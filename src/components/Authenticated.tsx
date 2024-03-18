@@ -10,7 +10,7 @@ const Authenticated = () => {
       userId: string;
     }[]
   >([]);
-  const [rooms, setRooms] = useState(["123", "234", "345", "456"]);
+  const [rooms, _setRooms] = useState(["123", "234", "345", "456"]);
   const [userId, setUseriD] = useState<string>(new Date().getTime().toString());
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   const [value, setValue] = useState("");
