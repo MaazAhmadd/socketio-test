@@ -1,6 +1,25 @@
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 const router = express.Router();
 import { User } from "./models";
+import jwt from "jsonwebtoken";
+import Mongoose from "mongoose";
+
+// middleware to check if x-auth-token token attached and valid
+const auth = (req: Request, res: Response, next: NextFunction) => {
+  const token = req.headers["x-auth-token"];
+  if (!token)
+    return res.status(401).json({ error: "Access denied. No token provided." });
+  try {
+    const decoded = jwt.verify(
+      token as string,
+      process.env.JWT_PRIVATE_KEY || ""
+    );
+    (req as any).user = decoded;
+    next();
+  } catch (ex) {
+    res.status(400).json({ error: "Invalid token." });
+  }
+};
 
 // Create user
 router.post("/register", async (req: Request, res: Response) => {
@@ -15,8 +34,8 @@ router.post("/register", async (req: Request, res: Response) => {
     res.status(400).send(error);
   }
 });
-// Update user
-router.put("/:id", async (req: Request, res: Response) => {
+// Update user by id or handle whatever is provided
+router.put("/updateuser/:id", auth, async (req: Request, res: Response) => {
   const updates = Object.keys(req.body);
   const allowedUpdates = ["name", "handle", "profilePicture", "password"];
   const isValidOperation = updates.some((update) =>
@@ -28,9 +47,14 @@ router.put("/:id", async (req: Request, res: Response) => {
   }
 
   try {
-    const user = await User.findById(req.params.id);
+    let user: any;
+    if (Mongoose.Types.ObjectId.isValid(req.params.id)) {
+      user = await User.findById(req.params.id);
+    } else {
+      user = await User.findOne({ handle: req.params.id });
+    }
     if (!user) {
-      return res.status(404).send();
+      return res.status(404).send('User not found');
     }
 
     updates.forEach((update) => ((user as any)[update] = req.body[update]));
@@ -45,7 +69,8 @@ router.put("/:id", async (req: Request, res: Response) => {
 
 // Send Friend Request
 router.get(
-  "/friendRequest/:senderId/:receiverId",
+  "/sendFriendRequest/:senderId/:receiverId",
+  auth,
   async (req: Request, res: Response) => {
     try {
       const user = await User.findById(req.params.senderId);
@@ -68,6 +93,7 @@ router.get(
 // Accept Friend Request
 router.get(
   "/acceptFriendRequest/:senderId/:receiverId",
+  auth,
   async (req: Request, res: Response) => {
     try {
       const user = await User.findById(req.params.senderId);
@@ -90,20 +116,26 @@ router.get(
     }
   }
 );
-// Get a single user by ID
-router.get("/getbyid/:id", async (req: Request, res: Response) => {
+// Get a single user by ID or handle
+router.get("/getuser/:id", auth, async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.params.id).select("-password");
+    let user: any;
+    if (Mongoose.Types.ObjectId.isValid(req.params.id)) {
+      user = await User.findById(req.params.id).select("-password");
+    } else {
+      user = await User.findOne({ handle: req.params.id }).select("-password");
+    }
     if (!user) {
-      return res.status(404).send();
+      return res.status(404).send('User not found');
     }
     res.send(user);
   } catch (error) {
     res.status(500).send(error);
   }
 });
+
 // Get all users
-router.get("/all", async (req: Request, res: Response) => {
+router.get("/all", auth, async (req: Request, res: Response) => {
   try {
     const users = await User.find({}).select("-password");
     res.send(users);
@@ -111,9 +143,10 @@ router.get("/all", async (req: Request, res: Response) => {
     res.status(500).send(error);
   }
 });
+
 // Search users by name or handle
 // /api/user
-router.get("/search", async (req: Request, res: Response) => {
+router.get("/search", auth, async (req: Request, res: Response) => {
   console.log("search query: ", req.query.q);
   try {
     const query = req.query.q;
