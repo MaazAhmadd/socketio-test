@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/carousel";
 import { ModeToggle } from "./theme-toggle";
 import { TypographyDemo } from "./typography-demo";
-import { DrawerDemo } from "./drawer";
+import { DrawerDemo } from "./drawer-demo";
+import { CardsChat } from "./chatbox";
 
 const Unauthenticated = () => {
   return (
@@ -45,6 +46,9 @@ const Unauthenticated = () => {
       </div>
       <div className="p-10">
         <DrawerDemo />
+      </div>
+      <div className="p-10">
+        <CardsChat />
       </div>
       <div className="p-10">
         <TypographyDemo />

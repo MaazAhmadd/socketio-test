@@ -5,8 +5,10 @@ export default function App() {
   const token = localStorage.getItem("auth_token");
 
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      {token ? <Authenticated /> : <Unauthenticated />}
-    </ThemeProvider>
+    <div className="">
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        {token ? <Authenticated /> : <Unauthenticated />}
+      </ThemeProvider>
+    </div>
   );
 }

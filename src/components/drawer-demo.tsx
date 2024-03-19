@@ -64,12 +64,16 @@ export function DrawerDemo() {
   }
 
   return (
-    <Drawer direction="bottom">
+    <Drawer direction="right">
       <DrawerTrigger asChild>
         <Button variant="outline">Open Drawer</Button>
       </DrawerTrigger>
       <DrawerContent>
-        <div className="mx-auto w-full max-w-sm">
+        {/* horizontal */}
+        {/* <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted " /> */}
+        {/* vertical */}
+        <div className="mx-auto ml-4 mr-6 h-[100px] w-2 rounded-full bg-muted" />
+        <div className="mx-auto  max-w-sm md:max-w-md w-[800px]">
           <DrawerHeader>
             <DrawerTitle>Move Goal</DrawerTitle>
             <DrawerDescription>Set your daily activity goal.</DrawerDescription>
@@ -105,8 +109,11 @@ export function DrawerDemo() {
                 <span className="sr-only">Increase</span>
               </Button>
             </div>
-            <div className="mt-3 h-[120px]">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="mt-3 h-[120px] ">
+              {/* <ResponsiveContainer
+                width="100%"
+                height="100%" 
+              >
                 <BarChart data={data}>
                   <Bar
                     dataKey="goal"
@@ -118,7 +125,7 @@ export function DrawerDemo() {
                     }
                   />
                 </BarChart>
-              </ResponsiveContainer>
+              </ResponsiveContainer> */}
             </div>
           </div>
           <DrawerFooter>
