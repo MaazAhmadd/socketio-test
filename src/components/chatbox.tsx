@@ -66,6 +66,7 @@ const users = [
 type User = (typeof users)[number];
 
 export function CardsChat() {
+  const scrollAreaRef = React.useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = React.useState(false);
   const [selectedUsers, setSelectedUsers] = React.useState<User[]>([]);
 
@@ -89,10 +90,21 @@ export function CardsChat() {
   ]);
   const [input, setInput] = React.useState("");
   const inputLength = input.trim().length;
+  React.useEffect(() => {
+    console.log(
+      "inside use effect chatbox ref .current: ",
+      scrollAreaRef.current
+    );
 
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTo({
+        top: scrollAreaRef.current.scrollHeight,
+      });
+    }
+  }, [messages]);
   return (
     <>
-      <Card>
+      <Card className="  w-full max-w-[400px]">
         <CardHeader className="flex flex-row items-center">
           <div className="flex items-center space-x-4">
             <Avatar>
@@ -122,8 +134,8 @@ export function CardsChat() {
           </TooltipProvider>
         </CardHeader>
         <CardContent>
-          <ScrollArea>
-            <div className="space-y-4 max-h-[60vh] pr-6">
+          <ScrollArea viewportRef={scrollAreaRef}>
+            <div className="space-y-4 pr-4 max-h-[60vh]">
               {messages.map((message, index) => (
                 <div
                   key={index}

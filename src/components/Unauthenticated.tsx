@@ -14,7 +14,7 @@ import { CardsChat } from "./chatbox";
 
 const Unauthenticated = () => {
   return (
-    <div className="p-6">
+    <div className="md:p-6 ">
       <div className="p-4">
         <Button className="" variant="outline">
           Click me
@@ -47,7 +47,7 @@ const Unauthenticated = () => {
       <div className="p-10">
         <DrawerDemo />
       </div>
-      <div className="p-10">
+      <div className="md:p-10">
         <CardsChat />
       </div>
       <div className="p-10">
