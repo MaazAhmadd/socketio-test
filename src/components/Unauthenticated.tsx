@@ -14,7 +14,7 @@ import { CardsChat } from "./chatbox";
 
 const Unauthenticated = () => {
   return (
-    <div className="md:p-6  md:max-w-none max-w-[400px] overflow-hidden">
+    <div className="md:p-6 overflow-hidden">
       <div className="p-4">
         <Button className="" variant="outline">
           Click me
