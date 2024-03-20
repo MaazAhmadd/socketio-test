@@ -104,7 +104,7 @@ export function CardsChat() {
   }, [messages]);
   return (
     <>
-      <Card className="  w-full max-w-[400px]">
+      <Card className=" max-w-md w-full">
         <CardHeader className="flex flex-row items-center">
           <div className="flex items-center space-x-4">
             <Avatar>
