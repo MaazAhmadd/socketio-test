@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 
 export const connectDB = async (): Promise<void> => {
   try {
-    await mongoose.connect("mongodb://localhost/chatappAuth");
+    await mongoose.connect(process.env.MONGODB_CON_STRING as string);
     console.log("MongoDB Connected...");
   } catch (err) {
     if (err instanceof Error) console.error(err.message);
