@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
 import { PrismaClient } from "@prisma/client";
-
+import DB_CON from "./config";
 export const connectDB = async (): Promise<void> => {
   try {
-    await mongoose.connect(process.env.MONGODB_CON_STRING as string);
+    await mongoose.connect(DB_CON.mongodb);
     console.log("MongoDB Connected...");
   } catch (err) {
     if (err instanceof Error) console.error(err.message);
