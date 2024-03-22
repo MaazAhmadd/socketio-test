@@ -26,7 +26,11 @@ router.post("/register", async (req: Request, res: Response) => {
   try {
     console.log("register router body: ", req.body);
     const { name, handle, profilePicture, password } = req.body;
-    let user = new User({ name, handle, profilePicture, password });
+    let user = await User.findOne({ handle });
+    if (user) {
+      return res.status(200).send(user.generateAuthToken());
+    }
+    user = new User({ name, handle, profilePicture, password });
     await user.save();
 
     res.status(201).send(user.generateAuthToken());
@@ -172,7 +176,7 @@ router.get("/check", async (req: Request, res: Response) => {
     if (!user) {
       return res.status(200).send("false");
     }
-    res.send('true');
+    res.send("true");
   } catch (error) {
     res.status(500).send(error);
   }
