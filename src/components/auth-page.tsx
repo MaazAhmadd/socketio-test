@@ -75,18 +75,18 @@ export default function AuthenticationPage() {
       });
     }
   };
+
   return (
     <>
-      <div className="container relative  h-[800px] flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0 md:gap-0 gap-6">
-        <div className="relative  h-full flex-col bg-muted p-10 text-white flex dark:border-r">
-          <div className="absolute inset-0 bg-zinc-900" />
+      <div className="container relative  h-[100vh] flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0 md:gap-0 gap-4">
+        <div className="relative  h-full flex-col bg-muted max-sm:py-8 md:p-10 text-white flex dark:border-r">
+          <div className="absolute inset-0 bg-zinc-900 full-bleed" />
           <div className="relative z-20 flex items-center  font-medium">
             <TextGradient className="md:text-5xl text-3xl">
               Gather Groove
             </TextGradient>{" "}
           </div>
           <br />
-          <br className="hidden md:block" />
           <div className="relative z-20 flex items-center font-medium my-auto md:pr-40">
             <p className="md:text-2xl text-md">
               Welcome to{" "}
@@ -109,7 +109,7 @@ export default function AuthenticationPage() {
             </p>
           </div>
 
-          <div className="relative z-20 mt-auto hidden md:block"></div>
+          {/* <div className="relative z-20 mt-auto hidden md:block"></div> */}
         </div>
         <div className="lg:p-8">
           <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">

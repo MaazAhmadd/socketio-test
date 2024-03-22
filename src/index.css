@@ -73,3 +73,13 @@
   font-family: "Scripto";
   src: url("/public/fonts/Scripto-2OR2v.ttf") format("truetype");
 }
+.full-bleed {
+  box-shadow: 0 0 0 100vmax rgb(24 24 27);
+  clip-path: inset(0 -100vmax);
+}
+@media (min-width: 768px) {
+  .full-bleed {
+    box-shadow: none;
+    clip-path: none;
+  }
+}
