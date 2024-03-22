@@ -91,11 +91,6 @@ export function CardsChat() {
   const [input, setInput] = React.useState("");
   const inputLength = input.trim().length;
   React.useEffect(() => {
-    console.log(
-      "inside use effect chatbox ref .current: ",
-      scrollAreaRef.current
-    );
-
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTo({
         top: scrollAreaRef.current.scrollHeight,

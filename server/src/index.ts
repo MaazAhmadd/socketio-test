@@ -12,6 +12,8 @@ import { connectDB } from "./db";
 import roomRouter from "./roomRouter";
 import socketServer from "./socketServer";
 import userRouter from "./userRouter";
+import cors from "cors";
+// const cors = require('cors');
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -24,10 +26,11 @@ connectDB();
 // );
 
 app.use(express.json());
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  next();
-});
+app.use(cors());
+// app.use((req, res, next) => {
+//   res.header("Access-Control-Allow-Origin", "*");
+//   next();
+// });
 
 const io = new Server<
   ClientToServerEvents,

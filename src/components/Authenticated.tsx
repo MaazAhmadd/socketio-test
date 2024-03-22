@@ -237,6 +237,15 @@ const Authenticated = () => {
       >
         log rooms
       </button>
+      <button
+        className="border-red-400 bg-red-300 border-2 px-2 py-1 rounded-sm ml-2"
+        onClick={() => {
+          localStorage.removeItem("auth_token");
+          window.location.reload();
+        }}
+      >
+        log out
+      </button>
     </div>
   );
 };

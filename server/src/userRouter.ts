@@ -29,7 +29,7 @@ router.post("/register", async (req: Request, res: Response) => {
     let user = new User({ name, handle, profilePicture, password });
     await user.save();
 
-    res.status(201).send(user);
+    res.status(201).send(user.generateAuthToken());
   } catch (error) {
     res.status(400).send(error);
   }
@@ -54,7 +54,7 @@ router.put("/updateuser/:id", auth, async (req: Request, res: Response) => {
       user = await User.findOne({ handle: req.params.id });
     }
     if (!user) {
-      return res.status(404).send('User not found');
+      return res.status(404).send("User not found");
     }
 
     updates.forEach((update) => ((user as any)[update] = req.body[update]));
@@ -126,7 +126,7 @@ router.get("/getuser/:id", auth, async (req: Request, res: Response) => {
       user = await User.findOne({ handle: req.params.id }).select("-password");
     }
     if (!user) {
-      return res.status(404).send('User not found');
+      return res.status(404).send("User not found");
     }
     res.send(user);
   } catch (error) {
@@ -148,15 +148,31 @@ router.get("/all", auth, async (req: Request, res: Response) => {
 // /api/user
 router.get("/search", auth, async (req: Request, res: Response) => {
   console.log("search query: ", req.query.q);
+
   try {
     const query = req.query.q;
-    const users = await User.find({
+    let users = await User.find({
       $or: [
         { name: { $regex: query, $options: "i" } },
         { handle: { $regex: query, $options: "i" } },
       ],
     }).select("name handle profilePicture");
+
     res.send(users);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+router.get("/check", async (req: Request, res: Response) => {
+  console.log("check query: ", req.query.q);
+
+  try {
+    const handle = req.query.q;
+    const user = await User.findOne({ handle });
+    if (!user) {
+      return res.status(200).send("not found");
+    }
+    res.send(user);
   } catch (error) {
     res.status(500).send(error);
   }
@@ -164,6 +180,8 @@ router.get("/search", auth, async (req: Request, res: Response) => {
 
 // login user
 router.post("/login", async (req: Request, res: Response) => {
+  console.log("backend /login req.body: ", req.body);
+
   try {
     const { handle, password } = req.body;
     const user = await User.findOne({ handle });
