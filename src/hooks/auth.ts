@@ -26,6 +26,7 @@ export const useCheckUser = (
   isStateError: any
 ) => {
   const checkUser = async () => {
+    if (!handle) return "empty user not checked";
     const response = await api.get("/user/check?q=" + handle);
     console.log("user checked: ", response.data);
 
