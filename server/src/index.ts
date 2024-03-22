@@ -26,7 +26,18 @@ connectDB();
 // );
 
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    allowedHeaders: [
+      "Origin",
+      "X-Requested-With",
+      "Content-Type",
+      "Accept",
+      "Authorization",
+      "x-auth-token",
+    ],
+  })
+);
 // app.use((req, res, next) => {
 //   res.header("Access-Control-Allow-Origin", "*");
 //   next();
