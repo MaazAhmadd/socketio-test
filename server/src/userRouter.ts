@@ -170,9 +170,9 @@ router.get("/check", async (req: Request, res: Response) => {
     const handle = req.query.q;
     const user = await User.findOne({ handle });
     if (!user) {
-      return res.status(200).send("not found");
+      return res.status(200).send("false");
     }
-    res.send(user);
+    res.send('true');
   } catch (error) {
     res.status(500).send(error);
   }

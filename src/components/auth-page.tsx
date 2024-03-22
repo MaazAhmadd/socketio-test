@@ -57,7 +57,7 @@ export default function AuthenticationPage() {
     const formData = new FormData();
     formData.append("handle", registerState);
     formData.append("password", passwordState);
-    if (checkUser?.handle?.length > 0) {
+    if (checkUser === "true") {
       if (passwordStateError.length > 0 || registerStateError.length > 0)
         return;
       console.log("passwordStateError", passwordStateError);
@@ -148,7 +148,7 @@ export default function AuthenticationPage() {
                         registerStateError.length > 0
                           ? "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500 border-red-500"
                           : "",
-                        checkUser?.handle
+                        checkUser === "true"
                           ? "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-500 border-green-500"
                           : ""
                       )}
@@ -209,7 +209,7 @@ export default function AuthenticationPage() {
                     disabled={isLoadingLogin || isLoadingRegister}
                     type="submit"
                     className={cn(
-                      checkUser?.handle
+                      checkUser === "true"
                         ? "bg-green-500 text-secondary-foreground shadow-sm hover:bg-green-500/80"
                         : ""
                     )}
@@ -217,7 +217,7 @@ export default function AuthenticationPage() {
                     {(isLoadingLogin || isLoadingRegister) && (
                       <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    {checkUser?.handle ? "Continue" : "Register"}
+                    {checkUser === "true" ? "Continue" : "Register"}
                   </Button>
                 </div>
               </form>
