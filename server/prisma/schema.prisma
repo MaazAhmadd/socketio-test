@@ -1,6 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
+ 
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,9 +10,9 @@ datasource db {
 
 model Member {
   id             Int     @id @default(autoincrement())
-  name           String
+  name           String?
   handle         String  @unique
-  profilePicture String
+  profilePicture String?
   isConnected    Boolean
   isLeader       Boolean
   micEnabled     Boolean
@@ -26,7 +24,7 @@ model VideoPlayer {
   id         Int     @id @default(autoincrement())
   isPlaying  Boolean
   source     String
-  length     String
+  duration   Int
   playStatus String
   Room       Room?   @relation(fields: [roomId], references: [id])
   roomId     Int     @unique
@@ -36,7 +34,7 @@ model Room {
   id          Int          @id @default(autoincrement())
   members     Member[]
   videoPlayer VideoPlayer?
-  lastEmpty   String
+  lastEmpty   BigInt
   status      String       @default("Public")
   kicked      Kicked[]
 }
@@ -44,7 +42,7 @@ model Room {
 
 model Kicked {
   id     Int    @id @default(autoincrement())
-  value  String
+  memberHandle  String
   roomId Int
   room   Room   @relation(fields: [roomId], references: [id])
 }

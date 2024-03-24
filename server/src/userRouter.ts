@@ -3,9 +3,16 @@ const router = express.Router();
 import { User } from "./models";
 import jwt from "jsonwebtoken";
 import Mongoose from "mongoose";
+import { DecodedUser } from "../types/types";
 
+declare module "express-serve-static-core" {
+  export interface Request {
+    user?: DecodedUser;
+    // Add other properties as needed
+  }
+}
 // middleware to check if x-auth-token token attached and valid
-const auth = (req: Request, res: Response, next: NextFunction) => {
+export const authUser = (req: Request, res: Response, next: NextFunction) => {
   const token = req.headers["x-auth-token"];
   if (!token)
     return res.status(401).json({ error: "Access denied. No token provided." });
@@ -14,7 +21,7 @@ const auth = (req: Request, res: Response, next: NextFunction) => {
       token as string,
       process.env.JWT_PRIVATE_KEY || ""
     );
-    (req as any).user = decoded;
+    req.user = decoded as DecodedUser;
     next();
   } catch (ex) {
     res.status(400).json({ error: "Invalid token." });
@@ -39,7 +46,7 @@ router.post("/register", async (req: Request, res: Response) => {
   }
 });
 // Update user by id or handle whatever is provided
-router.put("/updateuser/:id", auth, async (req: Request, res: Response) => {
+router.put("/updateuser/:id", authUser, async (req: Request, res: Response) => {
   const updates = Object.keys(req.body);
   const allowedUpdates = ["name", "handle", "profilePicture", "password"];
   const isValidOperation = updates.some((update) =>
@@ -74,7 +81,7 @@ router.put("/updateuser/:id", auth, async (req: Request, res: Response) => {
 // Send Friend Request
 router.get(
   "/sendFriendRequest/:senderId/:receiverId",
-  auth,
+  authUser,
   async (req: Request, res: Response) => {
     try {
       const user = await User.findById(req.params.senderId);
@@ -97,7 +104,7 @@ router.get(
 // Accept Friend Request
 router.get(
   "/acceptFriendRequest/:senderId/:receiverId",
-  auth,
+  authUser,
   async (req: Request, res: Response) => {
     try {
       const user = await User.findById(req.params.senderId);
@@ -121,7 +128,7 @@ router.get(
   }
 );
 // Get a single user by ID or handle
-router.get("/getuser/:id", auth, async (req: Request, res: Response) => {
+router.get("/getuser/:id", authUser, async (req: Request, res: Response) => {
   try {
     let user: any;
     if (Mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -139,7 +146,7 @@ router.get("/getuser/:id", auth, async (req: Request, res: Response) => {
 });
 
 // Get all users
-router.get("/all", auth, async (req: Request, res: Response) => {
+router.get("/all", authUser, async (req: Request, res: Response) => {
   try {
     const users = await User.find({}).select("-password");
     res.send(users);
@@ -150,7 +157,7 @@ router.get("/all", auth, async (req: Request, res: Response) => {
 
 // Search users by name or handle
 // /api/user
-router.get("/search", auth, async (req: Request, res: Response) => {
+router.get("/search", authUser, async (req: Request, res: Response) => {
   console.log("search query: ", req.query.q);
 
   try {

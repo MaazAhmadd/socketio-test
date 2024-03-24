@@ -40,19 +40,24 @@ interface SocketData {
 // type Rooms = Record<string, Room>;
 type Rooms = {
   [key: string]: Room;
-}
-
+};
 
 interface Room {
   members: Member[];
   lastEmptyTime: string;
-  roomId: string; 
+  roomId: string;
 }
 
 interface Member {
   isConnected: boolean;
   isLeader: boolean;
   userId: string | null;
+}
+interface DecodedUser {
+  _id: string;
+  name: string;
+  profilePicture: string;
+  handle: string;
 }
 
 export type {
@@ -63,4 +68,5 @@ export type {
   Rooms,
   Member,
   Room,
+  DecodedUser,
 };

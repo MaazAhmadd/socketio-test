@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useCheckUser, useLoginUser, useRegisterUser } from "@/hooks/auth";
 import useDebounce from "@/hooks/useDebounce";
 import { isValidJwt } from "@/utils";
+import { ModeToggle } from "./theme-toggle";
 
 export default function AuthenticationPage() {
   const [registerStateError, setRegisterStateError] = React.useState("");
@@ -86,6 +87,7 @@ export default function AuthenticationPage() {
               Gather Groove
             </TextGradient>{" "}
           </div>
+          <ModeToggle className="fixed top-4 right-4" />
           <br />
           <div className="relative z-20 flex items-center font-medium my-auto md:pr-40">
             <p className="md:text-2xl text-md">
