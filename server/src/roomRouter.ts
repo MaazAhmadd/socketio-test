@@ -26,6 +26,7 @@ router.post("/create", authUser, async (req: Request, res: Response) => {
             duration: 0,
             playStatus: "paused",
           },
+          
         },
         lastEmpty: Date.now(),
         status: "Public",
