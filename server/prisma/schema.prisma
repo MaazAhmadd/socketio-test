@@ -1,4 +1,3 @@
- 
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,7 +8,7 @@ datasource db {
 }
 
 model Member {
-  id             Int     @id @default(autoincrement())
+  id             String  @id @default(uuid())
   name           String?
   handle         String  @unique
   profilePicture String?
@@ -17,21 +16,21 @@ model Member {
   isLeader       Boolean
   micEnabled     Boolean
   Room           Room?   @relation(fields: [roomId], references: [id])
-  roomId         Int?
+  roomId         String?
 }
 
 model VideoPlayer {
-  id         Int     @id @default(autoincrement())
+  id         String  @id @default(uuid())
   isPlaying  Boolean
   source     String
   duration   Int
   playStatus String
   Room       Room?   @relation(fields: [roomId], references: [id])
-  roomId     Int     @unique
+  roomId     String  @unique
 }
 
 model Room {
-  id          Int          @id @default(autoincrement())
+  id          String       @id @default(uuid())
   members     Member[]
   videoPlayer VideoPlayer?
   lastEmpty   BigInt
@@ -39,10 +38,9 @@ model Room {
   kicked      Kicked[]
 }
 
-
 model Kicked {
-  id     Int    @id @default(autoincrement())
-  memberHandle  String
-  roomId Int
-  room   Room   @relation(fields: [roomId], references: [id])
+  id           String @id @default(uuid())
+  memberHandle String
+  room         Room   @relation(fields: [roomId], references: [id])
+  roomId       String
 }
