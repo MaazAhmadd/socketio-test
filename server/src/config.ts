@@ -4,3 +4,4 @@ export default {
       ? (process.env.MONGODB_CON_STRING as string)
       : "mongodb://localhost:27017/chatappAuth",
 };
+ 

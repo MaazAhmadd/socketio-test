@@ -1,31 +1,33 @@
 interface ServerToClientEvents {
-  noArg: () => void;
-  sendMessage: (value: string) => void;
-  basicEmit: (a: number, b: string, c: Buffer) => void;
-  withAck: (d: string, callback: (e: number) => void) => void;
-  message: (data: string, userId: string) => void;
-  joinRoom: ({ roomId, userId }: { roomId: string; userId: string }) => void;
-  leaveRoom: () => void;
   roomDesc: (data: Room) => void;
-  hello: (d: String, callback: (a: String) => void) => void;
-  getRooms: () => void;
-  getRoomsResponse: (data: string[]) => void;
-  giveLeader: (targetMember: string) => void;
+  stateError: (data: string) => void; 
+  message: (data: string, userId: string) => void;
+
+  // noArg: () => void;
+  // sendMessage: (value: string) => void;
+  // basicEmit: (a: number, b: string, c: Buffer) => void;
+  // withAck: (d: string, callback: (e: number) => void) => void;
+  // joinRoom: (data: { roomId: string }) => void;
+  // leaveRoom: () => void;
+  // hello: (d: String, callback: (a: String) => void) => void;
+  // getRooms: () => void;
+  // getRoomsResponse: (data: string[]) => void;
+  // giveLeader: (targetMember: string) => void;
+  // roomCreated: (data: Room) => void;
+  // roomJoined: (data: Room) => void;
 }
-// socket.timeout(5000).emit("create-something", value, () => {
-//   setIsLoading(false);
-// });
 
 interface ClientToServerEvents {
-  hello: () => void;
-  sendMessage: (value: string, callback: () => void) => void;
-  message: (data: string, userId: string) => void;
-  joinRoom: ({ roomId, userId }: { roomId: string; userId: string }) => void;
-  leaveRoom: () => void;
-  getRooms: () => void;
+  createRoom: () => void;
+  joinRoom: ({ roomId }: { roomId: string }) => void;
   giveLeader: (targetMember: string) => void;
+  sendMessage: (value: string, callback: () => void) => void;
+  leaveRoom: () => void;
 
-  roomDesc: (data: Room) => void;
+  // message: (data: string, userId: string) => void;
+  // getRooms: () => void;
+  // roomJoined: (data: Room) => void;
+  // roomDesc: (data: Room) => void;
 }
 
 interface InterServerEvents {
@@ -44,19 +46,31 @@ type Rooms = {
 
 interface Room {
   members: Member[];
-  lastEmptyTime: string;
-  roomId: string;
+  videoPlayer: VideoPlayer | null;
+  status: string;
 }
 
 interface Member {
+  handle: string;
+  profilePicture: string | null;
+  name: string | null;
   isConnected: boolean;
   isLeader: boolean;
-  userId: string | null;
+  micEnabled: boolean;
+  leaderPriorityCounter: number;
 }
+
+interface VideoPlayer {
+  isPlaying: boolean;
+  source: string;
+  totalDuration: number;
+  playedTill: number;
+}
+
 interface DecodedUser {
   _id: string;
-  name: string;
-  profilePicture: string;
+  name?: string;
+  profilePicture?: string;
   handle: string;
 }
 
@@ -69,4 +83,5 @@ export type {
   Member,
   Room,
   DecodedUser,
+  VideoPlayer,
 };

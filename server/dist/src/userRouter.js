@@ -12,13 +12,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.authUser = void 0;
 const express_1 = __importDefault(require("express"));
 const router = express_1.default.Router();
 const models_1 = require("./models");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const mongoose_1 = __importDefault(require("mongoose"));
 // middleware to check if x-auth-token token attached and valid
-const auth = (req, res, next) => {
+const authUser = (req, res, next) => {
     const token = req.headers["x-auth-token"];
     if (!token)
         return res.status(401).json({ error: "Access denied. No token provided." });
@@ -31,21 +32,26 @@ const auth = (req, res, next) => {
         res.status(400).json({ error: "Invalid token." });
     }
 };
+exports.authUser = authUser;
 // Create user
 router.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log("register router body: ", req.body);
         const { name, handle, profilePicture, password } = req.body;
-        let user = new models_1.User({ name, handle, profilePicture, password });
+        let user = yield models_1.User.findOne({ handle });
+        if (user) {
+            return res.status(200).send(user.generateAuthToken());
+        }
+        user = new models_1.User({ name, handle, profilePicture, password });
         yield user.save();
-        res.status(201).send(user);
+        res.status(201).send(user.generateAuthToken());
     }
     catch (error) {
         res.status(400).send(error);
     }
 }));
 // Update user by id or handle whatever is provided
-router.put("/updateuser/:id", auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.put("/updateuser/:id", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const updates = Object.keys(req.body);
     const allowedUpdates = ["name", "handle", "profilePicture", "password"];
     const isValidOperation = updates.some((update) => allowedUpdates.includes(update));
@@ -61,7 +67,7 @@ router.put("/updateuser/:id", auth, (req, res) => __awaiter(void 0, void 0, void
             user = yield models_1.User.findOne({ handle: req.params.id });
         }
         if (!user) {
-            return res.status(404).send('User not found');
+            return res.status(404).send("User not found");
         }
         updates.forEach((update) => (user[update] = req.body[update]));
         yield user.save();
@@ -72,7 +78,7 @@ router.put("/updateuser/:id", auth, (req, res) => __awaiter(void 0, void 0, void
     }
 }));
 // Send Friend Request
-router.get("/sendFriendRequest/:senderId/:receiverId", auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/sendFriendRequest/:senderId/:receiverId", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const user = yield models_1.User.findById(req.params.senderId);
         const friend = yield models_1.User.findById(req.params.receiverId);
@@ -90,7 +96,7 @@ router.get("/sendFriendRequest/:senderId/:receiverId", auth, (req, res) => __awa
     }
 }));
 // Accept Friend Request
-router.get("/acceptFriendRequest/:senderId/:receiverId", auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/acceptFriendRequest/:senderId/:receiverId", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const user = yield models_1.User.findById(req.params.senderId);
         const friend = yield models_1.User.findById(req.params.receiverId);
@@ -111,7 +117,7 @@ router.get("/acceptFriendRequest/:senderId/:receiverId", auth, (req, res) => __a
     }
 }));
 // Get a single user by ID or handle
-router.get("/getuser/:id", auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/getuser/:id", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let user;
         if (mongoose_1.default.Types.ObjectId.isValid(req.params.id)) {
@@ -121,7 +127,7 @@ router.get("/getuser/:id", auth, (req, res) => __awaiter(void 0, void 0, void 0,
             user = yield models_1.User.findOne({ handle: req.params.id }).select("-password");
         }
         if (!user) {
-            return res.status(404).send('User not found');
+            return res.status(404).send("User not found");
         }
         res.send(user);
     }
@@ -130,7 +136,7 @@ router.get("/getuser/:id", auth, (req, res) => __awaiter(void 0, void 0, void 0,
     }
 }));
 // Get all users
-router.get("/all", auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/all", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const users = yield models_1.User.find({}).select("-password");
         res.send(users);
@@ -141,11 +147,11 @@ router.get("/all", auth, (req, res) => __awaiter(void 0, void 0, void 0, functio
 }));
 // Search users by name or handle
 // /api/user
-router.get("/search", auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/search", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("search query: ", req.query.q);
     try {
         const query = req.query.q;
-        const users = yield models_1.User.find({
+        let users = yield models_1.User.find({
             $or: [
                 { name: { $regex: query, $options: "i" } },
                 { handle: { $regex: query, $options: "i" } },
@@ -157,8 +163,23 @@ router.get("/search", auth, (req, res) => __awaiter(void 0, void 0, void 0, func
         res.status(500).send(error);
     }
 }));
+router.get("/check", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("check query: ", req.query.q);
+    try {
+        const handle = req.query.q;
+        const user = yield models_1.User.findOne({ handle });
+        if (!user) {
+            return res.status(200).send("false");
+        }
+        res.send("true");
+    }
+    catch (error) {
+        res.status(500).send(error);
+    }
+}));
 // login user
 router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("backend /login req.body: ", req.body);
     try {
         const { handle, password } = req.body;
         const user = yield models_1.User.findOne({ handle });

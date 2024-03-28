@@ -1,24 +1,26 @@
 import { useState, useEffect } from "react";
 import { socket } from "../socket";
-import { Room } from "../../server/types/types";
-
-const Authenticated = () => {
+import { DecodedUser, Room } from "../../server/types/types";
+import api from "../api/api";
+import { useGetAllRooms } from "@/hooks";
+type Message = {
+  msg: string;
+  userId: string;
+};
+type Props = {
+  user: DecodedUser;
+};
+const Authenticated = ({ user }: Props) => {
   const [isConnected, setIsConnected] = useState(socket.connected);
-  const [messages, setMessages] = useState<
-    {
-      msg: string;
-      userId: string;
-    }[]
-  >([]);
-  const [rooms, _setRooms] = useState(["123", "234", "345", "456"]);
+  const { data: allRooms } = useGetAllRooms();
+  const [inRoom, setInRoom] = useState<Boolean>(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+
   const [userId, setUseriD] = useState<string>(new Date().getTime().toString());
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   const [value, setValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    console.log("render");
-  });
   useEffect(() => {
     function onConnect() {
       console.log("Connected to the server");
@@ -50,14 +52,7 @@ const Authenticated = () => {
     socket.on("disconnect", onDisconnect);
     socket.on("message", onMessage);
     socket.on("roomDesc", onRoomDesc);
-    socket.on("hello", (arg, callback) => {
-      console.log(arg); // "world"
-      callback("got it");
-    });
 
-    socket.on("getRoomsResponse", (rooms) => {
-      console.log("rooms all: ", rooms); // Logs the rooms that the client's socket is in
-    });
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);

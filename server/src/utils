@@ -75,6 +75,10 @@ function makeMemberJoin(
   (socket as any).roomId = roomId;
   socket.join(roomId);
 }
+
+
+
+
 function getUserIndex(rooms: Rooms, roomId: string, userId: string) {
   return rooms[roomId].members.findIndex((m) => m.userId === userId);
 }

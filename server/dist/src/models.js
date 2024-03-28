@@ -39,7 +39,7 @@ exports.User = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const UserSchema = new mongoose_1.Schema({
-    name: { type: String, index: true, required: true },
+    name: { type: String, index: true },
     handle: { type: String, required: true, unique: true, index: true },
     profilePicture: { type: String },
     password: { type: String, required: true },

@@ -1,39 +1,41 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client-js" 
 }
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL_SQLITE")
 }
 
 model Member {
-  id             String  @id @default(uuid())
-  name           String?
-  handle         String  @unique
-  profilePicture String?
-  isConnected    Boolean
-  isLeader       Boolean
-  micEnabled     Boolean
-  Room           Room?   @relation(fields: [roomId], references: [id])
-  roomId         String?
+  id                    String  @id @default(uuid())
+  name                  String?
+  handle                String  @unique
+  profilePicture        String?
+  isConnected           Boolean
+  isLeader              Boolean
+  micEnabled            Boolean
+  leaderPriorityCounter Int     @unique
+  Room                  Room?   @relation(fields: [roomId], references: [id])
+  roomId                String?
+
+  @@index([handle])
 }
 
 model VideoPlayer {
-  id         String  @id @default(uuid())
-  isPlaying  Boolean
-  source     String
-  duration   Int
-  playStatus String
-  Room       Room?   @relation(fields: [roomId], references: [id])
-  roomId     String  @unique
+  id            String  @id @default(uuid())
+  isPlaying     Boolean // paused/playing
+  source        String // source url of video
+  totalDuration Int // total duration of the video
+  playedTill    Int // time till the video has been played or from where the video is currently playing from
+  Room          Room?   @relation(fields: [roomId], references: [id])
+  roomId        String  @unique
 }
 
 model Room {
   id          String       @id @default(uuid())
   members     Member[]
   videoPlayer VideoPlayer?
-  lastEmpty   BigInt
   status      String       @default("Public")
   kicked      Kicked[]
 }

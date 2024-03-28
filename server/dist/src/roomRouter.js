@@ -8,13 +8,41 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const router = express_1.default.Router();
-router.get("/create", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.status(201).send("room created");
+router.get("/allrooms", 
+/* authUser, */ (_a, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var { prisma, body, user } = _a, req = __rest(_a, ["prisma", "body", "user"]);
+    try {
+        const rooms = yield (prisma === null || prisma === void 0 ? void 0 : prisma.room.findMany({
+            include: {
+                members: true,
+                videoPlayer: true,
+            },
+            take: 10,
+        }));
+        res.status(200).json(rooms);
+    }
+    catch (error) {
+        res.status(500).json({
+            errorMessage: "An error occurred on the server. [get - /api/room/allrooms]",
+            error,
+        });
+    }
 }));
 exports.default = router;

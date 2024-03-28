@@ -5,12 +5,6 @@ import jwt from "jsonwebtoken";
 import Mongoose from "mongoose";
 import { DecodedUser } from "../types/types";
 
-declare module "express-serve-static-core" {
-  export interface Request {
-    user?: DecodedUser;
-    // Add other properties as needed
-  }
-}
 // middleware to check if x-auth-token token attached and valid
 export const authUser = (req: Request, res: Response, next: NextFunction) => {
   const token = req.headers["x-auth-token"];
