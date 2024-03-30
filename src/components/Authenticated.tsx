@@ -62,7 +62,7 @@ const Authenticated = ({ user }: Props) => {
             <TextGradient className="md:text-6xl xs:text-3xl text-2xl">
               Gather Groove{" "}
             </TextGradient>{" "}
-            <h2 className="md:mt-1 scroll-m-20  pb-2 md:text-3xl text-xl font-semibold tracking-tight transition-colors first:mt-0 hidden md:block text-primary text-pretty">
+            <h2 className="md:mt-1 scroll-m-20  pb-2 md:text-3xl text-xl font-semibold tracking-tight transition-colors first:mt-0 text-primary md:text-pretty">
               Join a room to start watching together
             </h2>
           </div>
@@ -112,7 +112,7 @@ const Authenticated = ({ user }: Props) => {
             </div>
             <ScrollArea viewportRef={scrollAreaRef} className="bg-muted  ">
               {/* <div className="bg-muted space-y-4 rounded-b-lg "> */}
-              <div className="max-h-[80vh] md:max-h-[525px]">
+              <div className="max-h-[75vh]">
                 <ul>
                   {allRoom?.map((r) => {
                     return <li className={cn("py-2 my-2")}>{r}</li>;
