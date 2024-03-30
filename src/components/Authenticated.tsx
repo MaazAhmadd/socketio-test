@@ -1,16 +1,16 @@
-import { useEffect, useRef, useState } from "react";
-import { DecodedUser, Room } from "../../server/types/types";
-import { socket } from "@/socket";
 import { cn } from "@/lib/utils";
-import { useGetAllRooms } from "@/hooks";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { TextGradient } from "./auth-page";
+import { socket } from "@/socket";
+import { useEffect, useRef, useState } from "react";
+import { DecodedUser } from "../../server/types/types";
+// import { useGetAllRooms } from "@/hooks";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-type Message = {
-  msg: string;
-  userId: string;
-};
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { TextGradient } from "./auth-page";
+// type Message = {
+//   msg: string;
+//   userId: string;
+// };
 export enum Tabs {
   public = "public",
   invited = "invited",
@@ -21,10 +21,12 @@ type Props = {
   user: DecodedUser;
 };
 const Authenticated = ({ user }: Props) => {
+  console.log("user: ", user);
+
   const [isConnected, setIsConnected] = useState(socket.connected);
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const [showRoomTab, setShowRoomTab] = useState<Tabs>(Tabs.public);
-  const [allRoom, setAllRoom] = useState([
+  const [allRoom] = useState([
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
     22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
     41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
@@ -112,7 +114,7 @@ const Authenticated = ({ user }: Props) => {
               {/* <div className="bg-muted space-y-4 rounded-b-lg "> */}
               <div className="max-h-[80vh] md:max-h-[525px]">
                 <ul>
-                  {allRoom?.map((r, i) => {
+                  {allRoom?.map((r) => {
                     return <li className={cn("py-2 my-2")}>{r}</li>;
                   })}
                   <br />
