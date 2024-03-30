@@ -70,9 +70,10 @@ function socketServer(io, prisma) {
                 io.in(roomId).emit("roomDesc", room);
             }
         }));
-        socket.on("sendMessage", (data) => {
+        socket.on("sendMessage", (msg) => {
             if (socket.roomId && socket.user) {
-                io.in(socket.roomId).emit("message", data, socket.user.handle);
+                let msgData = { msg, sender: socket.user.handle };
+                io.in(socket.roomId).emit("message", msgData);
             }
             else {
                 console.error("roomId or user not attached to socket instance");
@@ -85,9 +86,11 @@ function socketServer(io, prisma) {
             }
         }));
         socket.on("disconnect", () => __awaiter(this, void 0, void 0, function* () {
-            const updatedRoom = yield makeMemberLeave(prisma, socket);
-            if (updatedRoom) {
-                io.in(updatedRoom.id).emit("roomDesc", updatedRoom);
+            if (socket.roomId) {
+                const updatedRoom = yield makeMemberLeave(prisma, socket);
+                if (updatedRoom) {
+                    io.in(updatedRoom.id).emit("roomDesc", updatedRoom);
+                }
             }
         }));
     });
