@@ -48,7 +48,6 @@ export default function socketServer(
         socket.emit("stateError", "user already in a room");
       }
     });
-
     socket.on("joinRoom", async (data) => {
       const { roomId } = data;
       const isNotInRoom = await checkIfMemberAlreadyActive(socket, prisma);
@@ -63,7 +62,6 @@ export default function socketServer(
         socket.emit("stateError", "user already in a room");
       }
     });
-
     socket.on("giveLeader", async (targetMember) => {
       const roomId = socket.roomId as string;
       const room = await giveLeader(prisma, socket, targetMember);
@@ -71,10 +69,10 @@ export default function socketServer(
         io.in(roomId).emit("roomDesc", room);
       }
     });
-
-    socket.on("sendMessage", (data) => {
+    socket.on("sendMessage", (msg) => {
       if (socket.roomId && socket.user) {
-        io.in(socket.roomId).emit("message", data, socket.user.handle);
+        let msgData = { msg, sender: socket.user.handle };
+        io.in(socket.roomId).emit("message", msgData);
       } else {
         console.error("roomId or user not attached to socket instance");
       }
@@ -86,9 +84,11 @@ export default function socketServer(
       }
     });
     socket.on("disconnect", async () => {
-      const updatedRoom = await makeMemberLeave(prisma, socket);
-      if (updatedRoom) {
-        io.in(updatedRoom.id).emit("roomDesc", updatedRoom);
+      if (socket.roomId) {
+        const updatedRoom = await makeMemberLeave(prisma, socket);
+        if (updatedRoom) {
+          io.in(updatedRoom.id).emit("roomDesc", updatedRoom);
+        }
       }
     });
   });

@@ -1,248 +1,153 @@
-import { useState, useEffect } from "react";
-import { socket } from "../socket";
+import { useEffect, useRef, useState } from "react";
 import { DecodedUser, Room } from "../../server/types/types";
-import api from "../api/api";
+import { socket } from "@/socket";
+import { cn } from "@/lib/utils";
 import { useGetAllRooms } from "@/hooks";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { TextGradient } from "./auth-page";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 type Message = {
   msg: string;
   userId: string;
 };
+export enum Tabs {
+  public = "public",
+  invited = "invited",
+  friends = "friends",
+  createRoom = "createRoom",
+}
 type Props = {
   user: DecodedUser;
 };
 const Authenticated = ({ user }: Props) => {
   const [isConnected, setIsConnected] = useState(socket.connected);
-  const { data: allRooms } = useGetAllRooms();
-  const [inRoom, setInRoom] = useState<Boolean>(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+  const [showRoomTab, setShowRoomTab] = useState<Tabs>(Tabs.public);
+  const [allRoom, setAllRoom] = useState([
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+    22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
+  ]);
+  // const { data: allRoom } = useGetAllRooms();
 
-  const [userId, setUseriD] = useState<string>(new Date().getTime().toString());
-  const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
-  const [value, setValue] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  console.log("showRoomTab: ", showRoomTab == Tabs.public);
 
   useEffect(() => {
+    // socket.connect();
     function onConnect() {
-      console.log("Connected to the server");
       setIsConnected(true);
     }
 
     function onDisconnect() {
-      console.log("Disconnected from the server");
       setIsConnected(false);
     }
 
-    function onMessage(value: string, _userId: string) {
-      // console.log("Received a 'message' event", value);
-
-      setMessages((previous) => [...previous, { msg: value, userId: _userId }]);
-    }
-
-    function onRoomDesc(data: Room) {
-      if (data) {
-        console.log("room desc received: ", data);
-
-        setCurrentRoom(data);
-      }
-    }
-    socket.on("connect_error", (error) => {
-      console.log("Connection Error:", error.message);
-    });
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
-    socket.on("message", onMessage);
-    socket.on("roomDesc", onRoomDesc);
 
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
-      socket.off("message", onMessage);
     };
   }, []);
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setIsLoading(true);
-
-    socket.timeout(100).emit("sendMessage", value, () => {
-      setIsLoading(false);
-    });
-
-    setValue("");
-  }
   return (
-    <div className="p-4">
-      <div className="mb-4">
-        {isConnected ? (
-          <p className="bg-green-400 fixed top-0 w-full">connected to server</p>
-        ) : (
-          <p className="bg-red-400 fixed top-0 w-full">
-            not connected to server
-          </p>
-        )}
-      </div>
-      <ul className="bg-gray-300 p-4">
-        {messages.map(({ msg, userId: _userId }, index) => (
-          <li key={index}>
-            {msg} - {_userId} ({_userId === userId ? "me" : "other"})
-          </li>
-        ))}
-      </ul>
-      <div className="m-4 flex gap-6">
-        <button
-          className="bg-green-300 p-2"
-          onClick={() => {
-            socket.connect();
-          }}
-        >
-          Connect
-        </button>
-        <button
-          className="bg-red-300 p-2"
-          onClick={() => {
-            socket.disconnect();
-            setCurrentRoom({
-              lastEmptyTime: "",
-              members: [
-                {
-                  isConnected: false,
-                  isLeader: false,
-                  userId: null,
-                },
-              ],
-              roomId: "",
-            });
-          }}
-        >
-          Disconnect
-        </button>
-      </div>
-      <form onSubmit={onSubmit} className="mb-4">
-        enter message:
-        <input
-          className="border-lime-300 border-4"
-          onChange={(e) => setValue(e.target.value)}
-        />
-        <button
-          className="border-gray-200 bg-gray-100 border-2 px-2 py-1 rounded-sm ml-2"
-          type="submit"
-          disabled={isLoading}
-        >
-          Submit
-        </button>
-      </form>
-      <div>
-        user:
-        <input
-          className="border-lime-300 border-4"
-          type="text"
-          value={userId}
-          onChange={(e) => setUseriD(e.target.value)}
-        />
-        <button className="border-teal-200 bg-teal-100 border-2 px-2 py-1 rounded-sm ml-2">
-          create room
-        </button>
-      </div>
-      <div className="m-4">
-        {rooms.map((_roomId: string, i) => {
-          return (
-            <div key={i}>
-              room:
-              <button
-                className={
-                  currentRoom &&
-                  currentRoom.members.filter((m) => m.userId === userId)[0] &&
-                  currentRoom.members.filter((m) => m.userId === userId)[0]
-                    .isConnected
-                    ? "border-gray-200 bg-gray-100 border-2 px-2 py-1 rounded-sm ml-2 text-gray-500"
-                    : "border-gray-400 bg-gray-200 border-2 px-2 py-1 rounded-sm ml-2"
-                }
-                onClick={() => {
-                  setCurrentRoom((p) => {
-                    if (!p) return null;
-                    return {
-                      ...p,
-                      roomId: _roomId,
-                    };
-                  });
-                  socket.emit("joinRoom", { roomId: _roomId, userId });
-                }}
-                disabled={
-                  currentRoom != null &&
-                  currentRoom.members.filter((m) => m.userId === userId)[0] &&
-                  currentRoom.members.filter((m) => m.userId === userId)[0]
-                    .isConnected
-                }
+    <>
+      <ConnectionStatus isConnected={isConnected} />
+      <div className="md:container md:my-12 h-[100vh]">
+        <div className="flex flex-col md:flex-row h-[100vh] justify-between">
+          <div className="md:mx-20 mx-10 self-center md:mb-20 flex flex-col md:gap-6 gap-2 text-center pt-3 md:pt-0">
+            <TextGradient className="md:text-6xl xs:text-3xl text-2xl">
+              Gather Groove{" "}
+            </TextGradient>{" "}
+            <h2 className="md:mt-1 scroll-m-20  pb-2 md:text-3xl text-xl font-semibold tracking-tight transition-colors first:mt-0 hidden md:block text-primary text-pretty">
+              Join a room to start watching together
+            </h2>
+          </div>
+
+          <div className=" md:px-4 md:pt-0 pt-2">
+            <div className="px-5 mb-4">
+              <Label className="sr-only" htmlFor="email">
+                Search Rooms
+              </Label>
+              <Input
+                id="handle"
+                placeholder="Search Rooms"
+                type="text"
+                autoCapitalize="none"
+                autoCorrect="off"
+                autoComplete="off"
+              />
+            </div>
+            <div className="flex md:gap-24 justify-between md:justify-normal">
+              <div className="flex gap-1">
+                <TabButton
+                  setBg={showRoomTab == Tabs.public && "bg-muted"}
+                  onClick={() => setShowRoomTab(Tabs.public)}
+                >
+                  Public
+                </TabButton>
+                <TabButton
+                  setBg={showRoomTab == Tabs.invited && "bg-muted"}
+                  onClick={() => setShowRoomTab(Tabs.invited)}
+                >
+                  Invited
+                </TabButton>
+                <TabButton
+                  setBg={showRoomTab == Tabs.friends && "bg-muted"}
+                  onClick={() => setShowRoomTab(Tabs.friends)}
+                >
+                  Friends
+                </TabButton>
+              </div>
+
+              <TabButton
+                setBg={showRoomTab == Tabs.createRoom && "bg-muted"}
+                onClick={() => setShowRoomTab(Tabs.createRoom)}
               >
-                {_roomId}
-              </button>
+                Create Room
+              </TabButton>
             </div>
-          );
-        })}
+            <ScrollArea viewportRef={scrollAreaRef} className="bg-muted  ">
+              {/* <div className="bg-muted space-y-4 rounded-b-lg "> */}
+              <div className="max-h-[80vh] md:max-h-[525px]">
+                <ul>
+                  {allRoom?.map((r, i) => {
+                    return <li className={cn("py-2 my-2")}>{r}</li>;
+                  })}
+                  <br />
+                </ul>
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
       </div>
-      <div>room id : {currentRoom?.roomId}</div>
-      <div className="m-4">
-        room description:{" "}
-        {currentRoom?.members.map((m, i) => {
-          return (
-            <div
-              key={i}
-              className={m.userId === userId ? "bg-gray-200 p-4" : "p-4"}
-            >
-              ID: {m.userId} |
-              {m.isConnected ? (
-                <span className="text-green-500">connected</span>
-              ) : (
-                <span className="text-red-500"> not connected</span>
-              )}
-              |
-              {m.isLeader ? (
-                <span className="text-yellow-500">Leader</span>
-              ) : (
-                <span className="text-neutral-500">Member</span>
-              )}{" "}
-              |
-              {currentRoom.members.filter((m) => m.userId === userId)[0]
-                .isLeader &&
-                !m.isLeader && (
-                  <span
-                    className="text-cyan-500 cursor-pointer"
-                    onClick={() => {
-                      if (m.userId) socket.emit("giveLeader", m.userId);
-                    }}
-                  >
-                    give leader
-                  </span>
-                )}
-            </div>
-          );
-        })}
-      </div>
-      <button
-        className="border-red-400 bg-red-300 border-2 px-2 py-1 rounded-sm ml-2"
-        onClick={() => {
-          setCurrentRoom(null);
-          socket.emit("leaveRoom");
-        }}
-      >
-        leave room
-      </button>
-      <button
-        className="border-orange-400 bg-orange-300 border-2 px-2 py-1 rounded-sm ml-2"
-        onClick={() => socket.emit("getRooms")}
-      >
-        log rooms
-      </button>
-      <button
-        className="border-red-400 bg-red-300 border-2 px-2 py-1 rounded-sm ml-2"
-        onClick={() => {
-          localStorage.removeItem("auth_token");
-          window.location.reload();
-        }}
-      >
-        log out
-      </button>
-    </div>
+    </>
   );
 };
 
 export default Authenticated;
+
+const ConnectionStatus = ({ isConnected }: { isConnected: boolean }) => {
+  return (
+    <span
+      className={cn(
+        "size-1 fixed top-0 right-0 bg-red-500 z-10",
+        isConnected ? "bg-green-500" : ""
+      )}
+    ></span>
+  );
+};
+
+const TabButton = ({ className, setBg, ...props }: any) => {
+  return (
+    <button
+      className={cn(
+        "py-1 md:px-4 px-2 rounded-t-lg bg-primary-foreground scroll-m-20 text-md font-extrabold tracking-tight lg:text-xl text-muted-foreground border-muted border-2 ",
+        setBg,
+        className
+      )}
+      {...props}
+    ></button>
+  );
+};

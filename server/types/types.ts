@@ -1,7 +1,7 @@
 interface ServerToClientEvents {
   roomDesc: (data: Room) => void;
-  stateError: (data: string) => void; 
-  message: (data: string, userId: string) => void;
+  message: (data: { sender: string; msg: string }) => void;
+  stateError: (data: string) => void;
 
   // noArg: () => void;
   // sendMessage: (value: string) => void;
@@ -21,7 +21,7 @@ interface ClientToServerEvents {
   createRoom: () => void;
   joinRoom: ({ roomId }: { roomId: string }) => void;
   giveLeader: (targetMember: string) => void;
-  sendMessage: (value: string, callback: () => void) => void;
+  sendMessage: (msg: string) => void;
   leaveRoom: () => void;
 
   // message: (data: string, userId: string) => void;

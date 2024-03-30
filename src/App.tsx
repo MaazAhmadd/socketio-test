@@ -2,7 +2,7 @@ import QueryClientProvider from "@/components/QueryClientProvider";
 import Authenticated from "./components/Authenticated";
 import Unauthenticated from "./components/Unauthenticated";
 import { ThemeProvider } from "@/components/theme-provider";
-import jwt from "jsonwebtoken";
+import { jwtDecode } from "jwt-decode";
 import { DecodedUser } from "server/types/types";
 
 export default function App() {
@@ -14,7 +14,7 @@ export default function App() {
         <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
           {/* <Unauthenticated /> */}
           {token ? (
-            <Authenticated user={jwt.decode(token) as DecodedUser} />
+            <Authenticated user={jwtDecode(token) as DecodedUser} />
           ) : (
             <Unauthenticated />
           )}
