@@ -118,6 +118,10 @@ const Authenticated = ({ user }: Props) => {
                     return <li className={cn("py-2 my-2")}>{r}</li>;
                   })}
                   <br />
+                  <br />
+                  <br />
+                  <br />
+                  <br />
                 </ul>
               </div>
             </ScrollArea>
