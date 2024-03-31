@@ -1,15 +1,17 @@
-import * as React from "react";
-import { cn } from "@/lib/utils";
 import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCheckUser, useLoginUser, useRegisterUser } from "@/hooks/auth";
 import useDebounce from "@/hooks/useDebounce";
-import { isValidJwt } from "@/utils";
+import { cn } from "@/lib/utils";
+import useGlobalStore from "@/state/store";
+import * as React from "react";
 import { ModeToggle } from "./theme-toggle";
 
 export default function AuthenticationPage() {
+  const setAuthToken = useGlobalStore((state) => state.setAuthToken);
+
   const [registerStateError, setRegisterStateError] = React.useState("");
   const [registerState, setRegisterState] = React.useState("");
 
@@ -44,14 +46,7 @@ export default function AuthenticationPage() {
   // }, [debouncedRegisterState]);
 
   React.useEffect(() => {
-    if (dataLogin && isValidJwt(dataLogin)) {
-      localStorage.setItem("auth_token", dataLogin);
-      window.location.reload();
-    }
-    if (dataRegister && isValidJwt(dataRegister)) {
-      localStorage.setItem("auth_token", dataRegister);
-      window.location.reload();
-    }
+    setAuthToken(dataLogin || dataRegister || null);
   }, [dataLogin, dataRegister]);
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +56,7 @@ export default function AuthenticationPage() {
     if (String(checkUser) === "true") {
       if (passwordStateError.length > 0 || registerStateError.length > 0)
         return;
-      console.log("passwordStateError", passwordStateError);
+      console.log("passwordStateError: ", passwordStateError);
 
       login({
         handle: formData.get("handle") as string,

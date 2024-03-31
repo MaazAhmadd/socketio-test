@@ -7,25 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TextGradient } from "./auth-page";
+import useGlobalStore from "@/state/store";
 // type Message = {
 //   msg: string;
 //   userId: string;
 // };
-export enum Tabs {
-  public = "public",
-  invited = "invited",
-  friends = "friends",
-  createRoom = "createRoom",
-}
-type Props = {
-  user: DecodedUser;
-};
-const Authenticated = ({ user }: Props) => {
-  console.log("user: ", user);
+export type Tabs = "public" | "createRoom" | "invited" | "friends";
+
+const Authenticated = () => {
+  const decodedAuthToken = useGlobalStore((state) => state.decodedAuthToken);
+  const logout = useGlobalStore((state) => state.logout);
+
+  console.log("user: ", decodedAuthToken);
 
   const [isConnected, setIsConnected] = useState(socket.connected);
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
-  const [showRoomTab, setShowRoomTab] = useState<Tabs>(Tabs.public);
+  const [showRoomTab, setShowRoomTab] = useState<Tabs>("public");
   const [allRoom] = useState([
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
     22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
@@ -33,7 +30,7 @@ const Authenticated = ({ user }: Props) => {
   ]);
   // const { data: allRoom } = useGetAllRooms();
 
-  console.log("showRoomTab: ", showRoomTab == Tabs.public);
+  console.log("showRoomTab: ", showRoomTab);
 
   useEffect(() => {
     // socket.connect();
@@ -62,7 +59,7 @@ const Authenticated = ({ user }: Props) => {
             <TextGradient className="md:text-6xl xs:text-3xl text-2xl">
               Gather Groove{" "}
             </TextGradient>{" "}
-            <h2 className="md:mt-1 scroll-m-20  pb-2 md:text-3xl text-xl font-semibold tracking-tight transition-colors first:mt-0 text-primary md:text-pretty">
+            <h2 className="md:mt-1 scroll-m-20 mx-4 pb-2 md:text-3xl xs:text-xl text-lg  font-semibold tracking-tight transition-colors first:mt-0 text-primary md:text-pretty">
               Join a room to start watching together
             </h2>
           </div>
@@ -84,47 +81,54 @@ const Authenticated = ({ user }: Props) => {
             <div className="flex md:gap-24 justify-between md:justify-normal">
               <div className="flex gap-1">
                 <TabButton
-                  setBg={showRoomTab == Tabs.public && "bg-muted"}
-                  onClick={() => setShowRoomTab(Tabs.public)}
+                  setBg={showRoomTab == "public" && "bg-muted"}
+                  onClick={() => setShowRoomTab("public")}
                 >
                   Public
                 </TabButton>
                 <TabButton
-                  setBg={showRoomTab == Tabs.invited && "bg-muted"}
-                  onClick={() => setShowRoomTab(Tabs.invited)}
+                  setBg={showRoomTab == "invited" && "bg-muted"}
+                  onClick={() => setShowRoomTab("invited")}
                 >
                   Invited
                 </TabButton>
                 <TabButton
-                  setBg={showRoomTab == Tabs.friends && "bg-muted"}
-                  onClick={() => setShowRoomTab(Tabs.friends)}
+                  setBg={showRoomTab == "friends" && "bg-muted"}
+                  onClick={() => setShowRoomTab("friends")}
                 >
                   Friends
                 </TabButton>
               </div>
 
               <TabButton
-                setBg={showRoomTab == Tabs.createRoom && "bg-muted"}
-                onClick={() => setShowRoomTab(Tabs.createRoom)}
+                setBg={showRoomTab == "createRoom" && "bg-muted"}
+                onClick={() => setShowRoomTab("createRoom")}
               >
                 Create Room
               </TabButton>
             </div>
-            <ScrollArea viewportRef={scrollAreaRef} className="bg-muted  ">
-              {/* <div className="bg-muted space-y-4 rounded-b-lg "> */}
-              <div className="max-h-[75vh]">
-                <ul>
-                  {allRoom?.map((r) => {
-                    return <li className={cn("py-2 my-2")}>{r}</li>;
-                  })}
-                  <br />
-                  <br />
-                  <br />
-                  <br />
-                  <br />
-                </ul>
-              </div>
-            </ScrollArea>
+            <div>
+              <ScrollArea viewportRef={scrollAreaRef} className="bg-muted  ">
+                {/* <div className="bg-muted space-y-4 rounded-b-lg "> */}
+                <div className="max-h-[75vh]">
+                  <ul>
+                    {allRoom?.map((r, i) => {
+                      return (
+                        <li
+                          className={cn(
+                            "p-2 my-2 ",
+                            i == allRoom.length - 1 && "mb-[40vh]"
+                          )}
+                        >
+                          {r}
+                        </li>
+                      );
+                    })}
+                    <br />
+                  </ul>
+                </div>
+              </ScrollArea>
+            </div>
           </div>
         </div>
       </div>
