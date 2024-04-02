@@ -17,32 +17,60 @@ export default function socketServer(
   io: Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents>,
   prisma: PrismaClient
 ) {
+  // disconnect all members and sockets
+  initializeSocketServer(io, prisma);
   // auth middleware
-  io.use((socket: CustomSocket, next) => {
+  io.use(async (socket: CustomSocket, next) => {
     try {
+      console.log("[socket auth middleware] checking authentication...");
+
       const token = socket.handshake?.query?.token;
-      if (typeof token != "string") {
+      if (typeof token != "string" || !token) {
+        console.log("[socket auth middleware] no token found");
         return next(new Error("Authentication error"));
       }
+
+      console.log("[socket auth middleware] verifying token: ", token);
       const decoded = jwt.verify(token, process.env.JWT_PRIVATE_KEY || "");
+      console.log(
+        "[socket auth middleware] token found, handle: ",
+        (decoded as DecodedUser).handle
+      );
+
       if (decoded) {
         socket.user = decoded as DecodedUser;
+        console.log("[socket auth middleware] connecting back sockets");
+
+        await prisma.member.updateMany({
+          where: {
+            handle: socket.user?.handle,
+          },
+          data: {
+            isConnected: true,
+          },
+        });
         next();
       } else {
+        console.log("[socket auth middleware] invalid token");
         next(new Error("Authentication error"));
       }
     } catch (error) {
+      console.log("[socket auth middleware] error: ", error);
       next(new Error("Authentication error: " + error));
     }
   });
 
   io.on("connection", (socket: CustomSocket) => {
-    socket.on("createRoom", async () => {
-      const isNotInRoom = await checkIfMemberAlreadyActive(socket, prisma);
-      if (isNotInRoom) {
+    socket.on("createRoom", async (url) => {
+      console.log("[socket createRoom] url received: ", url);
+
+      const isActive = await checkIfMemberAlreadyActive(socket, prisma);
+      console.log("[socket createRoom] isActive: ", isActive);
+
+      if (!isActive) {
         const room = await makeRoom(socket, prisma);
         socket.roomId = room.id;
-        socket.join(room.id);
+        socket.join(room.id);  
         io.in(room.id).emit("roomDesc", room);
       } else {
         socket.emit("stateError", "user already in a room");
@@ -50,8 +78,8 @@ export default function socketServer(
     });
     socket.on("joinRoom", async (data) => {
       const { roomId } = data;
-      const isNotInRoom = await checkIfMemberAlreadyActive(socket, prisma);
-      if (isNotInRoom) {
+      const isActive = await checkIfMemberAlreadyActive(socket, prisma);
+      if (!isActive) {
         const room = await joinRoom(socket, prisma, roomId);
         socket.roomId = roomId;
         socket.join(roomId);
@@ -84,17 +112,18 @@ export default function socketServer(
       }
     });
     socket.on("disconnect", async () => {
-      if (socket.roomId) {
-        const updatedRoom = await makeMemberLeave(prisma, socket);
-        if (updatedRoom) {
-          io.in(updatedRoom.id).emit("roomDesc", updatedRoom);
-        }
+      console.log("[socket disconnect] roomid: ", socket.roomId);
+
+      const updatedRoom = await makeMemberLeave(prisma, socket);
+      if (updatedRoom) {
+        io.in(updatedRoom.id).emit("roomDesc", updatedRoom);
       }
     });
   });
 }
 
 async function makeRoom(socket: CustomSocket, prisma: PrismaClient) {
+
   return await prisma.room.create({
     data: {
       members: {
@@ -131,21 +160,12 @@ async function checkIfMemberAlreadyActive(
   socket: CustomSocket,
   prisma: PrismaClient
 ) {
-  const rooms = await prisma.room.findMany({
+  const member = await prisma.member.findUnique({
     where: {
-      members: {
-        some: {
-          handle: socket.user?.handle || "",
-          isConnected: true,
-        },
-      },
+      handle: socket.user?.handle,
     },
   });
-  if (rooms.length > 0) {
-    return true;
-  } else {
-    return false;
-  }
+  return member?.isConnected;
 }
 async function joinRoom(
   socket: CustomSocket,
@@ -276,6 +296,22 @@ async function checkIfMemberBeenToThisRoomBefore(
 }
 async function makeMemberLeave(prisma: PrismaClient, socket: CustomSocket) {
   const currentUser = await getMemberByHandle(prisma, socket.user?.handle);
+  if (!currentUser) {
+    console.log(
+      `[makeMemberLeave] No member found with handle: ${socket.user?.handle}`
+    );
+    return;
+  }
+  await prisma.member.update({
+    where: {
+      handle: socket.user?.handle,
+    },
+    data: {
+      isLeader: false,
+      isConnected: false,
+    },
+  });
+  if (!socket.roomId) return false;
   const room = await prisma.room.findUnique({
     where: {
       id: socket.roomId,
@@ -283,36 +319,27 @@ async function makeMemberLeave(prisma: PrismaClient, socket: CustomSocket) {
     include: {
       members: {
         where: {
-          leaderPriorityCounter: {
-            gt: currentUser?.leaderPriorityCounter,
-          },
           isConnected: true,
         },
         orderBy: {
           leaderPriorityCounter: "asc",
         },
-        take: 1,
       },
     },
   });
 
-  if (room!.members.length > 0) {
+  let _members = room?.members.filter(
+    (m) => m.leaderPriorityCounter > currentUser!.leaderPriorityCounter
+  );
+
+  if (_members && _members.length > 0) {
     // check if there's another connected member, give leader to lowest priorityCounter
     await prisma.member.update({
       where: {
-        id: room!.members[0].id,
+        handle: _members ? _members[0].handle : "",
       },
       data: {
         isLeader: true,
-      },
-    });
-    await prisma.member.update({
-      where: {
-        handle: socket.user?.handle,
-      },
-      data: {
-        isLeader: false,
-        isConnected: false,
       },
     });
     return await prisma.room.findUnique({
@@ -326,11 +353,7 @@ async function makeMemberLeave(prisma: PrismaClient, socket: CustomSocket) {
     });
   } else {
     // no active members in the room so dispose it off
-    await prisma.room.delete({
-      where: {
-        id: socket.roomId,
-      },
-    });
+    // console.log("[makeMemberLeave] room empty: ", socket.roomId);
     return false;
   }
 }
@@ -443,3 +466,49 @@ async function getCurrentMemberPriorityCounter(
   return (await getMemberByHandle(prisma, socket.user?.handle))!
     .leaderPriorityCounter;
 }
+
+export const deleteInactiveRooms = async (prisma: PrismaClient) => {
+  console.log("[deleteInactiveRooms] checking inactive rooms to delete");
+
+  const rooms = await prisma.room.findMany({
+    where: {
+      members: {
+        every: {
+          isConnected: false,
+        },
+      },
+    },
+  });
+  console.log("[deleteInactiveRooms] found inactive rooms: ", rooms.length);
+
+  for (const room of rooms) {
+    console.log("[deleteInactiveRooms] deleting inactive room: ", room.id);
+    await prisma.room.delete({
+      where: {
+        id: room.id,
+      },
+    });
+  }
+};
+
+const passLeaderIfNotPassedProperly = async (
+  prisma: PrismaClient,
+  socket: CustomSocket
+) => {};
+
+const initializeSocketServer = async (
+  io: Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents>,
+  prisma: PrismaClient
+) => {
+  console.log("[initializeSocketServer] initializing socket server...");
+
+  io.disconnectSockets();
+  await prisma.member.updateMany({
+    where: {
+      isConnected: true,
+    },
+    data: {
+      isConnected: false,
+    },
+  });
+};

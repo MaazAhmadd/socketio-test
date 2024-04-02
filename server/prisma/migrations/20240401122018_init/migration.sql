@@ -9,7 +9,7 @@ CREATE TABLE "Member" (
     "micEnabled" BOOLEAN NOT NULL,
     "leaderPriorityCounter" INTEGER NOT NULL,
     "roomId" TEXT,
-    CONSTRAINT "Member_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT "Member_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -20,7 +20,7 @@ CREATE TABLE "VideoPlayer" (
     "totalDuration" INTEGER NOT NULL,
     "playedTill" INTEGER NOT NULL,
     "roomId" TEXT NOT NULL,
-    CONSTRAINT "VideoPlayer_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "VideoPlayer_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -34,14 +34,14 @@ CREATE TABLE "Kicked" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "memberHandle" TEXT NOT NULL,
     "roomId" TEXT NOT NULL,
-    CONSTRAINT "Kicked_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "Kicked_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Member_handle_key" ON "Member"("handle");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Member_leaderPriorityCounter_key" ON "Member"("leaderPriorityCounter");
+CREATE INDEX "Member_handle_idx" ON "Member"("handle");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "VideoPlayer_roomId_key" ON "VideoPlayer"("roomId");

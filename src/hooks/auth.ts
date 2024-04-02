@@ -9,7 +9,9 @@ export const useLoginUser = () => {
       const response = await api.post("/user/login/", formData);
       if (response.data && isValidJwt(response.data)) {
         localStorage.setItem("auth_token", response.data);
+        // window.location.reload();
       }
+      // await new Promise((resolve): any => setTimeout(() => resolve(""), 10));
       return response.data;
     } catch (error) {
       console.error("|| error in useLoginUser", error);
@@ -44,6 +46,7 @@ export const useRegisterUser = () => {
       const response = await api.post("/user/register/", formData);
       if (response.data && isValidJwt(response.data)) {
         localStorage.setItem("auth_token", response.data);
+        // window.location.reload();
       }
       return response.data;
     } catch (error) {

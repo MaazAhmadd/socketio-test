@@ -3,10 +3,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL_PG_REMOTE")
-  // provider = "sqlite"
-  // url      = env("DATABASE_URL_SQLITE")
+  // provider = "postgresql"
+  // url      = env("DATABASE_URL_PG_LOCAL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL_SQLITE")
 }
 
 model Member {
@@ -17,8 +17,8 @@ model Member {
   isConnected           Boolean
   isLeader              Boolean
   micEnabled            Boolean
-  leaderPriorityCounter Int     @unique
-  Room                  Room?   @relation(fields: [roomId], references: [id])
+  leaderPriorityCounter Int
+  Room                  Room?   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId                String?
 
   @@index([handle])
@@ -30,7 +30,7 @@ model VideoPlayer {
   source        String // source url of video
   totalDuration Int // total duration of the video
   playedTill    Int // time till the video has been played or from where the video is currently playing from
-  Room          Room?   @relation(fields: [roomId], references: [id])
+  Room          Room?   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId        String  @unique
 }
 
@@ -45,6 +45,6 @@ model Room {
 model Kicked {
   id           String @id @default(uuid())
   memberHandle String
-  room         Room   @relation(fields: [roomId], references: [id])
+  room         Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId       String
 }

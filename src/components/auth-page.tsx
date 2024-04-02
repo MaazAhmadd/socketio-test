@@ -10,15 +10,16 @@ import * as React from "react";
 import { ModeToggle } from "./theme-toggle";
 
 export default function AuthenticationPage() {
-  const setAuthToken = useGlobalStore((state) => state.setAuthToken);
+  const { setAuthToken, setRoute } = useGlobalStore((s) => ({
+    setAuthToken: s.setAuthToken,
+    setRoute: s.setRoute,
+  }));
 
   const [registerStateError, setRegisterStateError] = React.useState("");
   const [registerState, setRegisterState] = React.useState("");
 
   const [passwordState, setPasswordState] = React.useState("");
   const [passwordStateError, setPasswordStateError] = React.useState("");
-
-  // const [checkUser, setCheckUser] = React.useState<any>(false);
 
   const {
     mutate: login,
@@ -40,35 +41,33 @@ export default function AuthenticationPage() {
     passwordStateError.length > 0 || registerStateError.length > 0
   );
 
-  // React.useEffect(() => {
-  //   if (registerStateError.length > 0) return;
-  //   refetch();
-  // }, [debouncedRegisterState]);
-
   React.useEffect(() => {
     setAuthToken(dataLogin || dataRegister || null);
+    if (dataLogin || dataRegister) {
+      setRoute("homePage");
+    }
   }, [dataLogin, dataRegister]);
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData();
-    formData.append("handle", registerState);
-    formData.append("password", passwordState);
+    const formData = {
+      handle: registerState,
+      password: passwordState,
+    };
+    if (passwordStateError.length > 0 || registerStateError.length > 0) {
+      console.log(
+        "loginStateError: ",
+        passwordStateError,
+        " | ",
+        registerStateError
+      );
+      alert("error check console");
+      return;
+    }
     if (String(checkUser) === "true") {
-      if (passwordStateError.length > 0 || registerStateError.length > 0)
-        return;
-      console.log("passwordStateError: ", passwordStateError);
-
-      login({
-        handle: formData.get("handle") as string,
-        password: formData.get("password") as string,
-      });
+      login(formData);
     } else {
-      if (passwordStateError.length > 0 || registerStateError.length > 0)
-        return;
-      register({
-        handle: formData.get("handle") as string,
-        password: formData.get("password") as string,
-      });
+      register(formData);
     }
   };
 
@@ -122,7 +121,7 @@ export default function AuthenticationPage() {
               <form onSubmit={onSubmit}>
                 <div className="grid gap-2">
                   <div className="grid gap-1">
-                    <Label className="sr-only" htmlFor="email">
+                    <Label className="sr-only" htmlFor="handle">
                       Handle
                     </Label>
                     <Input
@@ -294,7 +293,8 @@ export const TextGradient = ({
     return (
       <span
         className={cn(
-          "font-Scripto bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-lime-500",
+          "font-Scripto gradient-text text-4xl font-medium text-transparent animate-gradient",
+          // "font-Scripto bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-lime-500",
           className
         )}
         {...props}
@@ -306,7 +306,8 @@ export const TextGradient = ({
     return (
       <p
         className={cn(
-          "font-Scripto bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-lime-500",
+          "font-Scripto gradient-text text-4xl font-medium text-transparent animate-gradient",
+          // "font-Scripto bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-lime-500",
           className
         )}
         {...props}

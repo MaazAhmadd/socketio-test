@@ -1,5 +1,10 @@
 import * as React from "react";
-import { MinusIcon, PlusIcon, GearIcon } from "@radix-ui/react-icons";
+import {
+  MinusIcon,
+  PlusIcon,
+  GearIcon,
+  Cross1Icon,
+} from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -12,7 +17,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 
-export function DrawerDemo() {
+export function SettingsDrawer() {
   const [goal, setGoal] = React.useState(350);
 
   function onClick(adjustment: number) {
@@ -29,12 +34,14 @@ export function DrawerDemo() {
           <GearIcon className="md:h-6 md:w-6 h-4 w-4" />
         </Button>
       </DrawerTrigger>
-      <DrawerContent className=" ml-0 mr-24 ">
+      <DrawerContent className=" ml-0 mr-24 bg-background/80 ">
         {/* horizontal */}
         {/* <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted " /> */}
         {/* vertical */}
-        <div className="mx-auto ml-4 mr-6 h-[100px] w-2 rounded-full bg-muted" />
-        <div className="mx-auto  max-w-sm md:max-w-md w-[800px]">
+        <div className="  max-w-sm md:max-w-md w-[80vw] ">
+          <DrawerClose asChild>
+            <Cross1Icon className="md:h-6 md:w-6 h-4 w-4   cursor-pointer " />
+          </DrawerClose>
           <DrawerHeader>
             <DrawerTitle>Move Goal</DrawerTitle>
             <DrawerDescription>Set your daily activity goal.</DrawerDescription>
@@ -78,6 +85,7 @@ export function DrawerDemo() {
             </DrawerClose>
           </DrawerFooter>
         </div>
+        <div className="mx-auto ml-4 mr-6 h-[100px] w-2 rounded-full bg-muted" />
       </DrawerContent>
     </Drawer>
   );

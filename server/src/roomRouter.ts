@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 const router = express.Router();
 
 router.get(
-  "/allrooms",
+  "/publicrooms",
   /* authUser, */ async (
     { prisma, body, user, ...req }: Request,
     res: Response

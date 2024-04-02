@@ -10,7 +10,7 @@ import {
 } from "../types/types";
 import { connectDB } from "./db";
 import roomRouter from "./roomRouter";
-import socketServer from "./socketServer";
+import socketServer, { deleteInactiveRooms } from "./socketServer";
 import userRouter from "./userRouter";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
@@ -50,6 +50,9 @@ const io = new Server<
   },
 });
 socketServer(io, prisma);
+setTimeout(() => {
+  setInterval(() => deleteInactiveRooms(prisma), 5000);
+}, 1000);
 
 app.get("/api/test", (req, res) => res.send("Express Ready"));
 app.use("/api/user", userRouter);

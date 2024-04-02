@@ -18,8 +18,8 @@ interface ServerToClientEvents {
 }
 
 interface ClientToServerEvents {
-  createRoom: () => void;
-  joinRoom: ({ roomId }: { roomId: string }) => void;
+  createRoom: (data: RoomCreationData) => void;
+  joinRoom: (data: RoomJoinData) => void;
   giveLeader: (targetMember: string) => void;
   sendMessage: (msg: string) => void;
   leaveRoom: () => void;
@@ -43,7 +43,12 @@ interface SocketData {
 type Rooms = {
   [key: string]: Room;
 };
-
+export type RoomCreationData = {
+  videoUrl: string;
+};
+export type RoomJoinData = {
+  roomId: string; 
+}
 interface Room {
   members: Member[];
   videoPlayer: VideoPlayer | null;
