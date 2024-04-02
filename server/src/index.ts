@@ -46,7 +46,14 @@ const io = new Server<
   InterServerEvents
 >(server, {
   cors: {
-    origin: "*",
+    allowedHeaders: [
+      "Origin",
+      "X-Requested-With",
+      "Content-Type",
+      "Accept",
+      "Authorization",
+      "x-auth-token",
+    ],
   },
 });
 socketServer(io, prisma);
