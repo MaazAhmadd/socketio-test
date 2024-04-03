@@ -33,6 +33,7 @@ const Room = () => {
     }
 
     function onDisconnect() {
+      console.log("[socket disconnect] disconnected");
       setConnected(false);
     }
 
