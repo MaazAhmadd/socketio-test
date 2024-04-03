@@ -38,7 +38,7 @@ export default function AuthenticationPage() {
   const { data: checkUser } = useCheckUser(
     registerState,
     debouncedRegisterState,
-    passwordStateError.length > 0 || registerStateError.length > 0
+    passwordStateError.length > 0 || registerStateError.length > 0,
   );
 
   React.useEffect(() => {
@@ -59,7 +59,7 @@ export default function AuthenticationPage() {
         "loginStateError: ",
         passwordStateError,
         " | ",
-        registerStateError
+        registerStateError,
       );
       alert("error check console");
       return;
@@ -73,20 +73,20 @@ export default function AuthenticationPage() {
 
   return (
     <>
-      <div className="container relative  h-[100vh] flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0 md:gap-0 gap-4">
-        <div className="relative  h-full flex-col bg-muted max-sm:py-8 md:p-10 text-white flex dark:border-r">
-          <div className="absolute inset-0 bg-zinc-900 full-bleed" />
+      <div className="container relative  grid h-[100vh] flex-col items-center justify-center gap-4 md:gap-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
+        <div className="relative  flex h-full flex-col bg-muted text-white dark:border-r max-sm:py-8 md:p-10">
+          <div className="full-bleed absolute inset-0 bg-zinc-900" />
           <div className="relative z-20 flex items-center  font-medium">
-            <TextGradient className="md:text-5xl text-3xl">
+            <TextGradient className="text-3xl md:text-5xl">
               Gather Groove
             </TextGradient>{" "}
           </div>
-          <ModeToggle className="fixed top-4 right-4" />
+          <ModeToggle className="fixed right-4 top-4" />
           <br />
-          <div className="relative z-20 flex items-center font-medium my-auto md:pr-40">
-            <p className="md:text-2xl text-md">
+          <div className="relative z-20 my-auto flex items-center font-medium md:pr-40">
+            <p className="text-md md:text-2xl">
               Welcome to{" "}
-              <TextGradient className="md:text-3xl text-lg" inline={true}>
+              <TextGradient className="text-lg md:text-3xl" inline={true}>
                 {" "}
                 Gather Groove{" "}
               </TextGradient>{" "}
@@ -96,7 +96,7 @@ export default function AuthenticationPage() {
               <br />
               <br />
               Meet new friends, chat, and enjoy videos together. With{" "}
-              <TextGradient className="md:text-3xl text-lg" inline={true}>
+              <TextGradient className="text-lg md:text-3xl" inline={true}>
                 {" "}
                 Gather Groove{" "}
               </TextGradient>{" "}
@@ -134,7 +134,7 @@ export default function AuthenticationPage() {
                           // setCheckUser(false);
                           setRegisterState(value.trim());
                           setRegisterStateError(
-                            validateInputs(value) as string
+                            validateInputs(value) as string,
                           );
                         }
                       }}
@@ -142,11 +142,11 @@ export default function AuthenticationPage() {
                       id="handle"
                       className={cn(
                         registerStateError.length > 0
-                          ? "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500 border-red-500"
+                          ? "border-red-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500"
                           : "",
                         String(checkUser) === "true"
-                          ? "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-500 border-green-500"
-                          : ""
+                          ? "border-green-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-500"
+                          : "",
                       )}
                       placeholder="@handle"
                       type="text"
@@ -169,14 +169,14 @@ export default function AuthenticationPage() {
                         } else {
                           setPasswordState(value.trim());
                           setPasswordStateError(
-                            validateInputs(value) as string
+                            validateInputs(value) as string,
                           );
                         }
                       }}
                       className={cn(
                         passwordStateError.length > 0
-                          ? "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500 border-red-500"
-                          : ""
+                          ? "border-red-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500"
+                          : "",
                       )}
                       id="password"
                       placeholder="password"
@@ -207,7 +207,7 @@ export default function AuthenticationPage() {
                     className={cn(
                       String(checkUser) === "true"
                         ? "bg-green-500 text-secondary-foreground shadow-sm hover:bg-green-500/80"
-                        : ""
+                        : "",
                     )}
                   >
                     {(isLoadingLogin || isLoadingRegister) && (
@@ -227,7 +227,7 @@ export default function AuthenticationPage() {
                   </span>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-[-20px]">
+              <p className="mb-[-20px] text-sm text-muted-foreground">
                 coming soon...
               </p>
               <Button
@@ -271,7 +271,7 @@ function validateInputs(value: string) {
   }
   if (
     !/^[a-zA-Z0-9#$_&\-+@()/*"':;!?~`|•√÷×§∆\\}{=°^¥€¢£%©®™✓\[\]\,\.<>]*$/.test(
-      value
+      value,
     )
   ) {
     return "no spaces or invalid characters allowed";
@@ -293,9 +293,9 @@ export const TextGradient = ({
     return (
       <span
         className={cn(
-          "font-Scripto gradient-text text-4xl font-medium text-transparent animate-gradient",
+          "gradient-text animate-gradient font-Scripto text-4xl font-medium text-transparent",
           // "font-Scripto bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-lime-500",
-          className
+          className,
         )}
         {...props}
       >
@@ -306,9 +306,9 @@ export const TextGradient = ({
     return (
       <p
         className={cn(
-          "font-Scripto gradient-text text-4xl font-medium text-transparent animate-gradient",
+          "gradient-text animate-gradient font-Scripto text-4xl font-medium text-transparent",
           // "font-Scripto bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-lime-500",
-          className
+          className,
         )}
         {...props}
       >

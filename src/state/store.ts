@@ -44,6 +44,8 @@ const useGlobalStore = create<GlobalStore>((set) => ({
     set({
       encodedAuthToken: null,
       decodedAuthToken: null,
+      connected: false,
+      route: "authPage",
     });
   },
   showRoomTab: "public",

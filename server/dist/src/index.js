@@ -57,13 +57,20 @@ app.use((0, cors_1.default)({
 (0, db_1.connectDB)();
 const io = new socket_io_1.Server(server, {
     cors: {
-        origin: "*",
+        allowedHeaders: [
+            "Origin",
+            "X-Requested-With",
+            "Content-Type",
+            "Accept",
+            "Authorization",
+            "x-auth-token",
+        ],
     },
 });
 (0, socketServer_1.default)(io, prisma);
 setTimeout(() => {
     setInterval(() => (0, socketServer_1.deleteInactiveRooms)(prisma), 5000);
-}, 1000);
+}, 10000);
 app.get("/api/test", (req, res) => res.send("Express Ready"));
 app.use("/api/user", userRouter_1.default);
 app.use("/api/room", roomRouter_1.default);

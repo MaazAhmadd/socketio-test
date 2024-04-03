@@ -11,6 +11,8 @@ export default function App() {
   useEffect(() => {
     console.log("[App] route: ", route);
   });
+  // glowing background:
+  // https://play.tailwindcss.com/ULwT6MTmWI
 
   return (
     <div className="">

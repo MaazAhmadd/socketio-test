@@ -18,6 +18,7 @@ const client_1 = require("@prisma/client");
 const config_1 = __importDefault(require("./config"));
 const connectDB = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log("[db] connecting to DB...", config_1.default.mongodb);
         yield mongoose_1.default.connect(config_1.default.mongodb);
         console.log("MongoDB Connected...");
     }

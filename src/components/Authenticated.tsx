@@ -20,11 +20,11 @@ const Authenticated = () => {
   return (
     <>
       <SettingsDrawer />
-      <div className="md:container md:py-12  h-[100vh]">
-        <div className="flex flex-col md:flex-row h-[100vh] justify-between">
+      <div className="h-[100vh] md:container  md:py-12">
+        <div className="flex h-[100vh] flex-col justify-between md:flex-row">
           <LeftText />
-          <div className=" md:px-4 md:pt-0 pt-2">
-            <div className="px-5 mb-4">
+          <div className=" pt-2 md:px-4 md:pt-0">
+            <div className="mb-4 px-5">
               <Label className="sr-only" htmlFor="searchrooms">
                 Search Rooms
               </Label>
@@ -37,7 +37,7 @@ const Authenticated = () => {
                 autoComplete="off"
               />
             </div>
-            <div className="flex md:gap-24 justify-between md:justify-normal">
+            <div className="flex justify-between md:justify-normal md:gap-24">
               <div className="flex gap-1">
                 <TabButton
                   setBg={showRoomTab == "public" && "bg-muted"}
@@ -85,9 +85,9 @@ const TabButton = ({ className, setBg, ...props }: any) => {
   return (
     <button
       className={cn(
-        "py-1 md:px-4 px-2 rounded-t-lg bg-primary-foreground scroll-m-20 text-md font-extrabold tracking-tight lg:text-xl text-muted-foreground border-muted border-2 ",
+        "text-md scroll-m-20 rounded-t-lg border-2 border-muted bg-primary-foreground px-2 py-1 font-extrabold tracking-tight text-muted-foreground md:px-4 lg:text-xl ",
         setBg,
-        className
+        className,
       )}
       {...props}
     ></button>
@@ -96,11 +96,11 @@ const TabButton = ({ className, setBg, ...props }: any) => {
 
 const LeftText = () => {
   return (
-    <div className="md:mx-20 mx-10 self-center md:mb-20 flex flex-col md:gap-6 gap-2 text-center pt-3 md:pt-0">
-      <TextGradient className="md:text-6xl xs:text-3xl text-2xl">
+    <div className="mx-10 flex flex-col gap-2 self-center pt-3 text-center md:mx-20 md:mb-20 md:gap-6 md:pt-0">
+      <TextGradient className="text-2xl xs:text-3xl md:text-6xl">
         Gather Groove{" "}
       </TextGradient>{" "}
-      <h2 className="md:mt-1 scroll-m-20 mx-4 pb-2 md:text-3xl xs:text-xl text-lg  font-semibold tracking-tight transition-colors first:mt-0 text-primary md:text-pretty">
+      <h2 className="mx-4 scroll-m-20 pb-2 text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-3xl">
         Join a room and start watching together
       </h2>
     </div>
@@ -123,12 +123,12 @@ const Public = () => {
       <div className="h-[75vh]">
         <ul>
           {!publicRooms && (
-            <p className="p-4 text-center md:mt-1 scroll-m-20 mx-4 pb-2 md:text-2xl xs:text-xl text-lg  font-semibold tracking-tight transition-colors first:mt-0 text-primary md:text-pretty">
+            <p className="mx-4 scroll-m-20 p-4 pb-2 text-center text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-2xl">
               No public rooms
             </p>
           )}
           {publicRooms && publicRooms.length < 1 && (
-            <p className="p-4 text-center md:mt-1 scroll-m-20 mx-4 pb-2 md:text-2xl xs:text-xl text-lg  font-semibold tracking-tight transition-colors first:mt-0 text-primary md:text-pretty">
+            <p className="mx-4 scroll-m-20 p-4 pb-2 text-center text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-2xl">
               No public rooms
             </p>
           )}
@@ -137,8 +137,8 @@ const Public = () => {
               <li
                 key={i}
                 className={cn(
-                  "p-2 my-2 ",
-                  i == publicRooms.length - 1 && "mb-[40vh]"
+                  "my-2 p-2 ",
+                  i == publicRooms.length - 1 && "mb-[40vh]",
                 )}
               >
                 {r.status} | {r.members.length} | {r.members[0].handle}
@@ -162,7 +162,7 @@ const Invited = () => {
       <div className="h-[75vh]">
         <ul>
           {invitedRooms && invitedRooms.length < 1 && (
-            <p className="p-4 text-center md:mt-1 scroll-m-20 mx-4 pb-2 md:text-2xl xs:text-xl text-lg  font-semibold tracking-tight transition-colors first:mt-0 text-primary md:text-pretty">
+            <p className="mx-4 scroll-m-20 p-4 pb-2 text-center text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-2xl">
               No Invited rooms
             </p>
           )}
@@ -170,8 +170,8 @@ const Invited = () => {
             return (
               <li
                 className={cn(
-                  "p-2 my-2 ",
-                  i == invitedRooms.length - 1 && "mb-[40vh]"
+                  "my-2 p-2 ",
+                  i == invitedRooms.length - 1 && "mb-[40vh]",
                 )}
               >
                 {r}
@@ -194,7 +194,7 @@ const Friends = () => {
       <div className="h-[75vh]">
         <ul>
           {friendsRooms && friendsRooms.length < 1 && (
-            <p className="p-4 text-center md:mt-1 scroll-m-20 mx-4 pb-2 md:text-2xl xs:text-xl text-lg  font-semibold tracking-tight transition-colors first:mt-0 text-primary md:text-pretty">
+            <p className="mx-4 scroll-m-20 p-4 pb-2 text-center text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-2xl">
               No Friends rooms
             </p>
           )}
@@ -202,8 +202,8 @@ const Friends = () => {
             return (
               <li
                 className={cn(
-                  "p-2 my-2 ",
-                  i == friendsRooms.length - 1 && "mb-[40vh]"
+                  "my-2 p-2 ",
+                  i == friendsRooms.length - 1 && "mb-[40vh]",
                 )}
               >
                 {r}
@@ -233,7 +233,7 @@ const CreateRoom = () => {
     if (videoUrl) {
       console.log(
         "[createRoom onsubmit] about to createRoom videoUrl: ",
-        videoUrl
+        videoUrl,
       );
       setRoomCreationVideoUrl(videoUrl);
       setRoomCreationRequestType("create");
@@ -247,12 +247,12 @@ const CreateRoom = () => {
   }, [disableBtn]);
   return (
     <div className="h-[75vh] bg-muted">
-      <p className="p-4 text-center md:mt-1 scroll-m-20 mx-4 pb-2 md:text-2xl xs:text-xl text-lg  font-semibold tracking-tight transition-colors first:mt-0 text-primary md:text-pretty">
+      <p className="mx-4 scroll-m-20 p-4 pb-2 text-center text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-2xl">
         Create Room
       </p>
       <form
         onSubmit={onSubmit}
-        className="mx-4 md:mx-10 mt-[10vh] flex flex-col gap-4 items-end"
+        className="mx-4 mt-[10vh] flex flex-col items-end gap-4 md:mx-10"
       >
         <Label className="sr-only" htmlFor="handle">
           Enter Url to play from

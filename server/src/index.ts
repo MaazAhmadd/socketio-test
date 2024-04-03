@@ -59,7 +59,7 @@ const io = new Server<
 socketServer(io, prisma);
 setTimeout(() => {
   setInterval(() => deleteInactiveRooms(prisma), 5000);
-}, 1000);
+}, 10000);
 
 app.get("/api/test", (req, res) => res.send("Express Ready"));
 app.use("/api/user", userRouter);
