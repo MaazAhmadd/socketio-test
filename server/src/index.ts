@@ -10,8 +10,9 @@ import {
 } from "../types/types";
 import { connectDB } from "./db";
 import roomRouter from "./roomRouter";
-import socketServer, { deleteInactiveRooms } from "./socketServer";
 import userRouter from "./userRouter";
+import ytRouter from "./ytRouter";
+import socketServer, { deleteInactiveRooms } from "./socketServer";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
 
@@ -64,6 +65,7 @@ setTimeout(() => {
 app.get("/api/test", (req, res) => res.send("Express Ready"));
 app.use("/api/user", userRouter);
 app.use("/api/room", roomRouter);
+app.use('/api/ytservice',ytRouter)
 
 server.listen(port, () => {
   console.log("server running at http://localhost:" + port);

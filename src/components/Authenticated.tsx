@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useGetPublicRooms } from "@/hooks";
+import { useGetPublicRooms } from "@/hooks/room";
 import { cn } from "@/lib/utils";
 import useGlobalStore from "@/state/store";
 import { useEffect, useRef, useState } from "react";
+import { FriendsDrawer } from "./FriendsDawer";
+import RoomCard from "./RoomCard";
 
 export type Tabs = "public" | "invited" | "friends" | "createRoom";
 
@@ -20,6 +22,7 @@ const Authenticated = () => {
   return (
     <>
       <SettingsDrawer />
+      <FriendsDrawer />
       <div className="h-[100vh] md:container  md:py-12">
         <div className="flex h-[100vh] flex-col justify-between md:flex-row">
           <LeftText />
@@ -132,18 +135,9 @@ const Public = () => {
               No public rooms
             </p>
           )}
-          {publicRooms?.map((r, i) => {
-            return (
-              <li
-                key={i}
-                className={cn(
-                  "my-2 p-2 ",
-                  i == publicRooms.length - 1 && "mb-[40vh]",
-                )}
-              >
-                {r.status} | {r.members.length} | {r.members[0].handle}
-              </li>
-            );
+          {publicRooms?.map((room, i) => {
+            console.log("[publicRooms] room: ", room);
+            return <RoomCard key={i} room={room} />;
           })}
           <br />
         </ul>

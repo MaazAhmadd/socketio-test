@@ -31,8 +31,9 @@ const node_http_1 = require("node:http");
 const socket_io_1 = require("socket.io");
 const db_1 = require("./db");
 const roomRouter_1 = __importDefault(require("./roomRouter"));
-const socketServer_1 = __importStar(require("./socketServer"));
 const userRouter_1 = __importDefault(require("./userRouter"));
+const ytRouter_1 = __importDefault(require("./ytRouter"));
+const socketServer_1 = __importStar(require("./socketServer"));
 const cors_1 = __importDefault(require("cors"));
 const client_1 = require("@prisma/client");
 const port = process.env.PORT || 3000;
@@ -74,6 +75,7 @@ setTimeout(() => {
 app.get("/api/test", (req, res) => res.send("Express Ready"));
 app.use("/api/user", userRouter_1.default);
 app.use("/api/room", roomRouter_1.default);
+app.use('/api/ytservice', ytRouter_1.default);
 server.listen(port, () => {
     console.log("server running at http://localhost:" + port);
 });

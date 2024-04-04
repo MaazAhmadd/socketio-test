@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.User = void 0;
+exports.YtService = exports.User = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const UserSchema = new mongoose_1.Schema({
@@ -67,5 +67,10 @@ UserSchema.methods.generateAuthToken = function () {
     }, process.env.JWT_PRIVATE_KEY || "");
     return token;
 };
+const YtServiceSchema = new mongoose_1.Schema({
+    url: { type: String, required: true },
+});
+const YtService = mongoose_1.default.model("YtService", YtServiceSchema);
+exports.YtService = YtService;
 const User = mongoose_1.default.model("User", UserSchema);
 exports.User = User;
