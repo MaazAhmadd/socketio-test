@@ -74,7 +74,6 @@ const RoomPage = () => {
   return (
     <>
       <ConnectionStatus />
-
       <div>Room</div>
       <Button variant={"destructive"} onClick={onLeaveRoom}>
         Leave Room

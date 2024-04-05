@@ -136,9 +136,9 @@ async function makeRoom(
   url: string,
 ) {
   const videoInfo = await ytInfoService(url, prisma);
-  if (!videoInfo) {
-    return null;
-  }
+  // if (!videoInfo) {
+  //   return null;
+  // }
 
   return await prisma.room.create({
     data: {

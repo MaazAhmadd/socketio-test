@@ -26,7 +26,7 @@ const Authenticated = () => {
       <div className="h-[100vh] md:container  md:py-12">
         <div className="flex h-[100vh] flex-col justify-between md:flex-row">
           <LeftText />
-          <div className=" pt-2 md:px-4 md:pt-0">
+          <div className=" pt-2 md:px-4 md:pt-0 max-w-[700px] md:w-[700px]">
             <div className="mb-4 px-5">
               <Label className="sr-only" htmlFor="searchrooms">
                 Search Rooms
@@ -40,7 +40,7 @@ const Authenticated = () => {
                 autoComplete="off"
               />
             </div>
-            <div className="flex justify-between md:justify-normal md:gap-24">
+            <div className="flex justify-between  md:gap-24">
               <div className="flex gap-1">
                 <TabButton
                   setBg={showRoomTab == "public" && "bg-muted"}
@@ -117,11 +117,19 @@ const Public = () => {
   //   22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
   //   41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
   // ]);
-  const { data: publicRooms } = useGetPublicRooms();
-  console.log("[useGetPublicRooms] publicRooms: ", publicRooms);
-
+  let { data: publicRooms } = useGetPublicRooms();
+  // console.log("[useGetPublicRooms] publicRooms: ", publicRooms);
+  const { setRoute, setRoomJoinRoomId, setRoomCreationRequestType } =
+    useGlobalStore((s) => ({
+      setRoute: s.setRoute,
+      setRoomJoinRoomId: s.setRoomJoinRoomId,
+      setRoomCreationRequestType: s.setRoomCreationRequestType,
+    }));
   return (
-    <ScrollArea viewportRef={scrollAreaRef} className="bg-muted  ">
+    <ScrollArea
+      viewportRef={scrollAreaRef}
+      className="border-2  border-muted bg-primary-foreground  "
+    >
       {/* <div className="bg-muted space-y-4 rounded-b-lg "> */}
       <div className="h-[75vh]">
         <ul>
@@ -137,7 +145,19 @@ const Public = () => {
           )}
           {publicRooms?.map((room) => {
             console.log("[publicRooms] room: ", room);
-            return <RoomCard key={room.id} room={room} />;
+            return (
+              <RoomCard
+                key={room.id}
+                room={room}
+                onClick={() => {
+                  setRoomJoinRoomId(room.id);
+                  setRoomCreationRequestType("join");
+                  setRoute("roomPage");
+                }}
+                className="mx-2  mr-4 mt-2 cursor-pointer rounded-xl border border-background bg-background hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground overflow-hidden"
+                // primary muted-foreground
+              />
+            );
           })}
           <br />
         </ul>
@@ -145,7 +165,6 @@ const Public = () => {
     </ScrollArea>
   );
 };
-
 
 const Invited = () => {
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);

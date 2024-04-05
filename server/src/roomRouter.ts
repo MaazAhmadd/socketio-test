@@ -4,6 +4,8 @@ const router = express.Router();
 router.get(
   "/publicrooms",
   async ({ prisma, body, ...req }: Request, res: Response) => {
+    // res.status(200).json(roomss);
+    // return;
     try {
       const rooms = await prisma?.room.findMany({
         where: {

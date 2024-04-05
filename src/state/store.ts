@@ -6,6 +6,7 @@ import {
   RoomJoinData,
 } from "server/types/types";
 import { create } from "zustand";
+import { produce } from "immer";
 
 export type Tabs = "public" | "createRoom" | "invited" | "friends";
 export type Routes = "authPage" | "homePage" | "roomPage";
@@ -58,9 +59,12 @@ const useGlobalStore = create<GlobalStore>((set) => ({
     videoUrl: "",
   },
   setRoomCreationVideoUrl: (videoUrl: string) =>
-    set(({ roomCreationData }) => ({
-      roomCreationData: { ...roomCreationData, videoUrl },
-    })),
+    set(
+      produce((draft) => {
+        draft.roomCreationData.videoUrl = videoUrl;
+      }),
+    ),
+
   roomCreationRequestType: "create",
   setRoomCreationRequestType: (type: RoomCreationRequestType) =>
     set({ roomCreationRequestType: type }),
@@ -68,9 +72,11 @@ const useGlobalStore = create<GlobalStore>((set) => ({
     roomId: "",
   },
   setRoomJoinRoomId: (roomId: string) =>
-    set(({ roomJoinData }) => ({
-      roomJoinData: { ...roomJoinData, roomId },
-    })),
+    set(
+      produce((draft) => {
+        draft.roomJoinData.roomId = roomId;
+      }),
+    ),
 }));
 
 export default useGlobalStore;
