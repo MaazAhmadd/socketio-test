@@ -60,7 +60,10 @@ const io = new Server<
 socketServer(io, prisma);
 // setTimeout(() => {
 setInterval(
-  () => deleteInactiveRooms(prisma),
+  async () => {
+    console.log("[deleteInactiveRooms] checking inactive rooms to delete");
+    await deleteInactiveRooms(prisma);
+  },
   process.env.NODE_ENV === "production" ? 86_400_000 : 10_000,
 );
 // setInterval(() => deleteInactiveRooms(prisma), 86_400_000);

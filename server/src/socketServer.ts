@@ -475,7 +475,6 @@ async function getCurrentMemberPriorityCounter(
     .leaderPriorityCounter;
 }
 export const deleteInactiveRooms = async (prisma: PrismaClient) => {
-  console.log("[deleteInactiveRooms] checking inactive rooms to delete");
 
   const rooms = await prisma.room.findMany({
     where: {
