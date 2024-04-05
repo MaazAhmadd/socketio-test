@@ -3,11 +3,11 @@ generator client {
 }
 
 datasource db {
-  // provider = "postgresql"
-  // url      = env("DATABASE_URL_PG_REMOTE")
+  provider = "postgresql"
+  url      = env("DATABASE_URL_PG_REMOTE")
   // url      = env("DATABASE_URL_PG_LOCAL")
-  provider = "sqlite"
-  url      = env("DATABASE_URL_SQLITE")
+  // provider = "sqlite"
+  // url      = env("DATABASE_URL_SQLITE")
 }
 
 model Member {
