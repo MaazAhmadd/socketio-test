@@ -23,34 +23,6 @@ const RoomPage = () => {
     connected: s.connected,
     setRoute: s.setRoute,
   }));
-  let roomobj = {
-    id: "b289b4e0-53e4-4a19-82e2-86cc24a50c27",
-    status: "Public",
-    members: [
-      {
-        id: "e9c93253-6993-48af-a295-57edb96bb0b5",
-        name: "user1name",
-        handle: "user1handle",
-        profilePicture:
-          "https://images.unsplash.com/photo-1709593491239-dd571c4ebfb8?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=400&ixid=MnwxfDB8MXxyYW5kb218MHx8fHx8fHx8MTcxMTcwNDcyMA&ixlib=rb-4.0.3&q=80&w=400",
-        isConnected: true,
-        isLeader: true,
-        micEnabled: false,
-        leaderPriorityCounter: 0,
-        roomId: "b289b4e0-53e4-4a19-82e2-86cc24a50c27",
-      },
-    ],
-    videoPlayer: {
-      id: "fa8f1f21-b9cb-48c5-840b-79fd28e980c1",
-      isPlaying: false,
-      sourceUrl: "https://youtube.com/watch?v=KVZ-P-ZI6W4",
-      thumbnailUrl: "https://i.ytimg.com/vi/KVZ-P-ZI6W4/sddefault.jpg",
-      title: "React.js Conf 2015 Keynote - Introducing React Native",
-      totalDuration: 0,
-      playedTill: 0,
-      roomId: "b289b4e0-53e4-4a19-82e2-86cc24a50c27",
-    },
-  };
 
   useEffect(() => {
     console.log("[Room] Render");
@@ -104,7 +76,9 @@ const RoomPage = () => {
       <ConnectionStatus />
 
       <div>Room</div>
-      <Button variant={'destructive'} onClick={onLeaveRoom}>Leave Room</Button>
+      <Button variant={"destructive"} onClick={onLeaveRoom}>
+        Leave Room
+      </Button>
     </>
   );
 };
