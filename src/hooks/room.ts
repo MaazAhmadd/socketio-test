@@ -5,7 +5,7 @@ import { Room } from "server/types/types";
 export const useGetPublicRooms = () => {
   async function getPublicRooms() {
     const response = await api.get("/room/publicrooms");
-    // console.log("all rooms: ", response.data);
+    console.log("[useGetPublicRooms] all rooms: ", response.data);
 
     return response.data;
   }
