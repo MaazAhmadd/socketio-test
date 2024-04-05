@@ -135,9 +135,9 @@ const Public = () => {
               No public rooms
             </p>
           )}
-          {publicRooms?.map((room, i) => {
+          {publicRooms?.map((room) => {
             console.log("[publicRooms] room: ", room);
-            return <RoomCard key={i} room={room} />;
+            return <RoomCard key={room.id} room={room} />;
           })}
           <br />
         </ul>
@@ -145,6 +145,7 @@ const Public = () => {
     </ScrollArea>
   );
 };
+
 
 const Invited = () => {
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);

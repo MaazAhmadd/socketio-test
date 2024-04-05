@@ -3,12 +3,16 @@ const router = express.Router();
 
 router.get(
   "/publicrooms",
-  /* authUser, */ async (
-    { prisma, body, user, ...req }: Request,
-    res: Response
-  ) => {
+  async ({ prisma, body, ...req }: Request, res: Response) => {
     try {
       const rooms = await prisma?.room.findMany({
+        where: {
+          members: {
+            some: {
+              isConnected: true,
+            },
+          },
+        },
         include: {
           members: true,
           videoPlayer: true,
@@ -23,7 +27,7 @@ router.get(
         error,
       });
     }
-  }
+  },
 );
 
 export default router;

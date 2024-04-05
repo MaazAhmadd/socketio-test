@@ -13,7 +13,7 @@ datasource db {
 model Member {
   id                    String  @id @default(uuid())
   name                  String?
-  handle                String  @unique
+  handle                String
   profilePicture        String?
   isConnected           Boolean
   isLeader              Boolean
@@ -28,7 +28,9 @@ model Member {
 model VideoPlayer {
   id            String  @id @default(uuid())
   isPlaying     Boolean // paused/playing
-  source        String // source url of video
+  sourceUrl     String // source url of video @map("source")
+  thumbnailUrl  String // thumbnail url of video
+  title         String // title of the video
   totalDuration Int // total duration of the video
   playedTill    Int // time till the video has been played or from where the video is currently playing from
   Room          Room?   @relation(fields: [roomId], references: [id], onDelete: Cascade)
@@ -48,4 +50,12 @@ model Kicked {
   memberHandle String
   room         Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId       String
+}
+
+model YtVideo {
+  id        String   @id @default(uuid())
+  ytId      String   @unique
+  thumbnail String
+  title     String
+  updatedAt DateTime @default(now()) @updatedAt()
 }

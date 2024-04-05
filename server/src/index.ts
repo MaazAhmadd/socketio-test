@@ -36,7 +36,7 @@ app.use(
       "Authorization",
       "x-auth-token",
     ],
-  })
+  }),
 );
 
 connectDB();
@@ -58,14 +58,16 @@ const io = new Server<
   },
 });
 socketServer(io, prisma);
-setTimeout(() => {
-  setInterval(() => deleteInactiveRooms(prisma), 5000);
-}, 10000);
+// setTimeout(() => {
+setInterval(() => deleteInactiveRooms(prisma), 10_000);
+// setInterval(() => deleteInactiveRooms(prisma), 86_400_000);
+// }, 10_000);
+// }, 86_400_000);
 
 app.get("/api/test", (req, res) => res.send("Express Ready"));
 app.use("/api/user", userRouter);
 app.use("/api/room", roomRouter);
-app.use('/api/ytservice',ytRouter)
+app.use("/api/ytservice", ytRouter);
 
 server.listen(port, () => {
   console.log("server running at http://localhost:" + port);

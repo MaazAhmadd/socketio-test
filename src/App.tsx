@@ -3,7 +3,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import Authenticated from "./components/Authenticated";
 import Unauthenticated from "./components/Unauthenticated";
 import useGlobalStore from "./state/store";
-import Room from "./components/Room";
+import RoomPage from "./components/Room";
 import { useEffect } from "react";
 
 export default function App() {
@@ -20,7 +20,7 @@ export default function App() {
         <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
           {route == "authPage" && <Unauthenticated />}
           {route == "homePage" && <Authenticated />}
-          {route == "roomPage" && <Room />}
+          {route == "roomPage" && <RoomPage />}
         </ThemeProvider>
       </QueryClientProvider>
     </div>

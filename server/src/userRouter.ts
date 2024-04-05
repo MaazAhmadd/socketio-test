@@ -13,7 +13,7 @@ export const authUser = (req: Request, res: Response, next: NextFunction) => {
   try {
     const decoded = jwt.verify(
       token as string,
-      process.env.JWT_PRIVATE_KEY || ""
+      process.env.JWT_PRIVATE_KEY || "",
     );
     req.user = decoded as DecodedUser;
     next();
@@ -44,7 +44,7 @@ router.put("/updateuser/:id", authUser, async (req: Request, res: Response) => {
   const updates = Object.keys(req.body);
   const allowedUpdates = ["name", "handle", "profilePicture", "password"];
   const isValidOperation = updates.some((update) =>
-    allowedUpdates.includes(update)
+    allowedUpdates.includes(update),
   );
 
   if (!isValidOperation) {
@@ -93,7 +93,7 @@ router.get(
     } catch (e) {
       res.status(500).send();
     }
-  }
+  },
 );
 // Accept Friend Request
 router.get(
@@ -119,7 +119,7 @@ router.get(
     } catch (e) {
       res.status(500).send();
     }
-  }
+  },
 );
 // Get a single user by ID or handle
 router.get("/getuser/:id", authUser, async (req: Request, res: Response) => {
@@ -158,8 +158,8 @@ router.get("/search", authUser, async (req: Request, res: Response) => {
     const query = req.query.q;
     let users = await User.find({
       $or: [
-        { name: { $regex: query, $options: "i" } },
-        { handle: { $regex: query, $options: "i" } },
+        { name: { $regex: query as string, $options: "i" } },
+        { handle: { $regex: query as string, $options: "i" } },
       ],
     }).select("name handle profilePicture");
 
@@ -173,7 +173,7 @@ router.get("/check", async (req: Request, res: Response) => {
 
   try {
     const handle = req.query.q;
-    const user = await User.findOne({ handle });
+    const user = await User.findOne({ handle: handle as string });
     if (!user) {
       return res.status(200).send("false");
     }

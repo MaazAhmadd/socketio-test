@@ -90,7 +90,7 @@ body {
 
 @font-face {
   font-family: "Scripto";
-  src: url("/public/fonts/Scripto-2OR2v.ttf") format("truetype");
+  src: url("/fonts/Scripto-2OR2v.ttf") format("truetype");
 }
 .full-bleed {
   box-shadow: 0 0 0 100vmax rgb(24 24 27);

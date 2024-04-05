@@ -47,12 +47,13 @@ export type RoomCreationData = {
   videoUrl: string;
 };
 export type RoomJoinData = {
-  roomId: string; 
-}
+  roomId: string;
+};
 interface Room {
   members: Member[];
   videoPlayer: VideoPlayer | null;
   status: string;
+  id: string;
 }
 
 interface Member {
@@ -63,13 +64,17 @@ interface Member {
   isLeader: boolean;
   micEnabled: boolean;
   leaderPriorityCounter: number;
+  roomId: string | null;
+  // rooms: Room[];
 }
 
 interface VideoPlayer {
   isPlaying: boolean;
-  source: string;
+  sourceUrl: string;
   totalDuration: number;
   playedTill: number;
+  thumbnailUrl: string;
+  title: string;
 }
 
 interface DecodedUser {
