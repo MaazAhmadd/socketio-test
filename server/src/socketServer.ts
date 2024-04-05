@@ -506,6 +506,12 @@ const initializeSocketServer = async (
   prisma: PrismaClient,
 ) => {
   console.log("[initializeSocketServer] initializing socket server...");
+  // const memberCount = await prisma.member.count();
+  // console.log("[initializeSocketServer] memberCount: ", memberCount);
+  // if (memberCount < 1) {
+  //   io.disconnectSockets();
+  //   return;
+  // }
 
   io.disconnectSockets();
   await prisma.member.updateMany({

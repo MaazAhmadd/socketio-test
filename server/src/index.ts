@@ -59,7 +59,10 @@ const io = new Server<
 });
 socketServer(io, prisma);
 // setTimeout(() => {
-setInterval(() => deleteInactiveRooms(prisma), 10_000);
+setInterval(
+  () => deleteInactiveRooms(prisma),
+  process.env.NODE_ENV === "production" ? 86_400_000 : 10_000,
+);
 // setInterval(() => deleteInactiveRooms(prisma), 86_400_000);
 // }, 10_000);
 // }, 86_400_000);
