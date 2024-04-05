@@ -4,11 +4,11 @@
   "description": "",
   "main": "dist/src/index.js",
   "scripts": {
-    "build": "tsc && npx prisma migrate dev --name init && npx prisma migrate deploy",
+    "build": "prisma migrate dev --name init && prisma generate && prisma migrate deploy && tsc",
     "start": "node dist/src/index.js",
     "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
-    "migrate": "npx prisma migrate deploy",
-    "migrate-dev": "npx prisma migrate dev --name init",
+    "migrate": "prisma migrate deploy",
+    "migrate-dev": "prisma migrate dev --name init",
     "prod": "npm run build && npm run migrate-dev && npm run migrate && npm run start"
   },
   "keywords": [],
