@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import useGlobalStore from "@/state/store";
 import * as React from "react";
 import { ModeToggle } from "./theme-toggle";
+import toast from "react-hot-toast";
 
 export default function AuthenticationPage() {
   const { setAuthToken, setRoute } = useGlobalStore((s) => ({
@@ -61,7 +62,7 @@ export default function AuthenticationPage() {
         " | ",
         registerStateError,
       );
-      alert("error check console");
+      toast.error("error check console");
       return;
     }
     if (String(checkUser) === "true") {

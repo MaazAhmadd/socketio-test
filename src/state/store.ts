@@ -1,5 +1,6 @@
 import { isValidJwt } from "@/utils";
 import { jwtDecode } from "jwt-decode";
+import api from "@/api/api";
 import {
   DecodedUser,
   RoomCreationData,
@@ -7,6 +8,7 @@ import {
 } from "server/types/types";
 import { create } from "zustand";
 import { produce } from "immer";
+import toast from "react-hot-toast";
 
 export type Tabs = "public" | "createRoom" | "invited" | "friends";
 export type Routes = "authPage" | "homePage" | "roomPage";
@@ -14,7 +16,7 @@ export type RoomCreationRequestType = "join" | "create";
 
 const token = localStorage.getItem("auth_token");
 interface GlobalStore {
-  encodedAuthToken: string | null;
+  // encodedAuthToken: string | null;
   decodedAuthToken: DecodedUser | null;
   setAuthToken: (token: string) => void;
   logout: () => void;
@@ -25,40 +27,59 @@ interface GlobalStore {
   connected: boolean;
   setConnected: (connected: boolean) => void;
   roomCreationData: RoomCreationData;
-  setRoomCreationVideoUrl: (videoUrl: string) => void;
+  setRoomCreationData_VideoUrl: (videoUrl: string) => void;
   roomCreationRequestType: RoomCreationRequestType;
   setRoomCreationRequestType: (type: RoomCreationRequestType) => void;
   roomJoinData: RoomJoinData;
-  setRoomJoinRoomId: (data: string) => void;
+  setRoomJoinData_RoomId: (data: string) => void;
 }
 
 const useGlobalStore = create<GlobalStore>((set) => ({
-  encodedAuthToken: token || null,
+  // encodedAuthToken: token || null,
   decodedAuthToken: token && isValidJwt(token) ? jwtDecode(token) : null,
   setAuthToken: (token: string) =>
     set({
-      encodedAuthToken: token || null,
+      // encodedAuthToken: token || null,
       decodedAuthToken: token && isValidJwt(token) ? jwtDecode(token) : null,
     }),
   logout: () => {
     localStorage.removeItem("auth_token");
-    set({
-      encodedAuthToken: null,
-      decodedAuthToken: null,
-      connected: false,
-      route: "authPage",
-    });
+    window.location.reload();
+    // set({
+    //   // encodedAuthToken: null,
+    //   decodedAuthToken: null,
+    //   connected: false,
+    //   route: "authPage",
+    // });
   },
   showRoomTab: "public",
   setShowRoomTab: (tab: Tabs) => set({ showRoomTab: tab }),
   route: token ? "homePage" : "authPage",
-  setRoute: (route: Routes) => set({ route }),
+  setRoute: async (route: Routes) => {
+    if (route === "roomPage") {
+      try {
+        const response = await api.get("/room/checkActiveMember", {
+          headers: {
+            "x-auth-token": localStorage.getItem("auth_token"),
+          },
+        });
+        if (String(response.data) === "true") {
+          toast.error("User already in a room");
+          return;
+        }
+      } catch (error) {
+        console.error("Error checking active member:", error);
+        return;
+      }
+    }
+    set({ route });
+  },
   connected: false,
   setConnected: (connected: boolean) => set({ connected }),
   roomCreationData: {
     videoUrl: "",
   },
-  setRoomCreationVideoUrl: (videoUrl: string) =>
+  setRoomCreationData_VideoUrl: (videoUrl: string) =>
     set(
       produce((draft) => {
         draft.roomCreationData.videoUrl = videoUrl;
@@ -71,7 +92,7 @@ const useGlobalStore = create<GlobalStore>((set) => ({
   roomJoinData: {
     roomId: "",
   },
-  setRoomJoinRoomId: (roomId: string) =>
+  setRoomJoinData_RoomId: (roomId: string) =>
     set(
       produce((draft) => {
         draft.roomJoinData.roomId = roomId;

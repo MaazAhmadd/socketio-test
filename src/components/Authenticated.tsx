@@ -1,4 +1,4 @@
-import { SettingsDrawer } from "@/components/SettingsDawer";
+import { SettingsDrawer } from "@/components/SettingsDrawer";
 import { TextGradient } from "@/components/auth-page";
 import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,14 @@ import { useGetPublicRooms } from "@/hooks/room";
 import { cn } from "@/lib/utils";
 import useGlobalStore from "@/state/store";
 import { useEffect, useRef, useState } from "react";
-import { FriendsDrawer } from "./FriendsDawer";
+import { FriendsDrawer } from "./FriendsDrawer";
 import RoomCard from "./RoomCard";
 
 export type Tabs = "public" | "invited" | "friends" | "createRoom";
 
 const Authenticated = () => {
+  let { refetch: getPublicRooms } = useGetPublicRooms();
+
   const { showRoomTab, setShowRoomTab } = useGlobalStore((state) => ({
     showRoomTab: state.showRoomTab,
     setShowRoomTab: state.setShowRoomTab,
@@ -26,7 +28,7 @@ const Authenticated = () => {
       <div className="h-[100vh] md:container  md:py-12">
         <div className="flex h-[100vh] flex-col justify-between md:flex-row">
           <LeftText />
-          <div className=" pt-2 md:px-4 md:pt-0 max-w-[700px] md:w-[700px]">
+          <div className=" max-w-[700px] pt-2 md:w-[700px] md:px-4 md:pt-0">
             <div className="mb-4 px-5">
               <Label className="sr-only" htmlFor="searchrooms">
                 Search Rooms
@@ -44,7 +46,10 @@ const Authenticated = () => {
               <div className="flex gap-1">
                 <TabButton
                   setBg={showRoomTab == "public" && "bg-muted"}
-                  onClick={() => setShowRoomTab("public")}
+                  onClick={() => {
+                    getPublicRooms();
+                    setShowRoomTab("public");
+                  }}
                 >
                   Public
                 </TabButton>
@@ -117,12 +122,11 @@ const Public = () => {
   //   22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
   //   41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
   // ]);
-  let { data: publicRooms } = useGetPublicRooms();
-  // console.log("[useGetPublicRooms] publicRooms: ", publicRooms);
-  const { setRoute, setRoomJoinRoomId, setRoomCreationRequestType } =
+  let { data: publicRooms, isLoading } = useGetPublicRooms();
+  const { setRoute, setRoomJoinData_RoomId, setRoomCreationRequestType } =
     useGlobalStore((s) => ({
       setRoute: s.setRoute,
-      setRoomJoinRoomId: s.setRoomJoinRoomId,
+      setRoomJoinData_RoomId: s.setRoomJoinData_RoomId,
       setRoomCreationRequestType: s.setRoomCreationRequestType,
     }));
   return (
@@ -133,15 +137,27 @@ const Public = () => {
       {/* <div className="bg-muted space-y-4 rounded-b-lg "> */}
       <div className="h-[75vh]">
         <ul>
-          {!publicRooms && (
+          {!isLoading && !publicRooms && (
             <p className="mx-4 scroll-m-20 p-4 pb-2 text-center text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-2xl">
               No public rooms
             </p>
           )}
-          {publicRooms && publicRooms.length < 1 && (
+          {!isLoading && publicRooms && publicRooms.length < 1 && (
             <p className="mx-4 scroll-m-20 p-4 pb-2 text-center text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-2xl">
               No public rooms
             </p>
+          )}
+          {isLoading && (
+            <div className="flex h-[20vh] items-center justify-center">
+              <div
+                className="text-surface inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
+                role="status"
+              >
+                <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+                  Loading...
+                </span>
+              </div>
+            </div>
           )}
           {publicRooms?.map((room) => {
             console.log("[publicRooms] room: ", room);
@@ -150,11 +166,11 @@ const Public = () => {
                 key={room.id}
                 room={room}
                 onClick={() => {
-                  setRoomJoinRoomId(room.id);
+                  setRoomJoinData_RoomId(room.id);
                   setRoomCreationRequestType("join");
                   setRoute("roomPage");
                 }}
-                className="mx-2  mr-4 mt-2 cursor-pointer rounded-xl border border-background bg-background hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground overflow-hidden"
+                className="mx-2  mr-4 mt-2 cursor-pointer overflow-hidden rounded-xl border border-background bg-background hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground"
                 // primary muted-foreground
               />
             );
@@ -169,7 +185,6 @@ const Public = () => {
 const Invited = () => {
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const [invitedRooms] = useState([]);
-  // const { data: publicRooms } = useGetPublicRooms();
   return (
     <ScrollArea viewportRef={scrollAreaRef} className="bg-muted  ">
       {/* <div className="bg-muted space-y-4 rounded-b-lg "> */}
@@ -202,7 +217,6 @@ const Invited = () => {
 const Friends = () => {
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const [friendsRooms] = useState([]);
-  // const { data: publicRooms } = useGetPublicRooms();
   return (
     <ScrollArea viewportRef={scrollAreaRef} className="bg-muted  ">
       <div className="h-[75vh]">
@@ -234,10 +248,10 @@ const Friends = () => {
 const CreateRoom = () => {
   const [videoUrl, setVideoUrl] = useState("");
   const [disableBtn, setDisableBtn] = useState(false);
-  const { setRoute, setRoomCreationVideoUrl, setRoomCreationRequestType } =
+  const { setRoute, setRoomCreationData_VideoUrl, setRoomCreationRequestType } =
     useGlobalStore((s) => ({
       setRoute: s.setRoute,
-      setRoomCreationVideoUrl: s.setRoomCreationVideoUrl,
+      setRoomCreationData_VideoUrl: s.setRoomCreationData_VideoUrl,
       setRoomCreationRequestType: s.setRoomCreationRequestType,
     }));
 
@@ -249,7 +263,7 @@ const CreateRoom = () => {
         "[createRoom onsubmit] about to createRoom videoUrl: ",
         videoUrl,
       );
-      setRoomCreationVideoUrl(videoUrl);
+      setRoomCreationData_VideoUrl(videoUrl);
       setRoomCreationRequestType("create");
       setRoute("roomPage");
     }

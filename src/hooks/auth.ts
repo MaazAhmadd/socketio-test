@@ -9,7 +9,7 @@ export const useLoginUser = () => {
       const response = await api.post("/user/login/", formData);
       if (response.data && isValidJwt(response.data)) {
         localStorage.setItem("auth_token", response.data);
-        // window.location.reload();
+        window.location.reload();
       }
       // await new Promise((resolve): any => setTimeout(() => resolve(""), 10));
       return response.data;
@@ -25,7 +25,7 @@ export const useLoginUser = () => {
 export const useCheckUser = (
   handle: string,
   debouncedValue: string,
-  isStateError: any
+  isStateError: any,
 ) => {
   const checkUser = async () => {
     if (!handle) return "empty user not checked";
@@ -46,7 +46,7 @@ export const useRegisterUser = () => {
       const response = await api.post("/user/register/", formData);
       if (response.data && isValidJwt(response.data)) {
         localStorage.setItem("auth_token", response.data);
-        // window.location.reload();
+        window.location.reload();
       }
       return response.data;
     } catch (error) {

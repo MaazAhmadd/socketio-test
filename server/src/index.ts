@@ -64,7 +64,9 @@ setInterval(
     console.log("[deleteInactiveRooms] checking inactive rooms to delete");
     await deleteInactiveRooms(prisma);
   },
-  process.env.NODE_ENV === "production" ? 86_400_000 : 10_000,
+  process.env.NODE_ENV === "production"
+    ? 1000 * 60 * 60 * 24 // 1 day
+    : 1000 * 60 * 5, // 5 minutes
 );
 // setInterval(() => deleteInactiveRooms(prisma), 86_400_000);
 // }, 10_000);

@@ -1,7 +1,4 @@
-import { 
-  Cross1Icon, 
-  PersonIcon,
-} from "@radix-ui/react-icons";
+import { Cross1Icon, PersonIcon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -16,7 +13,7 @@ import {
 // import useGlobalStore from "@/state/store";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { AccordionDemo } from "@/components/accordian-demo";
+import { AccordionDemo } from "@/components/demo-accordian";
 
 export function FriendsDrawer() {
   return (
@@ -29,7 +26,7 @@ export function FriendsDrawer() {
           <PersonIcon className="h-4 w-4 md:h-6 md:w-6" />
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="right-0 ml-24 mr-0 bg-background/80">
+      <DrawerContent className="right-0 ml-24 mr-0 max-w-[80vw] bg-background/80">
         <div className="flex h-full flex-col items-center justify-between ">
           <DrawerClose asChild>
             <Cross1Icon className="ml-5 mt-5 h-6 w-6 cursor-pointer   md:h-8 md:w-8" />
@@ -40,7 +37,7 @@ export function FriendsDrawer() {
         {/* horizontal */}
         {/* <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted " /> */}
         {/* vertical */}
-        <div className="h-full w-[80vw] max-w-sm md:max-w-md pr-5">
+        <div className="h-full w-[80vw] max-w-sm pr-5 md:max-w-md">
           {/* <div className="flex justify-between"> */}
           {/* <div></div> */}
           <DrawerHeader>

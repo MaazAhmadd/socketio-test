@@ -8,7 +8,7 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,  
+  DrawerTrigger,
 } from "@/components/ui/drawer";
 import useGlobalStore from "@/state/store";
 
@@ -28,11 +28,11 @@ export function SettingsDrawer() {
           <GearIcon className="h-4 w-4 md:h-6 md:w-6" />
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="ml-0 mr-24 bg-background/80 ">
+      <DrawerContent className="ml-0 mr-24 max-w-[80vw] bg-background/80">
         {/* horizontal */}
         {/* <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted " /> */}
         {/* vertical */}
-        <div className="h-full w-[80vw] max-w-sm md:max-w-md pl-5">
+        <div className="h-full w-[80vw] max-w-sm pl-5 md:max-w-md">
           {/* <div className="flex justify-between"> */}
           {/* <div></div> */}
           <DrawerHeader>
@@ -43,7 +43,7 @@ export function SettingsDrawer() {
           </DrawerHeader>
           {/* </div> */}
           <div className=" flex flex-col items-center justify-center gap-2  p-4">
-            <div className="flex flex-col items-center justify-center rounded-md bg-primary-foreground/80 px-8 py-4 w-full">
+            <div className="flex w-full flex-col items-center justify-center rounded-md bg-primary-foreground/80 px-8 py-4">
               {decodedAuthToken?.profilePicture ? (
                 <img
                   src={decodedAuthToken?.profilePicture}
@@ -69,11 +69,11 @@ export function SettingsDrawer() {
                 &nbsp;&nbsp; Edit
               </Button>
             </div>
-            <div className="flex flex-col items-center justify-center rounded-md bg-primary-foreground/80 px-8 py-4 w-full h-[100px]">
-            <p className="text-md  text-center text-lg font-bold leading-none tracking-tight md:text-lg">
-              Layout Settings
-            </p>
-          </div>
+            <div className="flex h-[100px] w-full flex-col items-center justify-center rounded-md bg-primary-foreground/80 px-8 py-4">
+              <p className="text-md  text-center text-lg font-bold leading-none tracking-tight md:text-lg">
+                Layout Settings
+              </p>
+            </div>
           </div>
           <DrawerFooter className="items-center">
             <DrawerClose asChild>

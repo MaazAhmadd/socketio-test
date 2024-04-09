@@ -65,10 +65,15 @@ export default function socketServer(
   });
 
   io.on("connection", (socket: CustomSocket) => {
+    console.log("[socket connection] connected: ", socket);
+
     socket.on("createRoom", async (data: RoomCreationData) => {
       console.log("[socket createRoom] url received: ", data);
 
-      const isActive = await checkIfMemberAlreadyActive(socket, prisma);
+      const isActive = await checkIfMemberAlreadyActive(
+        socket.user?.handle,
+        prisma,
+      );
       console.log("[socket createRoom] isActive: ", isActive);
 
       if (!isActive) {
@@ -86,7 +91,10 @@ export default function socketServer(
     });
     socket.on("joinRoom", async (data) => {
       const { roomId } = data;
-      const isActive = await checkIfMemberAlreadyActive(socket, prisma);
+      const isActive = await checkIfMemberAlreadyActive(
+        socket.user?.handle,
+        prisma,
+      );
       if (!isActive) {
         const room = await joinRoom(socket, prisma, roomId);
         socket.roomId = roomId;
@@ -174,13 +182,13 @@ async function makeRoom(
     },
   });
 }
-async function checkIfMemberAlreadyActive(
-  socket: CustomSocket,
+export async function checkIfMemberAlreadyActive(
+  handle: string | undefined,
   prisma: PrismaClient,
 ) {
   const member = await prisma.member.findMany({
     where: {
-      handle: socket.user?.handle,
+      handle,
       isConnected: true,
     },
   });
@@ -475,7 +483,6 @@ async function getCurrentMemberPriorityCounter(
     .leaderPriorityCounter;
 }
 export const deleteInactiveRooms = async (prisma: PrismaClient) => {
-
   const rooms = await prisma.room.findMany({
     where: {
       members: {
