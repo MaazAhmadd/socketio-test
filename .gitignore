@@ -8,7 +8,6 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
 
 dist-ssr
 *.local
@@ -31,5 +30,3 @@ server/node_modules
 # Keep environment variables out of version control
 server/.env
 server/.vercel
-
-server/dist
