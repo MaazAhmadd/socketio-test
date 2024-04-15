@@ -64,7 +64,7 @@ UserSchema.methods.generateAuthToken = function () {
         name: this.name,
         profilePicture: this.profilePicture,
         handle: this.handle,
-    }, process.env.JWT_PRIVATE_KEY || "");
+    }, process.env.JWT_PRIVATE_KEY || "wefusdjnkcmjnkdsveuwdjnk34wefuijnk");
     return token;
 };
 const YtServiceSchema = new mongoose_1.Schema({

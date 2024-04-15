@@ -24,7 +24,7 @@ const connectDB = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     catch (err) {
         if (err instanceof Error)
-            console.error(err.message);
+            console.error("[db] error", err);
         // Exit process with failure
         process.exit(1);
     }

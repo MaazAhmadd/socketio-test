@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useGetPublicRooms, useGetSearchResults } from "@/hooks/roomHooks";
 import { cn } from "@/lib/utils";
-import useGlobalStore from "@/state/store";
+import { useGlobalStore, useRoomStore } from "@/state/store";
 import { useEffect, useRef, useState } from "react";
 import { FriendsDrawer } from "./FriendsDrawer";
 import RoomCard from "./RoomCard";
@@ -143,15 +143,19 @@ const Public = () => {
   let { data: publicRooms, isFetching } = useGetPublicRooms();
   const {
     setRoute,
-    setRoomJoinData_RoomId,
-    setRoomCreationRequestType,
+
     setGlobalLoading,
   } = useGlobalStore((s) => ({
     setRoute: s.setRoute,
-    setRoomJoinData_RoomId: s.setRoomJoinData_RoomId,
-    setRoomCreationRequestType: s.setRoomCreationRequestType,
     setGlobalLoading: s.setGlobalLoading,
   }));
+  const { setRoomJoinData_RoomId, setRoomCreationRequestType } = useRoomStore(
+    (s) => ({
+      setRoomJoinData_RoomId: s.setRoomJoinData_RoomId,
+      setRoomCreationRequestType: s.setRoomCreationRequestType,
+    }),
+  );
+
   return (
     <ScrollArea
       viewportRef={scrollAreaRef}
@@ -277,17 +281,15 @@ const CreateRoom = () => {
   const [selectedPlatform, setSelectedPlatform] =
     useState<SupportedPlatforms>("youtube");
 
-  const {
-    setRoute,
-    setRoomCreationData_VideoUrl,
-    setRoomCreationRequestType,
-    setGlobalLoading,
-  } = useGlobalStore((s) => ({
+  const { setRoute, setGlobalLoading } = useGlobalStore((s) => ({
     setRoute: s.setRoute,
-    setRoomCreationData_VideoUrl: s.setRoomCreationData_VideoUrl,
-    setRoomCreationRequestType: s.setRoomCreationRequestType,
     setGlobalLoading: s.setGlobalLoading,
   }));
+  const { setRoomCreationData_VideoUrl, setRoomCreationRequestType } =
+    useRoomStore((s) => ({
+      setRoomCreationData_VideoUrl: s.setRoomCreationData_VideoUrl,
+      setRoomCreationRequestType: s.setRoomCreationRequestType,
+    }));
 
   const debouncedSearchQuery = useDebounce(searchQuery, 1000);
 
@@ -401,18 +403,16 @@ const CreateRoom = () => {
   );
 };
 
-const ResultCard = ({ result }: { result: VideoInfo }) => {
-  const {
-    setRoute,
-    setRoomCreationData_VideoUrl,
-    setRoomCreationRequestType,
-    setGlobalLoading,
-  } = useGlobalStore((s) => ({
+export const ResultCard = ({ result }: { result: VideoInfo }) => {
+  const { setRoute, setGlobalLoading } = useGlobalStore((s) => ({
     setRoute: s.setRoute,
-    setRoomCreationData_VideoUrl: s.setRoomCreationData_VideoUrl,
-    setRoomCreationRequestType: s.setRoomCreationRequestType,
     setGlobalLoading: s.setGlobalLoading,
   }));
+  const { setRoomCreationData_VideoUrl, setRoomCreationRequestType } =
+    useRoomStore((s) => ({
+      setRoomCreationData_VideoUrl: s.setRoomCreationData_VideoUrl,
+      setRoomCreationRequestType: s.setRoomCreationRequestType,
+    }));
   return (
     <div
       onClick={() => {
@@ -443,15 +443,14 @@ const ResultCard = ({ result }: { result: VideoInfo }) => {
   );
 };
 
-// write a function to trim string to 40 characters
-function trimString(str: string) {
+export function trimString(str: string) {
   if (str.length > 40) {
     return str.slice(0, 40) + "...";
   }
   return str;
 }
 
-const SelectSearchPlatform = ({
+export const SelectSearchPlatform = ({
   setSelectedValue,
 }: {
   setSelectedValue: (v: any) => void;
@@ -475,7 +474,7 @@ const SelectSearchPlatform = ({
   );
 };
 
-function RecentVideosDialog() {
+export function RecentVideosDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -510,7 +509,7 @@ function RecentVideosDialog() {
   );
 }
 
-function LikedVideosDialog() {
+export function LikedVideosDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>

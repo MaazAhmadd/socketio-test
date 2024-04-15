@@ -29,7 +29,7 @@ function socketServer(io, prisma) {
                 return next(new Error("Authentication error"));
             }
             console.log("[socket auth middleware] verifying token: ", token);
-            const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_PRIVATE_KEY || "");
+            const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_PRIVATE_KEY || "wefusdjnkcmjnkdsveuwdjnk34wefuijnk");
             console.log("[socket auth middleware] token found, handle: ", decoded.handle);
             if (decoded) {
                 socket.user = decoded;
@@ -57,7 +57,6 @@ function socketServer(io, prisma) {
         }
     }));
     io.on("connection", (socket) => {
-        // console.log("[socket connection] connected: ", socket);
         socket.on("createRoom", (data) => __awaiter(this, void 0, void 0, function* () {
             var _a;
             console.log("[socket createRoom] url received: ", data);
@@ -72,7 +71,7 @@ function socketServer(io, prisma) {
                 else {
                     socket.roomId = room.id;
                     socket.join(room.id);
-                    io.in(room.id).emit("roomDesc", room);
+                    io.in(room.id).emit("memberList", room.members);
                 }
             }
             else {
@@ -88,7 +87,7 @@ function socketServer(io, prisma) {
                 socket.roomId = roomId;
                 socket.join(roomId);
                 if (room) {
-                    io.in(roomId).emit("roomDesc", room);
+                    io.in(roomId).emit("memberList", room.members);
                 }
             }
             else {
@@ -99,7 +98,7 @@ function socketServer(io, prisma) {
             const roomId = socket.roomId;
             const room = yield giveLeader(prisma, socket, targetMember);
             if (room) {
-                io.in(roomId).emit("roomDesc", room);
+                io.in(roomId).emit("memberList", room.members);
             }
         }));
         socket.on("sendMessage", (msg) => {
@@ -114,14 +113,14 @@ function socketServer(io, prisma) {
         socket.on("leaveRoom", () => __awaiter(this, void 0, void 0, function* () {
             const updatedRoom = yield makeMemberLeave(prisma, socket);
             if (updatedRoom) {
-                io.in(updatedRoom.id).emit("roomDesc", updatedRoom);
+                io.in(updatedRoom.id).emit("memberList", updatedRoom.members);
             }
         }));
         socket.on("disconnect", () => __awaiter(this, void 0, void 0, function* () {
             console.log("[socket disconnect] roomid: ", socket.roomId);
             const updatedRoom = yield makeMemberLeave(prisma, socket);
             if (updatedRoom) {
-                io.in(updatedRoom.id).emit("roomDesc", updatedRoom);
+                io.in(updatedRoom.id).emit("memberList", updatedRoom.members);
             }
         }));
     });
@@ -253,7 +252,7 @@ function joinRoom(socket, prisma, roomId) {
             return yield returnRoomWithActiveMembersInOrder(prisma, roomId);
         }
         catch (error) {
-            console.log("error while joining room", error);
+            console.log("[joinRoom] error while joining room", error);
         }
     });
 }

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCheckUser, useLoginUser, useRegisterUser } from "@/hooks/authHooks";
 import { cn } from "@/lib/utils";
-// import useGlobalStore from "@/state/store";
+// import {useGlobalStore} from "@/state/store";
 import * as React from "react";
 import { ModeToggle } from "./theme-toggle";
 import toast from "react-hot-toast";

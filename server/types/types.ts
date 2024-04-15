@@ -1,5 +1,6 @@
 interface ServerToClientEvents {
   roomDesc: (data: Room) => void;
+  memberList: (data: Member[]) => void;
   message: (data: { sender: string; msg: string }) => void;
   stateError: (data: string) => void;
 
@@ -55,7 +56,8 @@ interface Room {
   status: string;
   id: string;
 }
-
+// random Music -> aesthetic,jazz,pop,rock,hip-hop,classical,electronic,rap,beatbox,bollywood
+// music suggestion platform with categories. // comment: make sure to suggest the original video so your vote gets counted
 interface Member {
   handle: string;
   profilePicture: string | null;

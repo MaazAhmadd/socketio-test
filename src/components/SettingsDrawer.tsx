@@ -10,7 +10,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import useGlobalStore from "@/state/store";
+import {useGlobalStore} from "@/state/store";
 
 export function SettingsDrawer() {
   const { logout, decodedAuthToken } = useGlobalStore((state) => ({

@@ -56,6 +56,7 @@ router.get("/publicrooms", userRouter_1.authUser, (_a, res) => __awaiter(void 0,
         res.status(200).json(rooms);
     }
     catch (error) {
+        console.log("[room/publicrooms] error: ", error);
         res.status(500).json({
             errorMessage: "An error occurred on the server. [get - /api/room/allrooms]",
             error,
@@ -71,6 +72,7 @@ router.get("/checkActiveMember", userRouter_1.authUser, (req, res) => __awaiter(
         res.status(200).json(isMemberAlreadyActive);
     }
     catch (error) {
+        console.log("[room/checkActiveMember] error: ", error);
         res.status(500).json({
             errorMessage: "An error occurred on the server. [get - /api/room/checkActiveMember]",
             error,

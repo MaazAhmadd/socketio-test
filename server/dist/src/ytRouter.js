@@ -38,6 +38,7 @@ router.get("/", (_a, res) => __awaiter(void 0, void 0, void 0, function* () {
         return res.status(404).send("video not found");
     }
     catch (error) {
+        console.log("[post - /api/ytservice] error: ", error);
         res.status(500).json({
             errorMessage: "An error occurred on the server. [post - /api/ytservice]",
             error,

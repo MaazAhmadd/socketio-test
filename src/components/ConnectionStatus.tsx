@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import useGlobalStore from "@/state/store";
+import {useGlobalStore} from "@/state/store";
 
 const ConnectionStatus = () => {
   const { connected } = useGlobalStore((s) => ({

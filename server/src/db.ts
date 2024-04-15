@@ -8,7 +8,7 @@ export const connectDB = async (): Promise<void> => {
     await mongoose.connect(DB_CON.mongodb);
     console.log("MongoDB Connected...");
   } catch (err) {
-    if (err instanceof Error) console.error(err.message);
+    if (err instanceof Error) console.error("[db] error", err);
     // Exit process with failure
     process.exit(1);
   }

@@ -12,6 +12,7 @@ router.get("/", async ({ prisma, ...req }: Request, res: Response) => {
     }
     return res.status(404).send("video not found");
   } catch (error) {
+    console.log("[post - /api/ytservice] error: ", error);
     res.status(500).json({
       errorMessage: "An error occurred on the server. [post - /api/ytservice]",
       error,

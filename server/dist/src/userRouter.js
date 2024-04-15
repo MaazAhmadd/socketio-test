@@ -24,11 +24,12 @@ const authUser = (req, res, next) => {
     if (!token)
         return res.status(401).json({ error: "Access denied. No token provided." });
     try {
-        const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_PRIVATE_KEY || "");
+        const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_PRIVATE_KEY || "wefusdjnkcmjnkdsveuwdjnk34wefuijnk");
         req.user = decoded;
         next();
     }
     catch (ex) {
+        console.log("[authUser] error in middleware: ", ex);
         res.status(400).json({ error: "Invalid token." });
     }
 };
@@ -47,6 +48,7 @@ router.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, functio
         res.status(201).send(user.generateAuthToken());
     }
     catch (error) {
+        console.log("[/api/user/register] error in register: ", error);
         res.status(400).send(error);
     }
 }));
@@ -74,6 +76,7 @@ router.put("/updateuser/:id", exports.authUser, (req, res) => __awaiter(void 0, 
         res.send(user);
     }
     catch (e) {
+        console.log("[/api/user/updateuser] error in updateuser: ", e);
         res.status(400).send(e);
     }
 }));
@@ -92,6 +95,7 @@ router.get("/sendFriendRequest/:senderId/:receiverId", exports.authUser, (req, r
         res.send(friend);
     }
     catch (e) {
+        console.log("[/api/user/sendFriendRequest] error in sendFriendRequest: ", e);
         res.status(500).send();
     }
 }));
@@ -113,6 +117,7 @@ router.get("/acceptFriendRequest/:senderId/:receiverId", exports.authUser, (req,
         res.send({ user, friend });
     }
     catch (e) {
+        console.log("[/api/user/acceptFriendRequest] error in acceptFriendRequest: ", e);
         res.status(500).send();
     }
 }));
@@ -132,6 +137,7 @@ router.get("/getuser/:id", exports.authUser, (req, res) => __awaiter(void 0, voi
         res.send(user);
     }
     catch (error) {
+        console.log("[/api/user/getuser] error in getuser: ", error);
         res.status(500).send(error);
     }
 }));
@@ -142,6 +148,7 @@ router.get("/all", exports.authUser, (req, res) => __awaiter(void 0, void 0, voi
         res.send(users);
     }
     catch (error) {
+        console.log("[/api/user/all] error in all: ", error);
         res.status(500).send(error);
     }
 }));
@@ -160,6 +167,7 @@ router.get("/search", exports.authUser, (req, res) => __awaiter(void 0, void 0, 
         res.send(users);
     }
     catch (error) {
+        console.log("[/api/user/search] error in search: ", error);
         res.status(500).send(error);
     }
 }));
@@ -174,6 +182,7 @@ router.get("/check", (req, res) => __awaiter(void 0, void 0, void 0, function* (
         res.send("true");
     }
     catch (error) {
+        console.log("[/api/user/check] error in check: ", error);
         res.status(500).send(error);
     }
 }));
@@ -193,6 +202,7 @@ router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* 
         res.send(user.generateAuthToken());
     }
     catch (error) {
+        console.log("[/api/user/login] error in login: ", error);
         res.status(500).send(error);
     }
 }));

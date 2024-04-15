@@ -33,7 +33,10 @@ export default function socketServer(
       }
 
       console.log("[socket auth middleware] verifying token: ", token);
-      const decoded = jwt.verify(token, process.env.JWT_PRIVATE_KEY || "");
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_PRIVATE_KEY || "wefusdjnkcmjnkdsveuwdjnk34wefuijnk",
+      );
       console.log(
         "[socket auth middleware] token found, handle: ",
         (decoded as DecodedUser).handle,
@@ -65,8 +68,6 @@ export default function socketServer(
   });
 
   io.on("connection", (socket: CustomSocket) => {
-    // console.log("[socket connection] connected: ", socket);
-
     socket.on("createRoom", async (data: RoomCreationData) => {
       console.log("[socket createRoom] url received: ", data);
 
@@ -84,7 +85,7 @@ export default function socketServer(
         } else {
           socket.roomId = room.id;
           socket.join(room.id);
-          io.in(room.id).emit("roomDesc", room);
+          io.in(room.id).emit("memberList", room.members);
         }
       } else {
         socket.emit("stateError", "user already in a room");
@@ -101,7 +102,7 @@ export default function socketServer(
         socket.roomId = roomId;
         socket.join(roomId);
         if (room) {
-          io.in(roomId).emit("roomDesc", room);
+          io.in(roomId).emit("memberList", room.members);
         }
       } else {
         socket.emit("stateError", "user already in a room");
@@ -111,7 +112,7 @@ export default function socketServer(
       const roomId = socket.roomId as string;
       const room = await giveLeader(prisma, socket, targetMember);
       if (room) {
-        io.in(roomId).emit("roomDesc", room);
+        io.in(roomId).emit("memberList", room.members);
       }
     });
     socket.on("sendMessage", (msg) => {
@@ -125,7 +126,7 @@ export default function socketServer(
     socket.on("leaveRoom", async () => {
       const updatedRoom = await makeMemberLeave(prisma, socket);
       if (updatedRoom) {
-        io.in(updatedRoom.id).emit("roomDesc", updatedRoom);
+        io.in(updatedRoom.id).emit("memberList", updatedRoom.members);
       }
     });
     socket.on("disconnect", async () => {
@@ -133,7 +134,7 @@ export default function socketServer(
 
       const updatedRoom = await makeMemberLeave(prisma, socket);
       if (updatedRoom) {
-        io.in(updatedRoom.id).emit("roomDesc", updatedRoom);
+        io.in(updatedRoom.id).emit("memberList", updatedRoom.members);
       }
     });
   });
@@ -268,7 +269,7 @@ async function joinRoom(
     }
     return await returnRoomWithActiveMembersInOrder(prisma, roomId);
   } catch (error) {
-    console.log("error while joining room", error);
+    console.log("[joinRoom] error while joining room", error);
   }
 }
 async function getMemberFromRoom(
