@@ -5,14 +5,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useGetPublicRooms } from "@/hooks/room";
+import { useGetPublicRooms, useGetSearchResults } from "@/hooks/roomHooks";
 import { cn } from "@/lib/utils";
 import useGlobalStore from "@/state/store";
 import { useEffect, useRef, useState } from "react";
 import { FriendsDrawer } from "./FriendsDrawer";
 import RoomCard from "./RoomCard";
-
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useDebounce } from "@/hooks/utilHooks";
+import { SupportedPlatforms, VideoInfo } from "server/types/types";
 export type Tabs = "public" | "invited" | "friends" | "createRoom";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const Authenticated = () => {
   let { refetch: getPublicRooms } = useGetPublicRooms();
@@ -122,7 +140,7 @@ const Public = () => {
   //   22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
   //   41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
   // ]);
-  let { data: publicRooms, isLoading } = useGetPublicRooms();
+  let { data: publicRooms, isFetching } = useGetPublicRooms();
   const { setRoute, setRoomJoinData_RoomId, setRoomCreationRequestType } =
     useGlobalStore((s) => ({
       setRoute: s.setRoute,
@@ -137,17 +155,17 @@ const Public = () => {
       {/* <div className="bg-muted space-y-4 rounded-b-lg "> */}
       <div className="h-[75vh]">
         <ul>
-          {!isLoading && !publicRooms && (
+          {!isFetching && !publicRooms && (
             <p className="mx-4 scroll-m-20 p-4 pb-2 text-center text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-2xl">
               No public rooms
             </p>
           )}
-          {!isLoading && publicRooms && publicRooms.length < 1 && (
+          {!isFetching && publicRooms && publicRooms.length < 1 && (
             <p className="mx-4 scroll-m-20 p-4 pb-2 text-center text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-2xl">
               No public rooms
             </p>
           )}
-          {isLoading && (
+          {isFetching && (
             <div className="flex h-[20vh] items-center justify-center">
               <div
                 className="text-surface inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
@@ -159,22 +177,23 @@ const Public = () => {
               </div>
             </div>
           )}
-          {publicRooms?.map((room) => {
-            console.log("[publicRooms] room: ", room);
-            return (
-              <RoomCard
-                key={room.id}
-                room={room}
-                onClick={() => {
-                  setRoomJoinData_RoomId(room.id);
-                  setRoomCreationRequestType("join");
-                  setRoute("roomPage");
-                }}
-                className="mx-2  mr-4 mt-2 cursor-pointer overflow-hidden rounded-xl border border-background bg-background hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground"
-                // primary muted-foreground
-              />
-            );
-          })}
+          {!isFetching &&
+            publicRooms?.map((room) => {
+              console.log("[publicRooms] room: ", room);
+              return (
+                <RoomCard
+                  key={room.id}
+                  room={room}
+                  onClick={() => {
+                    setRoomJoinData_RoomId(room.id);
+                    setRoomCreationRequestType("join");
+                    setRoute("roomPage");
+                  }}
+                  className="mx-2  mr-4 mt-2 cursor-pointer overflow-hidden rounded-xl border border-background bg-background hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground"
+                  // primary muted-foreground
+                />
+              );
+            })}
           <br />
         </ul>
       </div>
@@ -248,6 +267,10 @@ const Friends = () => {
 const CreateRoom = () => {
   const [videoUrl, setVideoUrl] = useState("");
   const [disableBtn, setDisableBtn] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPlatform, setSelectedPlatform] =
+    useState<SupportedPlatforms>("youtube");
+
   const { setRoute, setRoomCreationData_VideoUrl, setRoomCreationRequestType } =
     useGlobalStore((s) => ({
       setRoute: s.setRoute,
@@ -255,7 +278,12 @@ const CreateRoom = () => {
       setRoomCreationRequestType: s.setRoomCreationRequestType,
     }));
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const debouncedSearchQuery = useDebounce(searchQuery, 1000);
+
+  const { data: searchResults, isFetching: isFetchingSearchResults } =
+    useGetSearchResults(searchQuery, debouncedSearchQuery, selectedPlatform);
+
+  const onSubmitUrlForm = async (e: React.FormEvent) => {
     e.preventDefault();
     setDisableBtn(true);
     if (videoUrl) {
@@ -273,17 +301,20 @@ const CreateRoom = () => {
       setDisableBtn(false);
     }, 2000);
   }, [disableBtn]);
+
+  console.log("[createRoom] searchResults: ", searchResults);
+
   return (
-    <div className="h-[75vh] bg-muted">
+    <div className="h-[75vh] border-2 border-muted bg-primary-foreground">
       <p className="mx-4 scroll-m-20 p-4 pb-2 text-center text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-2xl">
         Create Room
       </p>
       <form
-        onSubmit={onSubmit}
-        className="mx-4 mt-[10vh] flex flex-col items-end gap-4 md:mx-10"
+        onSubmit={onSubmitUrlForm}
+        className="mx-4 mt-4 flex items-end gap-4 md:mx-10"
       >
         <Label className="sr-only" htmlFor="handle">
-          Enter Url to play from
+          Play Using Url
         </Label>
         <Input
           onChange={(e) => {
@@ -292,7 +323,7 @@ const CreateRoom = () => {
           value={videoUrl}
           id="handle"
           className="border-muted-foreground/50"
-          placeholder="Enter Url to play from"
+          placeholder="Play Using Url"
           type="text"
           autoCapitalize="none"
           autoCorrect="off"
@@ -306,6 +337,192 @@ const CreateRoom = () => {
           Create Room
         </Button>
       </form>
+      <div className="mx-4 mt-4 flex items-end gap-4 md:mx-10">
+        <SelectSearchPlatform setSelectedValue={setSelectedPlatform} />
+        <Label className="sr-only" htmlFor="searchQuery">
+          Search
+        </Label>
+        <Input
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+          }}
+          value={searchQuery}
+          id="handle"
+          className="border-muted-foreground/50"
+          placeholder="Search"
+          type="text"
+          autoCapitalize="none"
+          autoCorrect="off"
+          autoComplete="off"
+          disabled={disableBtn}
+        />
+      </div>
+      <div className="mx-4 mt-4 flex flex-wrap justify-center gap-4 overflow-y-hidden md:mx-10">
+        {!isFetchingSearchResults && !searchResults && (
+          <p className="text-pretty px-20 pb-20 pt-5 font-bold capitalize">
+            start typing to search from {selectedPlatform} or select another
+            platform to search from...
+          </p>
+        )}
+        {isFetchingSearchResults && (
+          <div className="flex h-[20vh] items-center justify-center">
+            <div
+              className="text-surface inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
+              role="status"
+            >
+              <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+                Loading...
+              </span>
+            </div>
+          </div>
+        )}
+        {!isFetchingSearchResults &&
+          searchResults?.map((r) => {
+            return <ResultCard key={r.ytId} result={r} />;
+          })}
+      </div>
+      <div className="mx-4 mt-4 flex flex-wrap justify-center gap-4 overflow-y-hidden md:mx-10">
+        <RecentVideosDialog />
+        <LikedVideosDialog />
+      </div>
     </div>
   );
 };
+
+const ResultCard = ({ result }: { result: VideoInfo }) => {
+  const { setRoute, setRoomCreationData_VideoUrl, setRoomCreationRequestType } =
+    useGlobalStore((s) => ({
+      setRoute: s.setRoute,
+      setRoomCreationData_VideoUrl: s.setRoomCreationData_VideoUrl,
+      setRoomCreationRequestType: s.setRoomCreationRequestType,
+    }));
+  return (
+    <div
+      onClick={() => {
+        setRoomCreationData_VideoUrl(result.ytId);
+        setRoomCreationRequestType("create");
+        setRoute("roomPage");
+      }}
+      className="h-[135px] w-[180px] cursor-pointer rounded-sm border border-muted hover:border-muted-foreground"
+      style={{
+        backgroundImage: `url(${result.thumbnail})`,
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+      }}
+    >
+      <div className="flex h-full flex-col justify-between">
+        <div className="flex flex-col items-end ">
+          <span className="rounded-sm bg-muted/70 p-1 text-sm font-bold leading-tight text-white">
+            {result.duration}
+          </span>
+        </div>
+        <p className="rounded-t-sm bg-muted/70 px-2 text-sm font-bold leading-tight text-white">
+          {trimString(result.title)}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// write a function to trim string to 40 characters
+function trimString(str: string) {
+  if (str.length > 40) {
+    return str.slice(0, 40) + "...";
+  }
+  return str;
+}
+
+const SelectSearchPlatform = ({
+  setSelectedValue,
+}: {
+  setSelectedValue: (v: any) => void;
+}) => {
+  const handleChange = (value: any) => {
+    setSelectedValue(value);
+  };
+  return (
+    <Select defaultValue="youtube" onValueChange={handleChange}>
+      <SelectTrigger className="w-min">
+        <SelectValue placeholder="Select platform" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup className="">
+          <SelectItem value="youtube">Youtube</SelectItem>
+          <SelectItem value="netflix">Netflix</SelectItem>
+          <SelectItem value="prime">Prime</SelectItem>
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  );
+};
+
+function RecentVideosDialog() {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="secondary">Recent</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Edit profile</DialogTitle>
+          <DialogDescription>
+            Make changes to your profile here. Click save when you're done.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              Name
+            </Label>
+            <Input id="name" value="Pedro Duarte" className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="username" className="text-right">
+              Username
+            </Label>
+            <Input id="username" value="@peduarte" className="col-span-3" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="submit">Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function LikedVideosDialog() {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="secondary">Liked</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Edit profile</DialogTitle>
+          <DialogDescription>
+            Make changes to your profile here. Click save when you're done.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              Name
+            </Label>
+            <Input id="name" value="Pedro Duarte" className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="username" className="text-right">
+              Username
+            </Label>
+            <Input id="username" value="@peduarte" className="col-span-3" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="submit">Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

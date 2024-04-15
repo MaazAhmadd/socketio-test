@@ -2,19 +2,19 @@ import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCheckUser, useLoginUser, useRegisterUser } from "@/hooks/auth";
-import useDebounce from "@/hooks/useDebounce";
+import { useCheckUser, useLoginUser, useRegisterUser } from "@/hooks/authHooks";
 import { cn } from "@/lib/utils";
-import useGlobalStore from "@/state/store";
+// import useGlobalStore from "@/state/store";
 import * as React from "react";
 import { ModeToggle } from "./theme-toggle";
 import toast from "react-hot-toast";
+import { useDebounce } from "@/hooks/utilHooks";
 
 export default function AuthenticationPage() {
-  const { setAuthToken, setRoute } = useGlobalStore((s) => ({
-    setAuthToken: s.setAuthToken,
-    setRoute: s.setRoute,
-  }));
+  // const { setAuthToken, setRoute } = useGlobalStore((s) => ({
+  //   setAuthToken: s.setAuthToken,
+  //   setRoute: s.setRoute,
+  // }));
 
   const [registerStateError, setRegisterStateError] = React.useState("");
   const [registerState, setRegisterState] = React.useState("");
@@ -26,13 +26,13 @@ export default function AuthenticationPage() {
     mutate: login,
     isPending: isLoadingLogin,
     error: errorLogin,
-    data: dataLogin,
+    // data: dataLogin,
   } = useLoginUser();
   const {
     mutate: register,
     isPending: isLoadingRegister,
     error: errorRegister,
-    data: dataRegister,
+    // data: dataRegister,
   } = useRegisterUser();
 
   const debouncedRegisterState = useDebounce(registerState, 500);
@@ -42,12 +42,12 @@ export default function AuthenticationPage() {
     passwordStateError.length > 0 || registerStateError.length > 0,
   );
 
-  React.useEffect(() => {
-    setAuthToken(dataLogin || dataRegister || null);
-    if (dataLogin || dataRegister) {
-      setRoute("homePage");
-    }
-  }, [dataLogin, dataRegister]);
+  // React.useEffect(() => {
+  //   setAuthToken(dataLogin || dataRegister || null);
+  //   if (dataLogin || dataRegister) {
+  //     setRoute("homePage");
+  //   }
+  // }, [dataLogin, dataRegister]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

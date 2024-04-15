@@ -54,7 +54,7 @@ export function RoomSettingsDrawer() {
             <div className="flex items-center justify-between">
               <DrawerDescription>Video Volume:</DrawerDescription>
               <Slider
-                defaultValue={[50]}
+                defaultValue={[100]}
                 max={100}
                 step={1}
                 className={cn("w-[60%]")}
@@ -63,7 +63,7 @@ export function RoomSettingsDrawer() {
             <div className="flex items-center justify-between">
               <DrawerDescription>Speaker Volume:</DrawerDescription>
               <Slider
-                defaultValue={[50]}
+                defaultValue={[100]}
                 max={100}
                 step={1}
                 className={cn("w-[60%]")}
@@ -85,7 +85,7 @@ export function RoomSettingsDrawer() {
 
 const SelectRoomPrivacy = () => {
   return (
-    <Select>
+    <Select defaultValue="public">
       <SelectTrigger className="w-min">
         <SelectValue placeholder="Select privacy" />
       </SelectTrigger>
@@ -102,7 +102,7 @@ const SelectRoomPrivacy = () => {
 
 const SelectPlayback = () => {
   return (
-    <Select>
+    <Select defaultValue="voting">
       <SelectTrigger className="w-min">
         <SelectValue placeholder="Select Playback" />
       </SelectTrigger>
@@ -120,15 +120,14 @@ const SelectPlayback = () => {
 
 const SelectMicrophone = () => {
   return (
-    <Select>
+    <Select defaultValue="enabled">
       <SelectTrigger className="w-min">
-        <SelectValue placeholder="Select privacy" />
+        <SelectValue placeholder="Select mic" />
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectItem value="public">Public</SelectItem>
-          <SelectItem value="private">Private</SelectItem>
-          <SelectItem value="friends">Friends</SelectItem>
+          <SelectItem value="enabled">Enable</SelectItem>
+          <SelectItem value="disabled">Disable</SelectItem>
         </SelectGroup>
       </SelectContent>
     </Select>

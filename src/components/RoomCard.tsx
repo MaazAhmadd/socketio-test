@@ -25,11 +25,11 @@ const RoomCard: React.FC<RoomCardProps> = ({
         ) : (
           <div className="w-full min-w-[100px] max-w-[150px] bg-slate-400"></div>
         )}
-        <div className="flex w-full flex-col justify-between py-2 pr-1">
+        <div className="flex w-full flex-col justify-between py-1 pr-2">
           <div className="text-sm font-bold leading-tight md:text-base">
             {room.videoPlayer?.title}
           </div>
-          <div className="mb-1 flex">
+          <div className="flex">
             <div className="no-scrollbar flex gap-2 overflow-x-scroll">
               {room.members.map((m) => {
                 const randomColor = getRandomColor(m.handle);

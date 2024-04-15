@@ -5,9 +5,10 @@ const router = express.Router();
 
 router.get(
   "/publicrooms",
+  authUser,
   async ({ prisma, body, ...req }: Request, res: Response) => {
-    // res.status(200).json(roomss);
-    // return;
+    console.log("[room/publicrooms]: ", req.user?.handle);
+
     try {
       const rooms = await prisma?.room.findMany({
         where: {

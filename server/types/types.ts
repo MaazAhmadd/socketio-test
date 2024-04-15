@@ -43,10 +43,10 @@ interface SocketData {
 type Rooms = {
   [key: string]: Room;
 };
-export type RoomCreationData = {
+type RoomCreationData = {
   videoUrl: string;
 };
-export type RoomJoinData = {
+type RoomJoinData = {
   roomId: string;
 };
 interface Room {
@@ -84,6 +84,15 @@ interface DecodedUser {
   handle: string;
 }
 
+type VideoInfo = {
+  title: string;
+  thumbnail: string;
+  ytId: string;
+  duration: string;
+};
+
+type SupportedPlatforms = "youtube" | "netflix" | "prime";
+
 export type {
   ServerToClientEvents,
   ClientToServerEvents,
@@ -94,4 +103,8 @@ export type {
   Room,
   DecodedUser,
   VideoPlayer,
+  RoomCreationData,
+  RoomJoinData,
+  VideoInfo,
+  SupportedPlatforms,
 };

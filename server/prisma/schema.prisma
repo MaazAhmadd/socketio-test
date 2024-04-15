@@ -57,5 +57,6 @@ model YtVideo {
   ytId      String   @unique
   thumbnail String
   title     String
+  duration  String
   updatedAt DateTime @default(now()) @updatedAt()
 }

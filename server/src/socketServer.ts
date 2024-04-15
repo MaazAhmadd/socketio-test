@@ -65,7 +65,7 @@ export default function socketServer(
   });
 
   io.on("connection", (socket: CustomSocket) => {
-    console.log("[socket connection] connected: ", socket);
+    // console.log("[socket connection] connected: ", socket);
 
     socket.on("createRoom", async (data: RoomCreationData) => {
       console.log("[socket createRoom] url received: ", data);
