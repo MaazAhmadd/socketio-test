@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { PrismaClient } from "@prisma/client";
 import { VideoInfo } from "../types/types";
 const router = express.Router();
@@ -20,16 +20,22 @@ router.get("/", async ({ prisma, ...req }: Request, res: Response) => {
 });
 
 router.get("/search", async ({ prisma, ...req }: Request, res: Response) => {
+  console.log("[ytRouter search] query: ", req.query?.q);
+
   try {
     const response = await searchVideos(req.query?.q as string, prisma!);
     if (response) {
+      console.log("[ytRouter search] videos found", response.length);
       return res.send(response);
     }
+    console.log("[ytRouter search] videos not found");
+
     return res.status(404).send("videos not found");
-  } catch (error) {
+  } catch (error: any) {
+    console.log("[ytRouter search] error: ", error);
     res.status(500).json({
       errorMessage: "An error occurred on the server. [post - /api/ytservice]",
-      error,
+      error: error.message,
     });
   }
 });
@@ -136,10 +142,6 @@ async function getVideoInfo(videoId: string) {
         },
       },
     );
-    console.log(
-      "[getVideoInfo] response.data",
-      response.data.items[0].snippet.thumbnails,
-    );
 
     return {
       title: response.data.items[0].snippet.title,
@@ -149,8 +151,11 @@ async function getVideoInfo(videoId: string) {
       ),
       ytId: videoId,
     };
-  } catch (error) {
-    console.log("[getVideoInfo] youtube data api info fetching error: ", error);
+  } catch (error: any) {
+    console.log(
+      "[getVideoInfo] youtube data api info fetching error: ",
+      error.data,
+    );
     return null;
   }
 }

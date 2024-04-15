@@ -65,6 +65,7 @@ function socketServer(io, prisma) {
             console.log("[socket createRoom] isActive: ", isActive);
             if (!isActive) {
                 const room = yield makeRoom(socket, prisma, data.videoUrl);
+                console.log("[socket createRoom] room made id: ", room.id);
                 if (!room) {
                     socket.emit("stateError", "invalid url");
                 }
@@ -129,6 +130,7 @@ exports.default = socketServer;
 function makeRoom(socket, prisma, url) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, _b, _c;
+        console.log("[makeRoom] url: ", url);
         const videoInfo = yield (0, ytRouter_1.ytInfoService)(url, prisma);
         // if (!videoInfo) {
         //   return null;
@@ -284,18 +286,19 @@ function getCurrentLeader(prisma, roomId) {
 }
 function makeMemberLeave(prisma, socket) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b;
+        var _a, _b, _c;
+        console.log("[makeMemberLeave] called...handle,roomid", (_a = socket.user) === null || _a === void 0 ? void 0 : _a.handle, socket.roomId);
         if (!socket.roomId)
             return false;
         const currentUser = yield getMemberFromRoom(prisma, socket.user.handle, socket.roomId);
         if (!currentUser) {
-            console.log(`[makeMemberLeave] No member found with handle: ${(_a = socket.user) === null || _a === void 0 ? void 0 : _a.handle} in room: ${socket.roomId}`);
+            console.log(`[makeMemberLeave] No member found with handle: ${(_b = socket.user) === null || _b === void 0 ? void 0 : _b.handle} in room: ${socket.roomId}`);
             return;
         }
         yield prisma.member.updateMany({
             where: {
                 AND: {
-                    handle: (_b = socket.user) === null || _b === void 0 ? void 0 : _b.handle,
+                    handle: (_c = socket.user) === null || _c === void 0 ? void 0 : _c.handle,
                     roomId: socket.roomId,
                 },
             },

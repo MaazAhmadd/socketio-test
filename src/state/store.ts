@@ -16,7 +16,8 @@ export type RoomCreationRequestType = "join" | "create";
 
 const token = localStorage.getItem("auth_token");
 interface GlobalStore {
-  // encodedAuthToken: string | null;
+  globalLoading: boolean;
+  setGlobalLoading: (loading: boolean) => void;
   decodedAuthToken: DecodedUser | null;
   setAuthToken: (token: string) => void;
   logout: () => void;
@@ -35,7 +36,8 @@ interface GlobalStore {
 }
 
 const useGlobalStore = create<GlobalStore>((set) => ({
-  // encodedAuthToken: token || null,
+  globalLoading: false,
+  setGlobalLoading: (loading: boolean) => set({ globalLoading: loading }),
   decodedAuthToken: token && isValidJwt(token) ? jwtDecode(token) : null,
   setAuthToken: (token: string) =>
     set({
@@ -64,10 +66,12 @@ const useGlobalStore = create<GlobalStore>((set) => ({
           },
         });
         if (String(response.data) === "true") {
+          set({ globalLoading: false });
           toast.error("User already in a room");
           return;
         }
       } catch (error) {
+        set({ globalLoading: false });
         console.error("Error checking active member:", error);
         return;
       }

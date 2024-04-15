@@ -14,7 +14,8 @@ const RoomPage = () => {
   const { width, height } = useWindowSize();
 
   const {
-    // encodedAuthToken,
+    // globalLoading,
+    setGlobalLoading,
     setConnected,
     roomCreationData,
     roomCreationRequestType,
@@ -22,7 +23,8 @@ const RoomPage = () => {
     // connected,
     setRoute,
   } = useGlobalStore((s) => ({
-    // encodedAuthToken: s.encodedAuthToken,
+    globalLoading: s.globalLoading,
+    setGlobalLoading: s.setGlobalLoading,
     setConnected: s.setConnected,
     roomCreationData: s.roomCreationData,
     roomCreationRequestType: s.roomCreationRequestType,
@@ -54,6 +56,7 @@ const RoomPage = () => {
     }
 
     function onStateError(err: string) {
+      setGlobalLoading(false);
       console.log("[socket stateError] stateError: ", err);
       toast.error(err);
       socket.disconnect();
@@ -62,6 +65,7 @@ const RoomPage = () => {
     }
 
     function onRoomDesc(data: Room) {
+      setGlobalLoading(false);
       toast.success("room desc received");
       console.log("[socket roomDesc] roomDesc: ", data);
     }

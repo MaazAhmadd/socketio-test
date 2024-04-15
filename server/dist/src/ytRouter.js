@@ -45,19 +45,23 @@ router.get("/", (_a, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 }));
 router.get("/search", (_c, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d;
+    var _d, _e;
     var { prisma } = _c, req = __rest(_c, ["prisma"]);
+    console.log("[ytRouter search] query: ", (_d = req.query) === null || _d === void 0 ? void 0 : _d.q);
     try {
-        const response = yield searchVideos((_d = req.query) === null || _d === void 0 ? void 0 : _d.q, prisma);
+        const response = yield searchVideos((_e = req.query) === null || _e === void 0 ? void 0 : _e.q, prisma);
         if (response) {
+            console.log("[ytRouter search] videos found", response.length);
             return res.send(response);
         }
+        console.log("[ytRouter search] videos not found");
         return res.status(404).send("videos not found");
     }
     catch (error) {
+        console.log("[ytRouter search] error: ", error);
         res.status(500).json({
             errorMessage: "An error occurred on the server. [post - /api/ytservice]",
-            error,
+            error: error.message,
         });
     }
 }));
@@ -148,7 +152,6 @@ function getVideoInfo(videoId) {
                     key: apiKey,
                 },
             });
-            console.log("[getVideoInfo] response.data", response.data.items[0].snippet.thumbnails);
             return {
                 title: response.data.items[0].snippet.title,
                 thumbnail: response.data.items[0].snippet.thumbnails.high.url,
@@ -157,7 +160,7 @@ function getVideoInfo(videoId) {
             };
         }
         catch (error) {
-            console.log("[getVideoInfo] youtube data api info fetching error: ", error);
+            console.log("[getVideoInfo] youtube data api info fetching error: ", error.data);
             return null;
         }
     });

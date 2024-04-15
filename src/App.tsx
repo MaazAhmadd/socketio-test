@@ -18,6 +18,7 @@ export default function App() {
 
   return (
     <>
+      <GlobalLoading />
       <ToasterComponent />
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
         <QueryClientProvider>
@@ -43,5 +44,14 @@ const ToasterComponent = () => {
         },
       }}
     />
+  );
+};
+
+const GlobalLoading = () => {
+  const globalLoading = useGlobalStore((state) => state.globalLoading);
+  return globalLoading ? (
+    <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/40 backdrop-blur-sm"></div>
+  ) : (
+    ""
   );
 };

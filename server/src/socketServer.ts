@@ -78,6 +78,7 @@ export default function socketServer(
 
       if (!isActive) {
         const room = await makeRoom(socket, prisma, data.videoUrl);
+        console.log("[socket createRoom] room made id: ", room.id);
         if (!room) {
           socket.emit("stateError", "invalid url");
         } else {
@@ -143,6 +144,8 @@ async function makeRoom(
   prisma: PrismaClient,
   url: string,
 ) {
+  console.log("[makeRoom] url: ", url);
+
   const videoInfo = await ytInfoService(url, prisma);
   // if (!videoInfo) {
   //   return null;
@@ -296,6 +299,12 @@ async function getCurrentLeader(prisma: PrismaClient, roomId: string) {
   return _m?.[0];
 }
 async function makeMemberLeave(prisma: PrismaClient, socket: CustomSocket) {
+  console.log(
+    "[makeMemberLeave] called...handle,roomid",
+    socket.user?.handle,
+    socket.roomId,
+  );
+
   if (!socket.roomId) return false;
 
   const currentUser = await getMemberFromRoom(

@@ -141,12 +141,17 @@ const Public = () => {
   //   41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
   // ]);
   let { data: publicRooms, isFetching } = useGetPublicRooms();
-  const { setRoute, setRoomJoinData_RoomId, setRoomCreationRequestType } =
-    useGlobalStore((s) => ({
-      setRoute: s.setRoute,
-      setRoomJoinData_RoomId: s.setRoomJoinData_RoomId,
-      setRoomCreationRequestType: s.setRoomCreationRequestType,
-    }));
+  const {
+    setRoute,
+    setRoomJoinData_RoomId,
+    setRoomCreationRequestType,
+    setGlobalLoading,
+  } = useGlobalStore((s) => ({
+    setRoute: s.setRoute,
+    setRoomJoinData_RoomId: s.setRoomJoinData_RoomId,
+    setRoomCreationRequestType: s.setRoomCreationRequestType,
+    setGlobalLoading: s.setGlobalLoading,
+  }));
   return (
     <ScrollArea
       viewportRef={scrollAreaRef}
@@ -187,6 +192,7 @@ const Public = () => {
                   onClick={() => {
                     setRoomJoinData_RoomId(room.id);
                     setRoomCreationRequestType("join");
+                    setGlobalLoading(true);
                     setRoute("roomPage");
                   }}
                   className="mx-2  mr-4 mt-2 cursor-pointer overflow-hidden rounded-xl border border-background bg-background hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground"
@@ -271,12 +277,17 @@ const CreateRoom = () => {
   const [selectedPlatform, setSelectedPlatform] =
     useState<SupportedPlatforms>("youtube");
 
-  const { setRoute, setRoomCreationData_VideoUrl, setRoomCreationRequestType } =
-    useGlobalStore((s) => ({
-      setRoute: s.setRoute,
-      setRoomCreationData_VideoUrl: s.setRoomCreationData_VideoUrl,
-      setRoomCreationRequestType: s.setRoomCreationRequestType,
-    }));
+  const {
+    setRoute,
+    setRoomCreationData_VideoUrl,
+    setRoomCreationRequestType,
+    setGlobalLoading,
+  } = useGlobalStore((s) => ({
+    setRoute: s.setRoute,
+    setRoomCreationData_VideoUrl: s.setRoomCreationData_VideoUrl,
+    setRoomCreationRequestType: s.setRoomCreationRequestType,
+    setGlobalLoading: s.setGlobalLoading,
+  }));
 
   const debouncedSearchQuery = useDebounce(searchQuery, 1000);
 
@@ -291,6 +302,7 @@ const CreateRoom = () => {
         "[createRoom onsubmit] about to createRoom videoUrl: ",
         videoUrl,
       );
+      setGlobalLoading(true);
       setRoomCreationData_VideoUrl(videoUrl);
       setRoomCreationRequestType("create");
       setRoute("roomPage");
@@ -390,15 +402,21 @@ const CreateRoom = () => {
 };
 
 const ResultCard = ({ result }: { result: VideoInfo }) => {
-  const { setRoute, setRoomCreationData_VideoUrl, setRoomCreationRequestType } =
-    useGlobalStore((s) => ({
-      setRoute: s.setRoute,
-      setRoomCreationData_VideoUrl: s.setRoomCreationData_VideoUrl,
-      setRoomCreationRequestType: s.setRoomCreationRequestType,
-    }));
+  const {
+    setRoute,
+    setRoomCreationData_VideoUrl,
+    setRoomCreationRequestType,
+    setGlobalLoading,
+  } = useGlobalStore((s) => ({
+    setRoute: s.setRoute,
+    setRoomCreationData_VideoUrl: s.setRoomCreationData_VideoUrl,
+    setRoomCreationRequestType: s.setRoomCreationRequestType,
+    setGlobalLoading: s.setGlobalLoading,
+  }));
   return (
     <div
       onClick={() => {
+        setGlobalLoading(true);
         setRoomCreationData_VideoUrl(result.ytId);
         setRoomCreationRequestType("create");
         setRoute("roomPage");
