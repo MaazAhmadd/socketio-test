@@ -4,6 +4,7 @@ import { User } from "./models";
 import jwt from "jsonwebtoken";
 import Mongoose from "mongoose";
 import { DecodedUser } from "../types/types";
+import { logger } from "./config";
 
 // middleware to check if x-auth-token token attached and valid
 export const authUser = (req: Request, res: Response, next: NextFunction) => {
@@ -18,8 +19,7 @@ export const authUser = (req: Request, res: Response, next: NextFunction) => {
     req.user = decoded as DecodedUser;
     next();
   } catch (ex) {
-    console.log("[authUser] error in middleware: ", ex);
-
+    logger("authUser middleware", "error in middleware: ", ex);
     res.status(400).json({ error: "Invalid token." });
   }
 };
@@ -27,7 +27,7 @@ export const authUser = (req: Request, res: Response, next: NextFunction) => {
 // Create user
 router.post("/register", async (req: Request, res: Response) => {
   try {
-    console.log("register router body: ", req.body);
+    logger("/api/user/register", "register router req.body: ", req.body);
     const { name, handle, profilePicture, password } = req.body;
     let user = await User.findOne({ handle });
     if (user) {
@@ -38,7 +38,7 @@ router.post("/register", async (req: Request, res: Response) => {
 
     res.status(201).send(user.generateAuthToken());
   } catch (error) {
-    console.log("[/api/user/register] error in register: ", error);
+    logger("/api/user/register", "error in register: ", error);
     res.status(400).send(error);
   }
 });
@@ -71,7 +71,7 @@ router.put("/updateuser/:id", authUser, async (req: Request, res: Response) => {
 
     res.send(user);
   } catch (e) {
-    console.log("[/api/user/updateuser] error in updateuser: ", e);
+    logger("/api/user/updateuser", "error in updateuser: ", e);
     res.status(400).send(e);
   }
 });
@@ -95,10 +95,8 @@ router.get(
 
       res.send(friend);
     } catch (e) {
-      console.log(
-        "[/api/user/sendFriendRequest] error in sendFriendRequest: ",
-        e,
-      );
+      logger("/api/user/sendFriendRequest", "error in sendFriendRequest: ", e);
+
       res.status(500).send();
     }
   },
@@ -125,8 +123,9 @@ router.get(
 
       res.send({ user, friend });
     } catch (e) {
-      console.log(
-        "[/api/user/acceptFriendRequest] error in acceptFriendRequest: ",
+      logger(
+        "/api/user/acceptFriendRequest",
+        "error in acceptFriendRequest: ",
         e,
       );
       res.status(500).send();
@@ -147,7 +146,7 @@ router.get("/getuser/:id", authUser, async (req: Request, res: Response) => {
     }
     res.send(user);
   } catch (error) {
-    console.log("[/api/user/getuser] error in getuser: ", error);
+    logger("/api/user/getuser", "error in getuser: ", error);
     res.status(500).send(error);
   }
 });
@@ -158,7 +157,7 @@ router.get("/all", authUser, async (req: Request, res: Response) => {
     const users = await User.find({}).select("-password");
     res.send(users);
   } catch (error) {
-    console.log("[/api/user/all] error in all: ", error);
+    logger("/api/user/all", "error in all: ", error);
     res.status(500).send(error);
   }
 });
@@ -166,7 +165,7 @@ router.get("/all", authUser, async (req: Request, res: Response) => {
 // Search users by name or handle
 // /api/user
 router.get("/search", authUser, async (req: Request, res: Response) => {
-  console.log("search query: ", req.query.q);
+  logger("/api/user/search", "search query: ", req.query.q);
 
   try {
     const query = req.query.q;
@@ -179,12 +178,12 @@ router.get("/search", authUser, async (req: Request, res: Response) => {
 
     res.send(users);
   } catch (error) {
-    console.log("[/api/user/search] error in search: ", error);
+    logger("/api/user/search", "error in search: ", error);
     res.status(500).send(error);
   }
 });
 router.get("/check", async (req: Request, res: Response) => {
-  console.log("check query: ", req.query.q);
+  logger("/api/user/check", "check query: ", req.query.q);
 
   try {
     const handle = req.query.q;
@@ -194,14 +193,14 @@ router.get("/check", async (req: Request, res: Response) => {
     }
     res.send("true");
   } catch (error) {
-    console.log("[/api/user/check] error in check: ", error);
+    logger("/api/user/check", "error in check: ", error);
     res.status(500).send(error);
   }
 });
 
 // login user
 router.post("/login", async (req: Request, res: Response) => {
-  console.log("backend /login req.body: ", req.body);
+  logger("/api/user/login", "req.body: ", req.body);
 
   try {
     const { handle, password } = req.body;
@@ -215,7 +214,7 @@ router.post("/login", async (req: Request, res: Response) => {
     }
     res.send(user.generateAuthToken());
   } catch (error) {
-    console.log("[/api/user/login] error in login: ", error);
+    logger("/api/user/login", "error in login: ", error);
     res.status(500).send(error);
   }
 });

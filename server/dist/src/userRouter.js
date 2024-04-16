@@ -18,6 +18,7 @@ const router = express_1.default.Router();
 const models_1 = require("./models");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const config_1 = require("./config");
 // middleware to check if x-auth-token token attached and valid
 const authUser = (req, res, next) => {
     const token = req.headers["x-auth-token"];
@@ -29,7 +30,7 @@ const authUser = (req, res, next) => {
         next();
     }
     catch (ex) {
-        console.log("[authUser] error in middleware: ", ex);
+        (0, config_1.logger)("authUser middleware", "error in middleware: ", ex);
         res.status(400).json({ error: "Invalid token." });
     }
 };
@@ -37,7 +38,7 @@ exports.authUser = authUser;
 // Create user
 router.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log("register router body: ", req.body);
+        (0, config_1.logger)("/api/user/register", "register router req.body: ", req.body);
         const { name, handle, profilePicture, password } = req.body;
         let user = yield models_1.User.findOne({ handle });
         if (user) {
@@ -48,7 +49,7 @@ router.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, functio
         res.status(201).send(user.generateAuthToken());
     }
     catch (error) {
-        console.log("[/api/user/register] error in register: ", error);
+        (0, config_1.logger)("/api/user/register", "error in register: ", error);
         res.status(400).send(error);
     }
 }));
@@ -76,7 +77,7 @@ router.put("/updateuser/:id", exports.authUser, (req, res) => __awaiter(void 0, 
         res.send(user);
     }
     catch (e) {
-        console.log("[/api/user/updateuser] error in updateuser: ", e);
+        (0, config_1.logger)("/api/user/updateuser", "error in updateuser: ", e);
         res.status(400).send(e);
     }
 }));
@@ -95,7 +96,7 @@ router.get("/sendFriendRequest/:senderId/:receiverId", exports.authUser, (req, r
         res.send(friend);
     }
     catch (e) {
-        console.log("[/api/user/sendFriendRequest] error in sendFriendRequest: ", e);
+        (0, config_1.logger)("/api/user/sendFriendRequest", "error in sendFriendRequest: ", e);
         res.status(500).send();
     }
 }));
@@ -117,7 +118,7 @@ router.get("/acceptFriendRequest/:senderId/:receiverId", exports.authUser, (req,
         res.send({ user, friend });
     }
     catch (e) {
-        console.log("[/api/user/acceptFriendRequest] error in acceptFriendRequest: ", e);
+        (0, config_1.logger)("/api/user/acceptFriendRequest", "error in acceptFriendRequest: ", e);
         res.status(500).send();
     }
 }));
@@ -137,7 +138,7 @@ router.get("/getuser/:id", exports.authUser, (req, res) => __awaiter(void 0, voi
         res.send(user);
     }
     catch (error) {
-        console.log("[/api/user/getuser] error in getuser: ", error);
+        (0, config_1.logger)("/api/user/getuser", "error in getuser: ", error);
         res.status(500).send(error);
     }
 }));
@@ -148,14 +149,14 @@ router.get("/all", exports.authUser, (req, res) => __awaiter(void 0, void 0, voi
         res.send(users);
     }
     catch (error) {
-        console.log("[/api/user/all] error in all: ", error);
+        (0, config_1.logger)("/api/user/all", "error in all: ", error);
         res.status(500).send(error);
     }
 }));
 // Search users by name or handle
 // /api/user
 router.get("/search", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("search query: ", req.query.q);
+    (0, config_1.logger)("/api/user/search", "search query: ", req.query.q);
     try {
         const query = req.query.q;
         let users = yield models_1.User.find({
@@ -167,12 +168,12 @@ router.get("/search", exports.authUser, (req, res) => __awaiter(void 0, void 0, 
         res.send(users);
     }
     catch (error) {
-        console.log("[/api/user/search] error in search: ", error);
+        (0, config_1.logger)("/api/user/search", "error in search: ", error);
         res.status(500).send(error);
     }
 }));
 router.get("/check", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("check query: ", req.query.q);
+    (0, config_1.logger)("/api/user/check", "check query: ", req.query.q);
     try {
         const handle = req.query.q;
         const user = yield models_1.User.findOne({ handle: handle });
@@ -182,13 +183,13 @@ router.get("/check", (req, res) => __awaiter(void 0, void 0, void 0, function* (
         res.send("true");
     }
     catch (error) {
-        console.log("[/api/user/check] error in check: ", error);
+        (0, config_1.logger)("/api/user/check", "error in check: ", error);
         res.status(500).send(error);
     }
 }));
 // login user
 router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("backend /login req.body: ", req.body);
+    (0, config_1.logger)("/api/user/login", "req.body: ", req.body);
     try {
         const { handle, password } = req.body;
         const user = yield models_1.User.findOne({ handle });
@@ -202,7 +203,7 @@ router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* 
         res.send(user.generateAuthToken());
     }
     catch (error) {
-        console.log("[/api/user/login] error in login: ", error);
+        (0, config_1.logger)("/api/user/login", "error in login: ", error);
         res.status(500).send(error);
     }
 }));

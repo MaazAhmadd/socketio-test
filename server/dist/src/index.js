@@ -45,6 +45,7 @@ const ytRouter_1 = __importDefault(require("./ytRouter"));
 const socketServer_1 = __importStar(require("./socketServer"));
 const cors_1 = __importDefault(require("cors"));
 const client_1 = require("@prisma/client");
+const config_1 = require("./config");
 const port = process.env.PORT || 3000;
 const app = (0, express_1.default)();
 const server = (0, node_http_1.createServer)(app);
@@ -80,7 +81,7 @@ const io = new socket_io_1.Server(server, {
 (0, socketServer_1.default)(io, prisma);
 // setTimeout(() => {
 setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("[deleteInactiveRooms] checking inactive rooms to delete");
+    (0, config_1.logger)("deleteInactiveRooms", "checking inactive rooms to delete...");
     yield (0, socketServer_1.deleteInactiveRooms)(prisma);
 }), process.env.NODE_ENV === "production"
     ? 1000 * 60 * 60 * 24 // 1 day
@@ -93,7 +94,11 @@ app.use("/api/user", userRouter_1.default);
 app.use("/api/room", roomRouter_1.default);
 app.use("/api/ytservice", ytRouter_1.default);
 server.listen(port, () => {
-    console.log("server running at http://localhost:" + port);
+    if (config_1.disableGlobalLogging) {
+        console.log("[production] server running at http://localhost:" + port);
+        console.log("logging disabled");
+    }
+    (0, config_1.logger)("server", "server running at http://localhost:" + port);
 });
 // prisma disconnect
 process.on("SIGINT", () => {

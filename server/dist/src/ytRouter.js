@@ -26,6 +26,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ytInfoService = void 0;
 const express_1 = __importDefault(require("express"));
 const axios_1 = __importDefault(require("axios"));
+const config_1 = require("./config");
 const router = express_1.default.Router();
 router.get("/", (_a, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _b;
@@ -38,7 +39,7 @@ router.get("/", (_a, res) => __awaiter(void 0, void 0, void 0, function* () {
         return res.status(404).send("video not found");
     }
     catch (error) {
-        console.log("[post - /api/ytservice] error: ", error);
+        (0, config_1.logger)("/api/ytservice", "error: ", error);
         res.status(500).json({
             errorMessage: "An error occurred on the server. [post - /api/ytservice]",
             error,
@@ -48,18 +49,18 @@ router.get("/", (_a, res) => __awaiter(void 0, void 0, void 0, function* () {
 router.get("/search", (_c, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _d, _e;
     var { prisma } = _c, req = __rest(_c, ["prisma"]);
-    console.log("[ytRouter search] query: ", (_d = req.query) === null || _d === void 0 ? void 0 : _d.q);
+    (0, config_1.logger)("/api/ytservice/search", "query: ", (_d = req.query) === null || _d === void 0 ? void 0 : _d.q);
     try {
         const response = yield searchVideos((_e = req.query) === null || _e === void 0 ? void 0 : _e.q, prisma);
         if (response) {
-            console.log("[ytRouter search] videos found", response.length);
+            (0, config_1.logger)("/api/ytservice/search", "videos found", response.length);
             return res.send(response);
         }
-        console.log("[ytRouter search] videos not found");
+        (0, config_1.logger)("/api/ytservice/search", "videos not found");
         return res.status(404).send("videos not found");
     }
     catch (error) {
-        console.log("[ytRouter search] error: ", error);
+        (0, config_1.logger)("/api/ytservice/search", "error: ", error);
         res.status(500).json({
             errorMessage: "An error occurred on the server. [post - /api/ytservice]",
             error: error.message,
@@ -137,13 +138,13 @@ function addNewItem(newItem, prisma) {
     });
 }
 function youTubeGetID(url) {
-    console.log("[youTubeGetID] url: ", url);
+    (0, config_1.logger)("youTubeGetID", "url: ", url);
     let _url = url.split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/)/);
     return _url[2] !== undefined ? _url[2].split(/[^0-9a-z_\-]/i)[0] : _url[0];
 }
 function getVideoInfo(videoId) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log("[getVideoInfo] calling youtube data api with videoId: ", videoId);
+        (0, config_1.logger)("getVideoInfo", "videoId: ", videoId);
         let apiKey = process.env.YOUTUBE_API_KEY;
         try {
             const response = yield axios_1.default.get("https://www.googleapis.com/youtube/v3/videos", {
@@ -161,7 +162,7 @@ function getVideoInfo(videoId) {
             };
         }
         catch (error) {
-            console.log("[getVideoInfo] youtube data api info fetching error: ", error.data);
+            (0, config_1.logger)("getVideoInfo", "youtube data api info fetching error: ", error.data);
             return null;
         }
     });

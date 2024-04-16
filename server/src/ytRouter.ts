@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import axios, { AxiosError } from "axios";
 import { PrismaClient } from "@prisma/client";
 import { VideoInfo } from "../types/types";
+import { logger } from "./config";
 const router = express.Router();
 
 router.get("/", async ({ prisma, ...req }: Request, res: Response) => {
@@ -12,7 +13,7 @@ router.get("/", async ({ prisma, ...req }: Request, res: Response) => {
     }
     return res.status(404).send("video not found");
   } catch (error) {
-    console.log("[post - /api/ytservice] error: ", error);
+    logger("/api/ytservice", "error: ", error);
     res.status(500).json({
       errorMessage: "An error occurred on the server. [post - /api/ytservice]",
       error,
@@ -21,19 +22,19 @@ router.get("/", async ({ prisma, ...req }: Request, res: Response) => {
 });
 
 router.get("/search", async ({ prisma, ...req }: Request, res: Response) => {
-  console.log("[ytRouter search] query: ", req.query?.q);
+  logger("/api/ytservice/search", "query: ", req.query?.q);
 
   try {
     const response = await searchVideos(req.query?.q as string, prisma!);
     if (response) {
-      console.log("[ytRouter search] videos found", response.length);
+      logger("/api/ytservice/search", "videos found", response.length);
       return res.send(response);
     }
-    console.log("[ytRouter search] videos not found");
+    logger("/api/ytservice/search", "videos not found");
 
     return res.status(404).send("videos not found");
   } catch (error: any) {
-    console.log("[ytRouter search] error: ", error);
+    logger("/api/ytservice/search", "error: ", error);
     res.status(500).json({
       errorMessage: "An error occurred on the server. [post - /api/ytservice]",
       error: error.message,
@@ -119,16 +120,13 @@ async function addNewItem(newItem: VideoInfo, prisma: PrismaClient) {
 }
 
 function youTubeGetID(url: string) {
-  console.log("[youTubeGetID] url: ", url);
+  logger("youTubeGetID", "url: ", url);
   let _url = url.split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/)/);
   return _url[2] !== undefined ? _url[2].split(/[^0-9a-z_\-]/i)[0] : _url[0];
 }
 
 async function getVideoInfo(videoId: string) {
-  console.log(
-    "[getVideoInfo] calling youtube data api with videoId: ",
-    videoId,
-  );
+  logger("getVideoInfo", "videoId: ", videoId);
 
   let apiKey = process.env.YOUTUBE_API_KEY;
 
@@ -153,10 +151,12 @@ async function getVideoInfo(videoId: string) {
       ytId: videoId,
     };
   } catch (error: any) {
-    console.log(
-      "[getVideoInfo] youtube data api info fetching error: ",
+    logger(
+      "getVideoInfo",
+      "youtube data api info fetching error: ",
       error.data,
     );
+
     return null;
   }
 }

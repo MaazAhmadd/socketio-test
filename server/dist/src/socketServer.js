@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteInactiveRooms = exports.returnRoomWithActiveMembersInOrder = exports.checkIfMemberAlreadyActive = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const ytRouter_1 = require("./ytRouter");
+const config_1 = require("./config");
 function socketServer(io, prisma) {
     // disconnect all members and sockets
     initializeSocketServer(io, prisma);
@@ -22,18 +23,18 @@ function socketServer(io, prisma) {
     io.use((socket, next) => __awaiter(this, void 0, void 0, function* () {
         var _a, _b, _c;
         try {
-            console.log("[socket auth middleware] checking authentication...");
+            (0, config_1.logger)("auth middleware", "checking authentication...");
             const token = (_b = (_a = socket.handshake) === null || _a === void 0 ? void 0 : _a.query) === null || _b === void 0 ? void 0 : _b.token;
             if (typeof token != "string" || !token) {
-                console.log("[socket auth middleware] no token found");
+                (0, config_1.logger)("auth middleware", "no token found");
                 return next(new Error("Authentication error"));
             }
-            console.log("[socket auth middleware] verifying token: ", token);
+            (0, config_1.logger)("auth middleware", "verifying token: ", token);
             const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_PRIVATE_KEY || "wefusdjnkcmjnkdsveuwdjnk34wefuijnk");
-            console.log("[socket auth middleware] token found, handle: ", decoded.handle);
+            (0, config_1.logger)("auth middleware", "token found, handle: ", decoded.handle);
             if (decoded) {
                 socket.user = decoded;
-                console.log("[socket auth middleware] connecting back sockets");
+                (0, config_1.logger)("auth middleware", "connecting back sockets");
                 if (socket.roomId) {
                     yield prisma.member.updateMany({
                         where: {
@@ -47,24 +48,24 @@ function socketServer(io, prisma) {
                 next();
             }
             else {
-                console.log("[socket auth middleware] invalid token");
+                (0, config_1.logger)("auth middleware", "invalid token...");
                 next(new Error("Authentication error"));
             }
         }
         catch (error) {
-            console.log("[socket auth middleware] error: ", error);
+            (0, config_1.logger)("auth middleware", "error: ", error);
             next(new Error("Authentication error: " + error));
         }
     }));
     io.on("connection", (socket) => {
         socket.on("createRoom", (data) => __awaiter(this, void 0, void 0, function* () {
             var _a;
-            console.log("[socket createRoom] url received: ", data);
+            (0, config_1.logger)("socket createRoom", "url received: ", data);
             const isActive = yield checkIfMemberAlreadyActive((_a = socket.user) === null || _a === void 0 ? void 0 : _a.handle, prisma);
-            console.log("[socket createRoom] isActive: ", isActive);
+            (0, config_1.logger)("socket createRoom", "checkIfMemberAlreadyActive: ", isActive);
             if (!isActive) {
                 const room = yield makeRoom(socket, prisma, data.videoUrl);
-                console.log("[socket createRoom] room made id: ", room.id);
+                (0, config_1.logger)("socket createRoom", "room made id: ", room === null || room === void 0 ? void 0 : room.id);
                 if (!room) {
                     socket.emit("stateError", "invalid url");
                 }
@@ -111,14 +112,17 @@ function socketServer(io, prisma) {
             }
         });
         socket.on("leaveRoom", () => __awaiter(this, void 0, void 0, function* () {
+            (0, config_1.logger)("socket leaveRoom", "before makeMemberLeave, roomid: ", socket.roomId);
             const updatedRoom = yield makeMemberLeave(prisma, socket);
+            (0, config_1.logger)("socket leaveRoom", "after makeMemberLeave updatedRoom: ", updatedRoom);
             if (updatedRoom) {
                 io.in(updatedRoom.id).emit("memberList", updatedRoom.members);
             }
         }));
         socket.on("disconnect", () => __awaiter(this, void 0, void 0, function* () {
-            console.log("[socket disconnect] roomid: ", socket.roomId);
+            (0, config_1.logger)("socket disconnect", "before makeMemberLeave, roomid: ", socket.roomId);
             const updatedRoom = yield makeMemberLeave(prisma, socket);
+            (0, config_1.logger)("socket disconnect", "after makeMemberLeave updatedRoom: ", updatedRoom);
             if (updatedRoom) {
                 io.in(updatedRoom.id).emit("memberList", updatedRoom.members);
             }
@@ -129,7 +133,7 @@ exports.default = socketServer;
 function makeRoom(socket, prisma, url) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, _b, _c;
-        console.log("[makeRoom] url: ", url);
+        (0, config_1.logger)("makeRoom", "url: ", url);
         const videoInfo = yield (0, ytRouter_1.ytInfoService)(url, prisma);
         // if (!videoInfo) {
         //   return null;
@@ -189,8 +193,9 @@ function joinRoom(socket, prisma, roomId) {
             if (member) {
                 const leader = yield getCurrentLeader(prisma, roomId);
                 if (member.leaderPriorityCounter < leader.leaderPriorityCounter) {
+                    (0, config_1.logger)("joinRoom", "joining member deserves leader", member.leaderPriorityCounter, leader.leaderPriorityCounter);
                     // update leader
-                    yield prisma.member.update({
+                    const updatedLeaderMember = yield prisma.member.update({
                         where: {
                             id: member.id,
                             roomId: roomId,
@@ -200,6 +205,7 @@ function joinRoom(socket, prisma, roomId) {
                             isConnected: true,
                         },
                     });
+                    (0, config_1.logger)("joinRoom", "updatedLeaderMember: ", updatedLeaderMember);
                     yield prisma.member.update({
                         where: {
                             id: leader.id,
@@ -225,9 +231,10 @@ function joinRoom(socket, prisma, roomId) {
             else {
                 const totalMembers = yield prisma.member.count({
                     where: {
-                        id: roomId,
+                        roomId,
                     },
                 });
+                (0, config_1.logger)("joinRoom", "totalMembers will be leaderPriorityCounter: ", totalMembers);
                 yield prisma.room.update({
                     where: {
                         id: roomId,
@@ -252,7 +259,7 @@ function joinRoom(socket, prisma, roomId) {
             return yield returnRoomWithActiveMembersInOrder(prisma, roomId);
         }
         catch (error) {
-            console.log("[joinRoom] error while joining room", error);
+            (0, config_1.logger)("joinRoom", "error while joining room", error);
         }
     });
 }
@@ -286,12 +293,13 @@ function getCurrentLeader(prisma, roomId) {
 function makeMemberLeave(prisma, socket) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, _b, _c;
-        console.log("[makeMemberLeave] called...handle,roomid", (_a = socket.user) === null || _a === void 0 ? void 0 : _a.handle, socket.roomId);
+        (0, config_1.logger)("makeMemberLeave", "called...handle,roomid", (_a = socket.user) === null || _a === void 0 ? void 0 : _a.handle, socket.roomId);
         if (!socket.roomId)
             return false;
         const currentUser = yield getMemberFromRoom(prisma, socket.user.handle, socket.roomId);
+        (0, config_1.logger)("makeMemberLeave", "currentUser: ", currentUser);
         if (!currentUser) {
-            console.log(`[makeMemberLeave] No member found with handle: ${(_b = socket.user) === null || _b === void 0 ? void 0 : _b.handle} in room: ${socket.roomId}`);
+            (0, config_1.logger)("makeMemberLeave", "No member found with handle,room: ", (_b = socket.user) === null || _b === void 0 ? void 0 : _b.handle, socket.roomId);
             return;
         }
         yield prisma.member.updateMany({
@@ -321,24 +329,42 @@ function makeMemberLeave(prisma, socket) {
                 },
             },
         });
-        let _members = room === null || room === void 0 ? void 0 : room.members.filter((m) => m.leaderPriorityCounter > currentUser.leaderPriorityCounter);
-        if (_members && _members.length > 0) {
+        const activeLeader = yield prisma.member.count({
+            where: {
+                roomId: socket.roomId,
+                isConnected: true,
+                isLeader: true,
+            },
+        });
+        if (activeLeader > 0) {
+            return yield returnRoomWithActiveMembersInOrder(prisma, socket.roomId);
+        }
+        (0, config_1.logger)("makeMemberLeave", "room: ", room === null || room === void 0 ? void 0 : room.members);
+        let activeMembersWithHigherPC = room === null || room === void 0 ? void 0 : room.members.filter((m) => m.leaderPriorityCounter > currentUser.leaderPriorityCounter);
+        let activeMembersWithLowerPC = room === null || room === void 0 ? void 0 : room.members.filter((m) => m.leaderPriorityCounter < currentUser.leaderPriorityCounter);
+        if (activeMembersWithHigherPC && activeMembersWithHigherPC.length > 0) {
             // check if there's another connected member, give leader to lowest priorityCounter
-            yield prisma.member.updateMany({
+            const updatedLeaderMember = yield prisma.member.updateMany({
                 where: {
-                    handle: _members[0].handle || "",
+                    handle: activeMembersWithHigherPC[0].handle || "",
                     roomId: socket.roomId,
                 },
                 data: {
                     isLeader: true,
                 },
             });
+            (0, config_1.logger)("makeMemberLeave", "updatedLeaderMember: ", updatedLeaderMember);
             return yield returnRoomWithActiveMembersInOrder(prisma, socket.roomId);
         }
         else {
-            // no active members in the room so dispose it off
-            // console.log("[makeMemberLeave] room empty: ", socket.roomId);
-            return false;
+            if (activeMembersWithLowerPC && activeMembersWithLowerPC.length > 0) {
+                return yield returnRoomWithActiveMembersInOrder(prisma, socket.roomId);
+            }
+            else {
+                // no active members in the room so dispose it off
+                (0, config_1.logger)("makeMemberLeave", "room empty: ", socket.roomId);
+                return false;
+            }
         }
     });
 }
@@ -405,7 +431,7 @@ function giveLeader(prisma, socket, targetMember) {
                 },
             });
         }
-        yield prisma.member.updateMany({
+        const updatedLeaderMember = yield prisma.member.updateMany({
             where: {
                 AND: {
                     handle: target.handle,
@@ -417,6 +443,7 @@ function giveLeader(prisma, socket, targetMember) {
                 isLeader: true,
             },
         });
+        (0, config_1.logger)("giveLeader", "updatedLeaderMember: ", updatedLeaderMember);
         return yield returnRoomWithActiveMembersInOrder(prisma, socket.roomId);
     });
 }
@@ -464,9 +491,9 @@ const deleteInactiveRooms = (prisma) => __awaiter(void 0, void 0, void 0, functi
             },
         },
     });
-    console.log("[deleteInactiveRooms] found inactive rooms: ", rooms.length);
+    (0, config_1.logger)("deleteInactiveRooms", "found inactive rooms: ", rooms.length);
     for (const room of rooms) {
-        console.log("[deleteInactiveRooms] deleting inactive room: ", room.id);
+        (0, config_1.logger)("deleteInactiveRooms", "deleting inactive room: ", room.id);
         yield prisma.room.delete({
             where: {
                 id: room.id,
@@ -477,7 +504,7 @@ const deleteInactiveRooms = (prisma) => __awaiter(void 0, void 0, void 0, functi
 exports.deleteInactiveRooms = deleteInactiveRooms;
 const passLeaderIfNotPassedProperly = (prisma, socket) => __awaiter(void 0, void 0, void 0, function* () { });
 const initializeSocketServer = (io, prisma) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("[initializeSocketServer] initializing socket server...");
+    (0, config_1.logger)("initializeSocketServer", "initializing socket server...");
     io.disconnectSockets();
     try {
         yield prisma.member.updateMany({

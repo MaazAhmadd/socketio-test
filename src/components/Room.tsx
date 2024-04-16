@@ -1,6 +1,6 @@
 import { useGlobalStore, useRoomStore } from "@/state/store";
 import ConnectionStatus from "./ConnectionStatus";
-import { useEffect  } from "react";
+import { useEffect } from "react";
 import { socket } from "@/socket";
 import { Member, Room } from "server/types/types";
 import { Button } from "./ui/button";
@@ -32,7 +32,7 @@ const RoomPage = () => {
   const {
     roomCreationData,
     roomCreationRequestType,
-    roomJoinData, 
+    roomJoinData,
     setCurrentRoom_members,
   } = useRoomStore((s) => ({
     roomCreationData: s.roomCreationData,
@@ -68,8 +68,7 @@ const RoomPage = () => {
     function onStateError(err: string) {
       setGlobalLoading(false);
       console.log("[socket stateError] stateError: ", err);
-      toast.error(err);
-      socket.disconnect();
+      toast.error(err); 
       setConnected(false);
       setRoute("homePage");
     }
@@ -81,8 +80,7 @@ const RoomPage = () => {
 
     function onConnectError(err: Error) {
       console.log("[socket connect_error] connect_error: ", err);
-      toast.error(err.message);
-      socket.disconnect();
+      toast.error(err.message); 
       setConnected(false);
       setRoute("homePage");
     }
@@ -109,8 +107,7 @@ const RoomPage = () => {
     };
   }, []);
   function onLeaveRoom() {
-    socket.emit("leaveRoom");
-    socket.disconnect();
+    socket.emit("leaveRoom"); 
     setConnected(false);
     setRoute("homePage");
   }
@@ -120,7 +117,7 @@ const RoomPage = () => {
   return (
     <>
       <ConnectionStatus />
-      {width < 601 ? (
+      {width < 768 ? (
         <div>
           <div className="h-[5vh]">
             <RoomButtons onLeaveRoom={onLeaveRoom} />

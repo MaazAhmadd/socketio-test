@@ -15,12 +15,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.prisma = exports.connectDB = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const client_1 = require("@prisma/client");
-const config_1 = __importDefault(require("./config"));
+const config_1 = require("./config");
 const connectDB = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log("[db] connecting to DB...", config_1.default.mongodb);
-        yield mongoose_1.default.connect(config_1.default.mongodb);
-        console.log("MongoDB Connected...");
+        (0, config_1.logger)("connectDB", " connecting to DB... ", config_1.mongodb);
+        yield mongoose_1.default.connect(config_1.mongodb);
+        (0, config_1.logger)("connectDB", "MongoDB Connected...");
     }
     catch (err) {
         if (err instanceof Error)

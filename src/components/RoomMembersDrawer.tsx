@@ -7,12 +7,15 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { useRoomStore } from "@/state/store";
+import { useGlobalStore, useRoomStore } from "@/state/store";
 import { Cross1Icon, PersonIcon } from "@radix-ui/react-icons";
 
 export function RoomMembersDrawer() {
   const { currentRoom_members } = useRoomStore((s) => ({
     currentRoom_members: s.currentRoom_members,
+  }));
+  const { decodedAuthToken } = useGlobalStore((s) => ({
+    decodedAuthToken: s.decodedAuthToken,
   }));
   console.log("[RoomMembersDrawer] currentRoom_members: ", currentRoom_members);
 
@@ -42,7 +45,9 @@ export function RoomMembersDrawer() {
               return (
                 <div>
                   member:
-                  {m.name}|{m.handle}
+                  {m.name || "name"}|{m.handle}|
+                  {m.isLeader ? "(leader)" : "(member)"}|
+                  {decodedAuthToken?.handle == m.handle ? "(me)" : ""}
                 </div>
               );
             })}

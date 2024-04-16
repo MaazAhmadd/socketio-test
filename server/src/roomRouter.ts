@@ -1,13 +1,14 @@
 import express, { Request, Response } from "express";
 import { authUser } from "./userRouter";
 import { checkIfMemberAlreadyActive } from "./socketServer";
+import { logger } from "./config";
 const router = express.Router();
 
 router.get(
   "/publicrooms",
   authUser,
   async ({ prisma, body, ...req }: Request, res: Response) => {
-    console.log("[room/publicrooms]: ", req.user?.handle);
+    logger("/api/room/publicrooms", "handle: ", req.user?.handle);
 
     try {
       const rooms = await prisma?.room.findMany({
@@ -33,7 +34,7 @@ router.get(
       });
       res.status(200).json(rooms);
     } catch (error) {
-      console.log("[room/publicrooms] error: ", error);
+      logger("/api/room/publicrooms", "error: ", error);
       res.status(500).json({
         errorMessage:
           "An error occurred on the server. [get - /api/room/allrooms]",
@@ -54,7 +55,7 @@ router.get(
       );
       res.status(200).json(isMemberAlreadyActive);
     } catch (error) {
-      console.log("[room/checkActiveMember] error: ", error);
+      logger("/api/room/checkActiveMember", "error: ", error);
       res.status(500).json({
         errorMessage:
           "An error occurred on the server. [get - /api/room/checkActiveMember]",
@@ -155,4 +156,3 @@ export default router;
 //     .reduce((map, item) => map.set(item.handle, item), new Map())
 //     .values(),
 // );
-// console.log(uniqueMembers);

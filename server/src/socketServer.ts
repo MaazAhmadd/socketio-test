@@ -10,7 +10,7 @@ import {
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { ytInfoService } from "./ytRouter";
-
+import { logger } from "./config";
 interface CustomSocket extends Socket {
   user?: DecodedUser;
   roomId?: string;
@@ -24,27 +24,28 @@ export default function socketServer(
   // auth middleware
   io.use(async (socket: CustomSocket, next) => {
     try {
-      console.log("[socket auth middleware] checking authentication...");
+      logger("auth middleware", "checking authentication...");
 
       const token = socket.handshake?.query?.token;
       if (typeof token != "string" || !token) {
-        console.log("[socket auth middleware] no token found");
+        logger("auth middleware", "no token found");
         return next(new Error("Authentication error"));
       }
 
-      console.log("[socket auth middleware] verifying token: ", token);
+      logger("auth middleware", "verifying token: ", token);
       const decoded = jwt.verify(
         token,
         process.env.JWT_PRIVATE_KEY || "wefusdjnkcmjnkdsveuwdjnk34wefuijnk",
       );
-      console.log(
-        "[socket auth middleware] token found, handle: ",
+      logger(
+        "auth middleware",
+        "token found, handle: ",
         (decoded as DecodedUser).handle,
       );
 
       if (decoded) {
         socket.user = decoded as DecodedUser;
-        console.log("[socket auth middleware] connecting back sockets");
+        logger("auth middleware", "connecting back sockets");
 
         if (socket.roomId) {
           await prisma.member.updateMany({
@@ -58,28 +59,28 @@ export default function socketServer(
         }
         next();
       } else {
-        console.log("[socket auth middleware] invalid token");
+        logger("auth middleware", "invalid token...");
         next(new Error("Authentication error"));
       }
     } catch (error) {
-      console.log("[socket auth middleware] error: ", error);
+      logger("auth middleware", "error: ", error);
       next(new Error("Authentication error: " + error));
     }
   });
 
   io.on("connection", (socket: CustomSocket) => {
     socket.on("createRoom", async (data: RoomCreationData) => {
-      console.log("[socket createRoom] url received: ", data);
+      logger("socket createRoom", "url received: ", data);
 
       const isActive = await checkIfMemberAlreadyActive(
         socket.user?.handle,
         prisma,
       );
-      console.log("[socket createRoom] isActive: ", isActive);
+      logger("socket createRoom", "checkIfMemberAlreadyActive: ", isActive);
 
       if (!isActive) {
         const room = await makeRoom(socket, prisma, data.videoUrl);
-        console.log("[socket createRoom] room made id: ", room.id);
+        logger("socket createRoom", "room made id: ", room?.id);
         if (!room) {
           socket.emit("stateError", "invalid url");
         } else {
@@ -124,15 +125,35 @@ export default function socketServer(
       }
     });
     socket.on("leaveRoom", async () => {
+      logger(
+        "socket leaveRoom",
+        "before makeMemberLeave, roomid: ",
+        socket.roomId,
+      );
       const updatedRoom = await makeMemberLeave(prisma, socket);
+      logger(
+        "socket leaveRoom",
+        "after makeMemberLeave updatedRoom: ",
+        updatedRoom,
+      );
+
       if (updatedRoom) {
         io.in(updatedRoom.id).emit("memberList", updatedRoom.members);
       }
     });
     socket.on("disconnect", async () => {
-      console.log("[socket disconnect] roomid: ", socket.roomId);
-
+      logger(
+        "socket disconnect",
+        "before makeMemberLeave, roomid: ",
+        socket.roomId,
+      );
       const updatedRoom = await makeMemberLeave(prisma, socket);
+      logger(
+        "socket disconnect",
+        "after makeMemberLeave updatedRoom: ",
+        updatedRoom,
+      );
+
       if (updatedRoom) {
         io.in(updatedRoom.id).emit("memberList", updatedRoom.members);
       }
@@ -145,7 +166,7 @@ async function makeRoom(
   prisma: PrismaClient,
   url: string,
 ) {
-  console.log("[makeRoom] url: ", url);
+  logger("makeRoom", "url: ", url);
 
   const videoInfo = await ytInfoService(url, prisma);
   // if (!videoInfo) {
@@ -209,8 +230,14 @@ async function joinRoom(
     if (member) {
       const leader = await getCurrentLeader(prisma, roomId);
       if (member.leaderPriorityCounter < leader!.leaderPriorityCounter) {
+        logger(
+          "joinRoom",
+          "joining member deserves leader",
+          member.leaderPriorityCounter,
+          leader!.leaderPriorityCounter,
+        );
         // update leader
-        await prisma.member.update({
+        const updatedLeaderMember = await prisma.member.update({
           where: {
             id: member!.id,
             roomId: roomId,
@@ -220,6 +247,7 @@ async function joinRoom(
             isConnected: true,
           },
         });
+        logger("joinRoom", "updatedLeaderMember: ", updatedLeaderMember);
         await prisma.member.update({
           where: {
             id: leader!.id,
@@ -243,9 +271,14 @@ async function joinRoom(
     } else {
       const totalMembers = await prisma.member.count({
         where: {
-          id: roomId,
+          roomId,
         },
       });
+      logger(
+        "joinRoom",
+        "totalMembers will be leaderPriorityCounter: ",
+        totalMembers,
+      );
       await prisma.room.update({
         where: {
           id: roomId,
@@ -269,7 +302,7 @@ async function joinRoom(
     }
     return await returnRoomWithActiveMembersInOrder(prisma, roomId);
   } catch (error) {
-    console.log("[joinRoom] error while joining room", error);
+    logger("joinRoom", "error while joining room", error);
   }
 }
 async function getMemberFromRoom(
@@ -299,9 +332,11 @@ async function getCurrentLeader(prisma: PrismaClient, roomId: string) {
   });
   return _m?.[0];
 }
+
 async function makeMemberLeave(prisma: PrismaClient, socket: CustomSocket) {
-  console.log(
-    "[makeMemberLeave] called...handle,roomid",
+  logger(
+    "makeMemberLeave",
+    "called...handle,roomid",
     socket.user?.handle,
     socket.roomId,
   );
@@ -313,10 +348,14 @@ async function makeMemberLeave(prisma: PrismaClient, socket: CustomSocket) {
     socket.user!.handle,
     socket.roomId,
   );
+  logger("makeMemberLeave", "currentUser: ", currentUser);
 
   if (!currentUser) {
-    console.log(
-      `[makeMemberLeave] No member found with handle: ${socket.user?.handle} in room: ${socket.roomId}`,
+    logger(
+      "makeMemberLeave",
+      "No member found with handle,room: ",
+      socket.user?.handle,
+      socket.roomId,
     );
     return;
   }
@@ -347,27 +386,47 @@ async function makeMemberLeave(prisma: PrismaClient, socket: CustomSocket) {
       },
     },
   });
+  const activeLeader = await prisma.member.count({
+    where: {
+      roomId: socket.roomId,
+      isConnected: true,
+      isLeader: true,
+    },
+  });
+  if (activeLeader > 0) {
+    return await returnRoomWithActiveMembersInOrder(prisma, socket.roomId);
+  }
+  logger("makeMemberLeave", "room: ", room?.members);
 
-  let _members = room?.members.filter(
+  let activeMembersWithHigherPC = room?.members.filter(
     (m) => m.leaderPriorityCounter > currentUser!.leaderPriorityCounter,
   );
+  let activeMembersWithLowerPC = room?.members.filter(
+    (m) => m.leaderPriorityCounter < currentUser!.leaderPriorityCounter,
+  );
 
-  if (_members && _members.length > 0) {
+  if (activeMembersWithHigherPC && activeMembersWithHigherPC.length > 0) {
     // check if there's another connected member, give leader to lowest priorityCounter
-    await prisma.member.updateMany({
+    const updatedLeaderMember = await prisma.member.updateMany({
       where: {
-        handle: _members[0].handle || "",
+        handle: activeMembersWithHigherPC[0].handle || "",
         roomId: socket.roomId,
       },
       data: {
         isLeader: true,
       },
     });
+    logger("makeMemberLeave", "updatedLeaderMember: ", updatedLeaderMember);
+
     return await returnRoomWithActiveMembersInOrder(prisma, socket.roomId);
   } else {
-    // no active members in the room so dispose it off
-    // console.log("[makeMemberLeave] room empty: ", socket.roomId);
-    return false;
+    if (activeMembersWithLowerPC && activeMembersWithLowerPC.length > 0) {
+      return await returnRoomWithActiveMembersInOrder(prisma, socket.roomId);
+    } else {
+      // no active members in the room so dispose it off
+      logger("makeMemberLeave", "room empty: ", socket.roomId);
+      return false;
+    }
   }
 }
 async function giveLeader(
@@ -442,7 +501,7 @@ async function giveLeader(
       },
     });
   }
-  await prisma.member.updateMany({
+  const updatedLeaderMember = await prisma.member.updateMany({
     where: {
       AND: {
         handle: target.handle,
@@ -454,6 +513,8 @@ async function giveLeader(
       isLeader: true,
     },
   });
+  logger("giveLeader", "updatedLeaderMember: ", updatedLeaderMember);
+
   return await returnRoomWithActiveMembersInOrder(prisma, socket.roomId);
 }
 export async function returnRoomWithActiveMembersInOrder(
@@ -502,10 +563,10 @@ export const deleteInactiveRooms = async (prisma: PrismaClient) => {
       },
     },
   });
-  console.log("[deleteInactiveRooms] found inactive rooms: ", rooms.length);
+  logger("deleteInactiveRooms", "found inactive rooms: ", rooms.length);
 
   for (const room of rooms) {
-    console.log("[deleteInactiveRooms] deleting inactive room: ", room.id);
+    logger("deleteInactiveRooms", "deleting inactive room: ", room.id);
     await prisma.room.delete({
       where: {
         id: room.id,
@@ -521,7 +582,7 @@ const initializeSocketServer = async (
   io: Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents>,
   prisma: PrismaClient,
 ) => {
-  console.log("[initializeSocketServer] initializing socket server...");
+  logger("initializeSocketServer", "initializing socket server...");
 
   io.disconnectSockets();
   try {

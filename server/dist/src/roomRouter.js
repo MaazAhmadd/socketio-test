@@ -26,11 +26,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const userRouter_1 = require("./userRouter");
 const socketServer_1 = require("./socketServer");
+const config_1 = require("./config");
 const router = express_1.default.Router();
 router.get("/publicrooms", userRouter_1.authUser, (_a, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _b;
     var { prisma, body } = _a, req = __rest(_a, ["prisma", "body"]);
-    console.log("[room/publicrooms]: ", (_b = req.user) === null || _b === void 0 ? void 0 : _b.handle);
+    (0, config_1.logger)("/api/room/publicrooms", "handle: ", (_b = req.user) === null || _b === void 0 ? void 0 : _b.handle);
     try {
         const rooms = yield (prisma === null || prisma === void 0 ? void 0 : prisma.room.findMany({
             where: {
@@ -56,7 +57,7 @@ router.get("/publicrooms", userRouter_1.authUser, (_a, res) => __awaiter(void 0,
         res.status(200).json(rooms);
     }
     catch (error) {
-        console.log("[room/publicrooms] error: ", error);
+        (0, config_1.logger)("/api/room/publicrooms", "error: ", error);
         res.status(500).json({
             errorMessage: "An error occurred on the server. [get - /api/room/allrooms]",
             error,
@@ -72,7 +73,7 @@ router.get("/checkActiveMember", userRouter_1.authUser, (req, res) => __awaiter(
         res.status(200).json(isMemberAlreadyActive);
     }
     catch (error) {
-        console.log("[room/checkActiveMember] error: ", error);
+        (0, config_1.logger)("/api/room/checkActiveMember", "error: ", error);
         res.status(500).json({
             errorMessage: "An error occurred on the server. [get - /api/room/checkActiveMember]",
             error,
@@ -169,4 +170,3 @@ exports.default = router;
 //     .reduce((map, item) => map.set(item.handle, item), new Map())
 //     .values(),
 // );
-// console.log(uniqueMembers);
