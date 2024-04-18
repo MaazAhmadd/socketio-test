@@ -5,10 +5,10 @@ import { logger } from "./config";
 const router = express.Router();
 
 router.get(
-  "/publicrooms",
+  "/room/publicrooms",
   authUser,
   async ({ prisma, body, ...req }: Request, res: Response) => {
-    logger("/api/room/publicrooms", "handle: ", req.user?.handle);
+    logger("/room/publicrooms", "handle: ", req.user?.handle);
 
     try {
       const rooms = await prisma?.room.findMany({
@@ -34,17 +34,17 @@ router.get(
       });
       res.status(200).json(rooms);
     } catch (error) {
-      logger("/api/room/publicrooms", "error: ", error);
+      logger("/room/publicrooms", "error: ", error);
       res.status(500).json({
         errorMessage:
-          "An error occurred on the server. [get - /api/room/allrooms]",
+          "An error occurred on the server. [get - /room/allrooms]",
         error,
       });
     }
   },
 );
 router.get(
-  "/checkActiveMember",
+  "/room/checkActiveMember",
   authUser,
   async (req: Request, res: Response) => {
     try {
@@ -55,10 +55,10 @@ router.get(
       );
       res.status(200).json(isMemberAlreadyActive);
     } catch (error) {
-      logger("/api/room/checkActiveMember", "error: ", error);
+      logger("/room/checkActiveMember", "error: ", error);
       res.status(500).json({
         errorMessage:
-          "An error occurred on the server. [get - /api/room/checkActiveMember]",
+          "An error occurred on the server. [get - /room/checkActiveMember]",
         error,
       });
     }

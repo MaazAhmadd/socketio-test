@@ -4,7 +4,7 @@ import { User } from "./models";
 import jwt from "jsonwebtoken";
 import Mongoose from "mongoose";
 import { CurrentUser, DecodedUser } from "../types/types";
-import { logger } from "./config";
+import { FnNames, logger } from "./config";
 
 // middleware to check if x-auth-token token attached and valid
 export const authUser = (req: Request, res: Response, next: NextFunction) => {
@@ -25,9 +25,9 @@ export const authUser = (req: Request, res: Response, next: NextFunction) => {
 };
 
 // Create user
-router.post("/register", async (req: Request, res: Response) => {
+router.post("/user/register", async (req: Request, res: Response) => {
   try {
-    logger("/api/user/register", "register router req.body: ", req.body);
+    logger("/user/register", "register router req.body: ", req.body);
     const { name, handle, pfp, password } = req.body as DecodedUser & {
       password: string;
     };
@@ -40,47 +40,51 @@ router.post("/register", async (req: Request, res: Response) => {
 
     res.status(201).send(user.generateAuthToken());
   } catch (error) {
-    logger("/api/user/register", "error in register: ", error);
+    logger("/user/register", "error in register: ", error);
     res.status(400).send(error);
   }
 });
 // Update user by id or handle whatever is provided
-router.put("/updateuser/:id", authUser, async (req: Request, res: Response) => {
-  const updates = Object.keys(req.body);
-  const allowedUpdates = ["name", "handle", "pfp", "password"];
-  const isValidOperation = updates.some((update) =>
-    allowedUpdates.includes(update),
-  );
+router.put(
+  "/user/updateuser/:id",
+  authUser,
+  async (req: Request, res: Response) => {
+    const updates = Object.keys(req.body);
+    const allowedUpdates = ["name", "handle", "pfp", "password"];
+    const isValidOperation = updates.some((update) =>
+      allowedUpdates.includes(update),
+    );
 
-  if (!isValidOperation) {
-    return res.status(400).send({ error: "Invalid updates!" });
-  }
-
-  try {
-    let user: any;
-    if (Mongoose.Types.ObjectId.isValid(req.params.id)) {
-      user = await User.findById(req.params.id);
-    } else {
-      user = await User.findOne({ handle: req.params.id });
-    }
-    if (!user) {
-      return res.status(404).send("User not found");
+    if (!isValidOperation) {
+      return res.status(400).send({ error: "Invalid updates!" });
     }
 
-    updates.forEach((update) => ((user as any)[update] = req.body[update]));
+    try {
+      let user: any;
+      if (Mongoose.Types.ObjectId.isValid(req.params.id)) {
+        user = await User.findById(req.params.id);
+      } else {
+        user = await User.findOne({ handle: req.params.id });
+      }
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
 
-    await user.save();
+      updates.forEach((update) => ((user as any)[update] = req.body[update]));
 
-    res.send(user);
-  } catch (e) {
-    logger("/api/user/updateuser", "error in updateuser: ", e);
-    res.status(400).send(e);
-  }
-});
+      await user.save();
+
+      res.send(user);
+    } catch (e) {
+      logger("/user/updateuser", "error in updateuser: ", e);
+      res.status(400).send(e);
+    }
+  },
+);
 
 // Send Friend Request
 router.get(
-  "/sendFriendRequest/:receiverHandle",
+  "/user/sendFriendRequest/:receiverHandle",
   authUser,
   async (req: Request, res: Response) => {
     try {
@@ -88,7 +92,7 @@ router.get(
         handle: req.user?.handle,
       });
       const friend = await User.findOne({ handle: req.params.receiverHandle });
-      logger("/api/user/sendFriendRequest", "user: ", user, "friend: ", friend);
+      logger("/user/sendFriendRequest", "user: ", user, "friend: ", friend);
       if (!user || !friend) {
         return res.status(404).send();
       }
@@ -105,13 +109,13 @@ router.get(
         res.status(400).json({ message: "Friend request already sent." });
       }
     } catch (e) {
-      logger("/api/user/sendFriendRequest", "error in sendFriendRequest: ", e);
+      logger("/user/sendFriendRequest", "error in sendFriendRequest: ", e);
       res.status(500).send();
     }
   },
 ); // Accept Friend Request
 router.get(
-  "/acceptFriendRequest/:senderHandle",
+  "/user/acceptFriendRequest/:senderHandle",
   authUser,
   async (req: Request, res: Response) => {
     try {
@@ -138,18 +142,14 @@ router.get(
         res.status(400).json({ message: "no valid request to accept" });
       }
     } catch (e) {
-      logger(
-        "/api/user/acceptFriendRequest",
-        "error in acceptFriendRequest: ",
-        e,
-      );
+      logger("/user/acceptFriendRequest", "error in acceptFriendRequest: ", e);
       res.status(500).send();
     }
   },
 );
 // Remove Friend
 router.get(
-  "/removeFriend/:friendHandle",
+  "/user/removeFriend/:friendHandle",
   authUser,
   async (req: Request, res: Response) => {
     try {
@@ -171,40 +171,36 @@ router.get(
         res.status(400).json({ message: "Friend not found." });
       }
     } catch (e) {
-      logger("/api/user/removeFriend", "error in removeFriend: ", e);
+      logger("/user/removeFriend", "error in removeFriend: ", e);
       res.status(500).send();
     }
   },
 );
 // get Friendlist
 router.get(
-  "/fetchFriendlist",
+  "/user/fetchFriendlist",
   authUser,
   async (req: Request, res: Response) => {
     try {
-      logger(
-        "/api/user/fetchFriendlist",
-        "fetchFriendlist: ",
-        req.user?.handle,
-      );
+      logger("/user/fetchFriendlist", "fetchFriendlist: ", req.user?.handle);
       const user = await User.findOne({
         handle: req.user?.handle,
       }).populate("friends", "handle -_id");
-      logger("/api/user/fetchFriendlist", "user: ", user);
+      logger("/user/fetchFriendlist", "user: ", user);
       if (!user) {
         return res.status(404).send();
       }
       const friendsHandles = user.friends.map((f: any) => f.handle);
       res.status(200).json({ friends: friendsHandles });
     } catch (e) {
-      logger("/api/user/fetchFriendlist", "error in fetchFriendlist: ", e);
+      logger("/user/fetchFriendlist", "error in fetchFriendlist: ", e);
       res.status(500).send();
     }
   },
 );
 // Fetch Friend Requests Received
 router.get(
-  "/fetchFriendRequestsReceived",
+  "/user/fetchFriendRequestsReceived",
   authUser,
   async (req: Request, res: Response) => {
     try {
@@ -223,7 +219,7 @@ router.get(
         .json({ friendRequestsReceived: friendRequestsReceivedHandles });
     } catch (e) {
       logger(
-        "/api/user/fetchFriendRequestsReceived",
+        "/user/fetchFriendRequestsReceived",
         "error in fetchFriendRequestsReceived: ",
         e,
       );
@@ -234,7 +230,7 @@ router.get(
 
 // Fetch Friend Requests Sent
 router.get(
-  "/fetchFriendRequestsSent",
+  "/user/fetchFriendRequestsSent",
   authUser,
   async (req: Request, res: Response) => {
     try {
@@ -250,7 +246,7 @@ router.get(
       res.status(200).json({ friendRequestsSent: friendRequestsSentHandles });
     } catch (e) {
       logger(
-        "/api/user/fetchFriendRequestsSent",
+        "/user/fetchFriendRequestsSent",
         "error in fetchFriendRequestsSent: ",
         e,
       );
@@ -259,69 +255,100 @@ router.get(
   },
 );
 
+// makeRoute(
+//   "get",
+//   "/user/fetchFriendRequestsSent",
+//   [authUser],
+//   async function (req: Request, res: Response) {
+//     logger(
+//       "/user/fetchFriendRequestsSent",
+//       "sent requests for: ",
+//       req.user?.handle,
+//     );
+//     const user = await User.findOne({
+//       handle: req.user?.handle,
+//     }).populate("friendReqsSent", "handle -_id");
+//     if (!user) {
+//       return res.status(404).send();
+//     }
+//     const friendRequestsSentHandles = user.friendReqsSent.map(
+//       (user: any) => user.handle,
+//     );
+//     res.status(200).json({ friendRequestsSent: friendRequestsSentHandles });
+//   },
+// );
+
 // Get a single user by ID or handle
-router.get("/getuser/:id", authUser, async (req: Request, res: Response) => {
-  try {
-    let user: any;
-    if (Mongoose.Types.ObjectId.isValid(req.params.id)) {
-      user = await User.findById(req.params.id).select("-password -_id");
-    } else {
-      user = await User.findOne({ handle: req.params.id }).select(
-        "-password -_id",
-      );
+router.get(
+  "/user/getuser/:id",
+  authUser,
+  async (req: Request, res: Response) => {
+    try {
+      let user: any;
+      if (Mongoose.Types.ObjectId.isValid(req.params.id)) {
+        user = await User.findById(req.params.id).select("-password -_id");
+      } else {
+        user = await User.findOne({ handle: req.params.id }).select(
+          "-password -_id",
+        );
+      }
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
+      res.send(user);
+    } catch (error) {
+      logger("/user/getuser", "error in getuser: ", error);
+      res.status(500).send(error);
     }
-    if (!user) {
-      return res.status(404).send("User not found");
-    }
-    res.send(user);
-  } catch (error) {
-    logger("/api/user/getuser", "error in getuser: ", error);
-    res.status(500).send(error);
-  }
-});
+  },
+);
 
 // Get current user by ID or handle
-router.get("/getCurrentUser", authUser, async (req: Request, res: Response) => {
-  let userToSend: CurrentUser
-  try {
-    let user = await User.findOne({ handle: req.user?.handle })
-      .select("-password -_id")
-      .populate("friends friendReqsSent friendReqsReceived", "handle -_id");
-    if (!user) {
-      return res.status(404).send("User not found");
+router.get(
+  "/user/getCurrentUser",
+  authUser,
+  async (req: Request, res: Response) => {
+    let userToSend: CurrentUser;
+    try {
+      let user = await User.findOne({ handle: req.user?.handle })
+        .select("-password -_id")
+        .populate("friends friendReqsSent friendReqsReceived", "handle -_id");
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
+      userToSend = {
+        name: user.name,
+        handle: user.handle,
+        pfp: user.pfp,
+        friends: user.friends.map((f: any) => f.handle as string),
+        friendReqsSent: user.friendReqsSent.map((f: any) => f.handle as string),
+        friendReqsReceived: user.friendReqsReceived.map(
+          (f: any) => f.handle as string,
+        ),
+      };
+      res.send(userToSend);
+    } catch (error) {
+      logger("/user/getuser", "error in getuser: ", error);
+      res.status(500).send(error);
     }
-    userToSend = {
-      name: user.name,
-      handle: user.handle,
-      pfp: user.pfp,
-      friends: user.friends.map((f: any) => f.handle as string),
-      friendReqsSent: user.friendReqsSent.map((f: any) => f.handle as string),
-      friendReqsReceived: user.friendReqsReceived.map(
-        (f: any) => f.handle as string,
-      ),
-    };
-    res.send(userToSend);
-  } catch (error) {
-    logger("/api/user/getuser", "error in getuser: ", error);
-    res.status(500).send(error);
-  }
-});
+  },
+);
 
 // Get all users
-router.get("/all", authUser, async (req: Request, res: Response) => {
+router.get("/user/all", authUser, async (req: Request, res: Response) => {
   try {
     const users = await User.find({}).select("-password -_id");
     res.send(users);
   } catch (error) {
-    logger("/api/user/all", "error in all: ", error);
+    logger("/user/all", "error in all: ", error);
     res.status(500).send(error);
   }
 });
 
 // Search users by name or handle
-// /api/user
-router.get("/search", authUser, async (req: Request, res: Response) => {
-  logger("/api/user/search", "search query: ", req.query.q);
+// /user
+router.get("/user/search", authUser, async (req: Request, res: Response) => {
+  logger("/user/search", "search query: ", req.query.q);
 
   try {
     const query = req.query.q;
@@ -334,12 +361,12 @@ router.get("/search", authUser, async (req: Request, res: Response) => {
 
     res.send(users);
   } catch (error) {
-    logger("/api/user/search", "error in search: ", error);
+    logger("/user/search", "error in search: ", error);
     res.status(500).send(error);
   }
 });
-router.get("/check", async (req: Request, res: Response) => {
-  logger("/api/user/check", "check query: ", req.query.q);
+router.get("/user/check", async (req: Request, res: Response) => {
+  logger("/user/check", "check query: ", req.query.q);
 
   try {
     const handle = req.query.q;
@@ -349,14 +376,14 @@ router.get("/check", async (req: Request, res: Response) => {
     }
     res.send("true");
   } catch (error) {
-    logger("/api/user/check", "error in check: ", error);
+    logger("/user/check", "error in check: ", error);
     res.status(500).send(error);
   }
 });
 
 // login user
-router.post("/login", async (req: Request, res: Response) => {
-  logger("/api/user/login", "req.body: ", req.body);
+router.post("/user/login", async (req: Request, res: Response) => {
+  logger("/user/login", "req.body: ", req.body);
 
   try {
     const { handle, password } = req.body;
@@ -370,9 +397,38 @@ router.post("/login", async (req: Request, res: Response) => {
     }
     res.send(user.generateAuthToken());
   } catch (error) {
-    logger("/api/user/login", "error in login: ", error);
+    logger("/user/login", "error in login: ", error);
     res.status(500).send(error);
   }
 });
+
+function makeRoute(
+  route: "get" | "post" | "put" | "delete" | "patch" | "options" | "head",
+  endpoint: FnNames,
+  middleware: ((
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => express.Response<any, Record<string, any>> | undefined)[],
+  fn: (req: Request, res: Response) => Promise<any>,
+  errorMsg: string = "error on the server, check logs",
+) {
+  return router[route](
+    endpoint,
+    middleware,
+    async (req: Request, res: Response) => {
+      try {
+        await fn(req, res);
+      } catch (error) {
+        logger(endpoint, errorMsg, error);
+        if (process.env.NODE_ENV === "development") {
+          if (error instanceof Error) res.status(500).send(error.message);
+        } else {
+          res.status(500).send(errorMsg);
+        }
+      }
+    },
+  );
+}
 
 export default router;

@@ -5,7 +5,7 @@ import { VideoInfo } from "../types/types";
 import { logger } from "./config";
 const router = express.Router();
 
-router.get("/", async ({ prisma, ...req }: Request, res: Response) => {
+router.get("/ytservice", async ({ prisma, ...req }: Request, res: Response) => {
   try {
     const videoInfo = await ytInfoService(req.query?.url as string, prisma!);
     if (videoInfo) {
@@ -13,34 +13,37 @@ router.get("/", async ({ prisma, ...req }: Request, res: Response) => {
     }
     return res.status(404).send("video not found");
   } catch (error) {
-    logger("/api/ytservice", "error: ", error);
+    logger("/ytservice", "error: ", error);
     res.status(500).json({
-      errorMessage: "An error occurred on the server. [post - /api/ytservice]",
+      errorMessage: "An error occurred on the server. [post - /ytservice]",
       error,
     });
   }
 });
 
-router.get("/search", async ({ prisma, ...req }: Request, res: Response) => {
-  logger("/api/ytservice/search", "query: ", req.query?.q);
+router.get(
+  "/ytservice/search",
+  async ({ prisma, ...req }: Request, res: Response) => {
+    logger("/ytservice/search", "query: ", req.query?.q);
 
-  try {
-    const response = await searchVideos(req.query?.q as string, prisma!);
-    if (response) {
-      logger("/api/ytservice/search", "videos found", response.length);
-      return res.send(response);
+    try {
+      const response = await searchVideos(req.query?.q as string, prisma!);
+      if (response) {
+        logger("/ytservice/search", "videos found", response.length);
+        return res.send(response);
+      }
+      logger("/ytservice/search", "videos not found");
+
+      return res.status(404).send("videos not found");
+    } catch (error: any) {
+      logger("/ytservice/search", "error: ", error);
+      res.status(500).json({
+        errorMessage: "An error occurred on the server. [post - /ytservice]",
+        error: error.message,
+      });
     }
-    logger("/api/ytservice/search", "videos not found");
-
-    return res.status(404).send("videos not found");
-  } catch (error: any) {
-    logger("/api/ytservice/search", "error: ", error);
-    res.status(500).json({
-      errorMessage: "An error occurred on the server. [post - /api/ytservice]",
-      error: error.message,
-    });
-  }
-});
+  },
+);
 
 export default router;
 

@@ -74,9 +74,9 @@ setInterval(
 // }, 86_400_000);
 
 app.get("/api/test", (req, res) => res.send("Express Ready"));
-app.use("/api/user", userRouter);
-app.use("/api/room", roomRouter);
-app.use("/api/ytservice", ytRouter);
+app.use("/api", userRouter);
+app.use("/api", roomRouter);
+app.use("/api", ytRouter);
 
 server.listen(port, () => {
   if (disableGlobalLogging) {

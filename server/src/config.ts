@@ -7,6 +7,27 @@ export const disableGlobalLogging =
   // true // enable global logging
   process.env.NODE_ENV === "production" ? true : false;
 const loggingFns = {
+  // roomRouter.ts
+  "/room/publicrooms": false,
+  "/room/checkActiveMember": true,
+  // userRouter.ts
+  "authUser middleware": true,
+  "/user/register": true,
+  "/user/updateuser": true,
+  "/user/sendFriendRequest": true,
+  "/user/acceptFriendRequest": true,
+  "/user/removeFriend": true,
+  "/user/fetchFriendlist": true,
+  "/user/fetchFriendRequestsReceived": true,
+  "/user/fetchFriendRequestsSent": true,
+  "/user/getuser": true,
+  "/user/all": true,
+  "/user/search": true,
+  "/user/check": true,
+  "/user/login": true,
+  // ytRouter.ts
+  "/ytservice": true,
+  "/ytservice/search": true,
   // socketServer.ts
   "auth middleware": false,
   "socket createRoom": true,
@@ -22,32 +43,11 @@ const loggingFns = {
   connectDB: true,
   // index.ts
   server: true,
-  // roomRouter.ts
-  "/api/room/publicrooms": false,
-  "/api/room/checkActiveMember": true,
-  // userRouter.ts
-  "authUser middleware": true,
-  "/api/user/register": true,
-  "/api/user/updateuser": true,
-  "/api/user/sendFriendRequest": true,
-  "/api/user/acceptFriendRequest": true,
-  "/api/user/removeFriend": true,
-  "/api/user/fetchFriendlist": true,
-  "/api/user/fetchFriendRequestsReceived": true,
-  "/api/user/fetchFriendRequestsSent": true,
-  "/api/user/getuser": true,
-  "/api/user/all": true,
-  "/api/user/search": true,
-  "/api/user/check": true,
-  "/api/user/login": true,
-  // ytRouter.ts
-  "/api/ytservice": true,
-  "/api/ytservice/search": true,
   youTubeGetID: true,
   getVideoInfo: true,
 } as const;
 
-type FnNames = keyof typeof loggingFns;
+export type FnNames = keyof typeof loggingFns;
 
 export function logger(fnName: FnNames, label: string = "", ...args: any[]) {
   if (disableGlobalLogging) {
