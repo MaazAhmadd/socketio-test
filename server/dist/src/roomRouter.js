@@ -47,7 +47,7 @@ router.get("/publicrooms", userRouter_1.authUser, (_a, res) => __awaiter(void 0,
                         isConnected: true,
                     },
                     orderBy: {
-                        leaderPriorityCounter: "asc",
+                        leaderPC: "asc",
                     },
                 },
                 videoPlayer: true,

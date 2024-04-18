@@ -45,7 +45,7 @@ export function RoomMembersDrawer() {
               return (
                 <div>
                   member:
-                  {m.name || "name"}|{m.handle}|
+                  {m.name || "name"}|@{m.handle}|
                   {m.isLeader ? "(leader)" : "(member)"}|
                   {decodedAuthToken?.handle == m.handle ? "(me)" : ""}
                 </div>

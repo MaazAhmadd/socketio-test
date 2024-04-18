@@ -2,7 +2,7 @@ import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCheckUser, useLoginUser, useRegisterUser } from "@/hooks/authHooks";
+import { useCheckUser, useLoginUser, useRegisterUser } from "@/hooks/userHooks";
 import { cn } from "@/lib/utils";
 // import {useGlobalStore} from "@/state/store";
 import * as React from "react";

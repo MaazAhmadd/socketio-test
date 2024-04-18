@@ -8,10 +8,11 @@ interface IMongooseArray<T> extends Types.Array<T> {
 export interface IUser extends Document {
   name: string;
   handle: string;
-  profilePicture: string;
+  pfp: string;
   password: string;
   friends: IMongooseArray<Types.ObjectId>;
-  friendRequests: IMongooseArray<Types.ObjectId>;
+  friendReqsSent: IMongooseArray<Types.ObjectId>;
+  friendReqsReceived: IMongooseArray<Types.ObjectId>;
   toJSON(): any;
   comparePassword(password: string): Promise<boolean>;
   generateAuthToken(): string;
@@ -19,10 +20,11 @@ export interface IUser extends Document {
 const UserSchema: Schema = new Schema({
   name: { type: String, index: true },
   handle: { type: String, required: true, unique: true, index: true },
-  profilePicture: { type: String },
+  pfp: { type: String },
   password: { type: String, required: true },
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  friendRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  friendReqsSent: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  friendReqsReceived: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 });
 UserSchema.methods.toJSON = function () {
   const user = this;
@@ -39,26 +41,15 @@ UserSchema.methods.comparePassword = async function (
 UserSchema.methods.generateAuthToken = function () {
   const token = jwt.sign(
     {
-      _id: this._id,
       name: this.name,
-      profilePicture: this.profilePicture,
+      pfp: this.pfp,
       handle: this.handle,
     },
-    process.env.JWT_PRIVATE_KEY || "wefusdjnkcmjnkdsveuwdjnk34wefuijnk",
+    process.env.JWT_PRIVATE_KEY || "",
   );
   return token;
 };
 
-// ytservice model
-interface IYtService extends Document {
-  url: string;
-}
-const YtServiceSchema: Schema = new Schema({
-  url: { type: String, required: true },
-});
-const YtService = mongoose.model<IYtService>("YtService", YtServiceSchema);
-
 const User = mongoose.model<IUser>("User", UserSchema);
 
-export { User, YtService };
-
+export { User };

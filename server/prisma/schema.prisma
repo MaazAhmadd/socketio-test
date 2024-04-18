@@ -11,16 +11,16 @@ datasource db {
 }
 
 model Member {
-  id                    String  @id @default(uuid())
-  name                  String?
-  handle                String
-  profilePicture        String?
-  isConnected           Boolean
-  isLeader              Boolean
-  micEnabled            Boolean
-  leaderPriorityCounter Int
-  Room                  Room?   @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  roomId                String?
+  id          String  @id @default(uuid())
+  name        String?
+  handle      String
+  pfp         String?
+  isConnected Boolean
+  isLeader    Boolean
+  mic         Boolean
+  leaderPC    Int  // leader priority counter
+  Room        Room?   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId      String?
 
   @@index([handle])
 }
@@ -41,15 +41,10 @@ model Room {
   id          String       @id @default(uuid())
   members     Member[]
   videoPlayer VideoPlayer?
-  status      String       @default("Public")
-  kicked      Kicked[]
-}
-
-model Kicked {
-  id           String @id @default(uuid())
-  memberHandle String
-  room         Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  roomId       String
+  privacy     String       @default("Public")
+  playback    String       @default("voting")
+  roomMic     Boolean
+  kicked      String // store JSON.stringify(["handle1","handle2"])
 }
 
 model YtVideo {

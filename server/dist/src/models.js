@@ -35,16 +35,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.YtService = exports.User = void 0;
+exports.User = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const UserSchema = new mongoose_1.Schema({
     name: { type: String, index: true },
     handle: { type: String, required: true, unique: true, index: true },
-    profilePicture: { type: String },
+    pfp: { type: String },
     password: { type: String, required: true },
     friends: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" }],
-    friendRequests: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" }],
+    friendReqsSent: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" }],
+    friendReqsReceived: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" }],
 });
 UserSchema.methods.toJSON = function () {
     const user = this;
@@ -60,17 +61,11 @@ UserSchema.methods.comparePassword = function (candidatePassword) {
 };
 UserSchema.methods.generateAuthToken = function () {
     const token = jsonwebtoken_1.default.sign({
-        _id: this._id,
         name: this.name,
-        profilePicture: this.profilePicture,
+        pfp: this.pfp,
         handle: this.handle,
-    }, process.env.JWT_PRIVATE_KEY || "wefusdjnkcmjnkdsveuwdjnk34wefuijnk");
+    }, process.env.JWT_PRIVATE_KEY || "");
     return token;
 };
-const YtServiceSchema = new mongoose_1.Schema({
-    url: { type: String, required: true },
-});
-const YtService = mongoose_1.default.model("YtService", YtServiceSchema);
-exports.YtService = YtService;
 const User = mongoose_1.default.model("User", UserSchema);
 exports.User = User;

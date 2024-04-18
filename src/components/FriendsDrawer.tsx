@@ -13,7 +13,7 @@ import {
 // import {useGlobalStore} from "@/state/store";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { AccordionDemo } from "@/components/demo-accordian";
+import { FriendlistAccordian } from "./friendlistAccordian";
 
 export function FriendsDrawer() {
   return (
@@ -61,9 +61,9 @@ export function FriendsDrawer() {
             </div>
           </DrawerHeader>
           {/* </div> */}
-          <div className=" flex flex-col items-center justify-center gap-2 p-4">
-            <div className="flex w-full flex-col items-center justify-center rounded-md bg-primary-foreground/80 px-8 py-4">
-              <AccordionDemo />
+          <div className=" flex flex-col items-center justify-center gap-2 py-4">
+            <div className="flex w-full flex-col items-center justify-center rounded-md bg-primary-foreground/80 px-3">
+              <FriendlistAccordian />
             </div>
             {/* <p className="text-md  text-center text-lg font-bold leading-none tracking-tight md:text-lg">
               Layout Settings

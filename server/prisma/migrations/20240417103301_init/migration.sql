@@ -3,11 +3,11 @@ CREATE TABLE "Member" (
     "id" TEXT NOT NULL,
     "name" TEXT,
     "handle" TEXT NOT NULL,
-    "profilePicture" TEXT,
+    "pfp" TEXT,
     "isConnected" BOOLEAN NOT NULL,
     "isLeader" BOOLEAN NOT NULL,
-    "micEnabled" BOOLEAN NOT NULL,
-    "leaderPriorityCounter" INTEGER NOT NULL,
+    "mic" BOOLEAN NOT NULL,
+    "leaderPC" INTEGER NOT NULL,
     "roomId" TEXT,
 
     CONSTRAINT "Member_pkey" PRIMARY KEY ("id")
@@ -30,18 +30,12 @@ CREATE TABLE "VideoPlayer" (
 -- CreateTable
 CREATE TABLE "Room" (
     "id" TEXT NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'Public',
+    "privacy" TEXT NOT NULL DEFAULT 'Public',
+    "playback" TEXT NOT NULL DEFAULT 'voting',
+    "roomMic" BOOLEAN NOT NULL,
+    "kicked" TEXT NOT NULL,
 
     CONSTRAINT "Room_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Kicked" (
-    "id" TEXT NOT NULL,
-    "memberHandle" TEXT NOT NULL,
-    "roomId" TEXT NOT NULL,
-
-    CONSTRAINT "Kicked_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -70,6 +64,3 @@ ALTER TABLE "Member" ADD CONSTRAINT "Member_roomId_fkey" FOREIGN KEY ("roomId") 
 
 -- AddForeignKey
 ALTER TABLE "VideoPlayer" ADD CONSTRAINT "VideoPlayer_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Kicked" ADD CONSTRAINT "Kicked_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE CASCADE ON UPDATE CASCADE;

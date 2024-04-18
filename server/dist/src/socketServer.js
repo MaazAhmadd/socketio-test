@@ -30,7 +30,7 @@ function socketServer(io, prisma) {
                 return next(new Error("Authentication error"));
             }
             (0, config_1.logger)("auth middleware", "verifying token: ", token);
-            const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_PRIVATE_KEY || "wefusdjnkcmjnkdsveuwdjnk34wefuijnk");
+            const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_PRIVATE_KEY || "");
             (0, config_1.logger)("auth middleware", "token found, handle: ", decoded.handle);
             if (decoded) {
                 socket.user = decoded;
@@ -144,12 +144,12 @@ function makeRoom(socket, prisma, url) {
                     create: [
                         {
                             handle: ((_a = socket.user) === null || _a === void 0 ? void 0 : _a.handle) || "",
-                            profilePicture: ((_b = socket.user) === null || _b === void 0 ? void 0 : _b.profilePicture) || "",
+                            pfp: ((_b = socket.user) === null || _b === void 0 ? void 0 : _b.pfp) || "",
                             name: ((_c = socket.user) === null || _c === void 0 ? void 0 : _c.name) || "",
                             isConnected: true,
                             isLeader: true,
-                            micEnabled: false,
-                            leaderPriorityCounter: 0,
+                            mic: false,
+                            leaderPC: 0,
                         },
                     ],
                 },
@@ -163,7 +163,8 @@ function makeRoom(socket, prisma, url) {
                         playedTill: 0,
                     },
                 },
-                status: "Public",
+                roomMic: false,
+                kicked: JSON.stringify([]),
             },
             include: {
                 members: true,
@@ -192,8 +193,8 @@ function joinRoom(socket, prisma, roomId) {
             // const memberBeenToRoom = member.length > 0;
             if (member) {
                 const leader = yield getCurrentLeader(prisma, roomId);
-                if (member.leaderPriorityCounter < leader.leaderPriorityCounter) {
-                    (0, config_1.logger)("joinRoom", "joining member deserves leader", member.leaderPriorityCounter, leader.leaderPriorityCounter);
+                if (member.leaderPC < leader.leaderPC) {
+                    (0, config_1.logger)("joinRoom", "joining member deserves leader", member.leaderPC, leader.leaderPC);
                     // update leader
                     const updatedLeaderMember = yield prisma.member.update({
                         where: {
@@ -234,7 +235,7 @@ function joinRoom(socket, prisma, roomId) {
                         roomId,
                     },
                 });
-                (0, config_1.logger)("joinRoom", "totalMembers will be leaderPriorityCounter: ", totalMembers);
+                (0, config_1.logger)("joinRoom", "totalMembers will be leaderPC: ", totalMembers);
                 yield prisma.room.update({
                     where: {
                         id: roomId,
@@ -244,12 +245,12 @@ function joinRoom(socket, prisma, roomId) {
                             create: [
                                 {
                                     handle: ((_a = socket.user) === null || _a === void 0 ? void 0 : _a.handle) || "",
-                                    profilePicture: ((_b = socket.user) === null || _b === void 0 ? void 0 : _b.profilePicture) || "",
+                                    pfp: ((_b = socket.user) === null || _b === void 0 ? void 0 : _b.pfp) || "",
                                     name: ((_c = socket.user) === null || _c === void 0 ? void 0 : _c.name) || "",
                                     isConnected: true,
                                     isLeader: false,
-                                    micEnabled: false,
-                                    leaderPriorityCounter: totalMembers,
+                                    mic: false,
+                                    leaderPC: totalMembers,
                                 },
                             ],
                         },
@@ -324,7 +325,7 @@ function makeMemberLeave(prisma, socket) {
                         isConnected: true,
                     },
                     orderBy: {
-                        leaderPriorityCounter: "asc",
+                        leaderPC: "asc",
                     },
                 },
             },
@@ -340,8 +341,8 @@ function makeMemberLeave(prisma, socket) {
             return yield returnRoomWithActiveMembersInOrder(prisma, socket.roomId);
         }
         (0, config_1.logger)("makeMemberLeave", "room: ", room === null || room === void 0 ? void 0 : room.members);
-        let activeMembersWithHigherPC = room === null || room === void 0 ? void 0 : room.members.filter((m) => m.leaderPriorityCounter > currentUser.leaderPriorityCounter);
-        let activeMembersWithLowerPC = room === null || room === void 0 ? void 0 : room.members.filter((m) => m.leaderPriorityCounter < currentUser.leaderPriorityCounter);
+        let activeMembersWithHigherPC = room === null || room === void 0 ? void 0 : room.members.filter((m) => m.leaderPC > currentUser.leaderPC);
+        let activeMembersWithLowerPC = room === null || room === void 0 ? void 0 : room.members.filter((m) => m.leaderPC < currentUser.leaderPC);
         if (activeMembersWithHigherPC && activeMembersWithHigherPC.length > 0) {
             // check if there's another connected member, give leader to lowest priorityCounter
             const updatedLeaderMember = yield prisma.member.updateMany({
@@ -390,8 +391,8 @@ function giveLeader(prisma, socket, targetMember) {
             console.error("current and target members not in same room");
             return false;
         }
-        const currentLeaderPC = member === null || member === void 0 ? void 0 : member.leaderPriorityCounter;
-        const targetMemberPC = target.leaderPriorityCounter;
+        const currentLeaderPC = member === null || member === void 0 ? void 0 : member.leaderPC;
+        const targetMemberPC = target.leaderPC;
         yield prisma.member.updateMany({
             where: {
                 AND: {
@@ -400,20 +401,20 @@ function giveLeader(prisma, socket, targetMember) {
                 },
             },
             data: {
-                leaderPriorityCounter: -1,
+                leaderPC: -1,
             },
         });
         if (targetMemberPC - currentLeaderPC > 1) {
             yield prisma.member.updateMany({
                 where: {
                     roomId: socket.roomId,
-                    leaderPriorityCounter: {
+                    leaderPC: {
                         gte: currentLeaderPC,
                         lt: targetMemberPC,
                     },
                 },
                 data: {
-                    leaderPriorityCounter: { increment: 1 },
+                    leaderPC: { increment: 1 },
                 },
             });
         }
@@ -426,7 +427,7 @@ function giveLeader(prisma, socket, targetMember) {
                     },
                 },
                 data: {
-                    leaderPriorityCounter: { increment: 1 },
+                    leaderPC: { increment: 1 },
                     isLeader: false,
                 },
             });
@@ -439,7 +440,7 @@ function giveLeader(prisma, socket, targetMember) {
                 },
             },
             data: {
-                leaderPriorityCounter: currentLeaderPC,
+                leaderPC: currentLeaderPC,
                 isLeader: true,
             },
         });
@@ -459,7 +460,7 @@ function returnRoomWithActiveMembersInOrder(prisma, roomId) {
                         isConnected: true,
                     },
                     orderBy: {
-                        leaderPriorityCounter: "asc",
+                        leaderPC: "asc",
                     },
                 },
                 videoPlayer: true,
@@ -468,9 +469,9 @@ function returnRoomWithActiveMembersInOrder(prisma, roomId) {
     });
 }
 exports.returnRoomWithActiveMembersInOrder = returnRoomWithActiveMembersInOrder;
-function getCurrentLeaderPriorityCounter(prisma, roomId) {
+function getCurrentleaderPC(prisma, roomId) {
     return __awaiter(this, void 0, void 0, function* () {
-        return (yield getCurrentLeader(prisma, roomId)).leaderPriorityCounter;
+        return (yield getCurrentLeader(prisma, roomId)).leaderPC;
     });
 }
 function getCurrentMemberPriorityCounter(prisma, socket) {
@@ -478,7 +479,7 @@ function getCurrentMemberPriorityCounter(prisma, socket) {
         if (!socket.roomId)
             return false;
         return (yield getMemberFromRoom(prisma, socket.user.handle, socket.roomId))
-            .leaderPriorityCounter;
+            .leaderPC;
     });
 }
 const deleteInactiveRooms = (prisma) => __awaiter(void 0, void 0, void 0, function* () {

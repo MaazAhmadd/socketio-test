@@ -25,7 +25,7 @@ router.get(
               isConnected: true,
             },
             orderBy: {
-              leaderPriorityCounter: "asc",
+              leaderPC: "asc",
             },
           },
           videoPlayer: true,

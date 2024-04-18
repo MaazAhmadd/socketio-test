@@ -3,7 +3,7 @@ const router = express.Router();
 import { User } from "./models";
 import jwt from "jsonwebtoken";
 import Mongoose from "mongoose";
-import { DecodedUser } from "../types/types";
+import { CurrentUser, DecodedUser } from "../types/types";
 import { logger } from "./config";
 
 // middleware to check if x-auth-token token attached and valid
@@ -14,7 +14,7 @@ export const authUser = (req: Request, res: Response, next: NextFunction) => {
   try {
     const decoded = jwt.verify(
       token as string,
-      process.env.JWT_PRIVATE_KEY || "wefusdjnkcmjnkdsveuwdjnk34wefuijnk",
+      process.env.JWT_PRIVATE_KEY || "",
     );
     req.user = decoded as DecodedUser;
     next();
@@ -28,12 +28,14 @@ export const authUser = (req: Request, res: Response, next: NextFunction) => {
 router.post("/register", async (req: Request, res: Response) => {
   try {
     logger("/api/user/register", "register router req.body: ", req.body);
-    const { name, handle, profilePicture, password } = req.body;
+    const { name, handle, pfp, password } = req.body as DecodedUser & {
+      password: string;
+    };
     let user = await User.findOne({ handle });
     if (user) {
       return res.status(200).send(user.generateAuthToken());
     }
-    user = new User({ name, handle, profilePicture, password });
+    user = new User({ name, handle, pfp, password });
     await user.save();
 
     res.status(201).send(user.generateAuthToken());
@@ -45,7 +47,7 @@ router.post("/register", async (req: Request, res: Response) => {
 // Update user by id or handle whatever is provided
 router.put("/updateuser/:id", authUser, async (req: Request, res: Response) => {
   const updates = Object.keys(req.body);
-  const allowedUpdates = ["name", "handle", "profilePicture", "password"];
+  const allowedUpdates = ["name", "handle", "pfp", "password"];
   const isValidOperation = updates.some((update) =>
     allowedUpdates.includes(update),
   );
@@ -78,50 +80,63 @@ router.put("/updateuser/:id", authUser, async (req: Request, res: Response) => {
 
 // Send Friend Request
 router.get(
-  "/sendFriendRequest/:senderId/:receiverId",
+  "/sendFriendRequest/:receiverHandle",
   authUser,
   async (req: Request, res: Response) => {
     try {
-      const user = await User.findById(req.params.senderId);
-      const friend = await User.findById(req.params.receiverId);
+      const user = await User.findOne({
+        handle: req.user?.handle,
+      });
+      const friend = await User.findOne({ handle: req.params.receiverHandle });
+      logger("/api/user/sendFriendRequest", "user: ", user, "friend: ", friend);
       if (!user || !friend) {
         return res.status(404).send();
       }
-
-      if (!friend.friendRequests.includes(user._id)) {
-        friend.friendRequests.push(user._id);
+      if (
+        !friend.friends.includes(friend._id) &&
+        !user.friendReqsSent.includes(friend._id)
+      ) {
+        friend.friendReqsReceived.push(user._id);
+        user.friendReqsSent.push(friend._id);
+        await user.save();
         await friend.save();
+        res.status(200).json({ message: "Friend request sent successfully." });
+      } else {
+        res.status(400).json({ message: "Friend request already sent." });
       }
-
-      res.send(friend);
     } catch (e) {
       logger("/api/user/sendFriendRequest", "error in sendFriendRequest: ", e);
-
       res.status(500).send();
     }
   },
-);
-// Accept Friend Request
+); // Accept Friend Request
 router.get(
-  "/acceptFriendRequest/:senderId/:receiverId",
+  "/acceptFriendRequest/:senderHandle",
   authUser,
   async (req: Request, res: Response) => {
     try {
-      const user = await User.findById(req.params.senderId);
-      const friend = await User.findById(req.params.receiverId);
+      const user = await User.findOne({ handle: req.user?.handle });
+      const friend = await User.findOne({ handle: req.params.senderHandle });
       if (!user || !friend) {
         return res.status(404).send();
       }
 
-      if (friend.friendRequests.includes(user._id)) {
-        friend.friendRequests.pull(user._id);
+      if (
+        friend.friendReqsReceived.includes(user._id) &&
+        !user.friends.includes(friend._id)
+      ) {
+        friend.friendReqsReceived.pull(user._id);
         friend.friends.push(user._id);
+        user.friendReqsSent.pull(friend._id);
         user.friends.push(friend._id);
         await friend.save();
         await user.save();
+        res
+          .status(200)
+          .json({ message: "Friend request accepted successfully." });
+      } else {
+        res.status(400).json({ message: "no valid request to accept" });
       }
-
-      res.send({ user, friend });
     } catch (e) {
       logger(
         "/api/user/acceptFriendRequest",
@@ -132,14 +147,128 @@ router.get(
     }
   },
 );
+// Remove Friend
+router.get(
+  "/removeFriend/:friendHandle",
+  authUser,
+  async (req: Request, res: Response) => {
+    try {
+      const user = await User.findOne({
+        handle: req.user?.handle,
+      });
+      const friend = await User.findOne({ handle: req.params.friendHandle });
+      if (!user || !friend) {
+        return res.status(404).send();
+      }
+
+      if (user.friends.includes(friend._id)) {
+        user.friends.pull(friend._id);
+        friend.friends.pull(user._id);
+        await user.save();
+        await friend.save();
+        res.status(200).json({ message: "Friend removed successfully." });
+      } else {
+        res.status(400).json({ message: "Friend not found." });
+      }
+    } catch (e) {
+      logger("/api/user/removeFriend", "error in removeFriend: ", e);
+      res.status(500).send();
+    }
+  },
+);
+// get Friendlist
+router.get(
+  "/fetchFriendlist",
+  authUser,
+  async (req: Request, res: Response) => {
+    try {
+      logger(
+        "/api/user/fetchFriendlist",
+        "fetchFriendlist: ",
+        req.user?.handle,
+      );
+      const user = await User.findOne({
+        handle: req.user?.handle,
+      }).populate("friends", "handle -_id");
+      logger("/api/user/fetchFriendlist", "user: ", user);
+      if (!user) {
+        return res.status(404).send();
+      }
+      const friendsHandles = user.friends.map((f: any) => f.handle);
+      res.status(200).json({ friends: friendsHandles });
+    } catch (e) {
+      logger("/api/user/fetchFriendlist", "error in fetchFriendlist: ", e);
+      res.status(500).send();
+    }
+  },
+);
+// Fetch Friend Requests Received
+router.get(
+  "/fetchFriendRequestsReceived",
+  authUser,
+  async (req: Request, res: Response) => {
+    try {
+      const user = await User.findOne({
+        handle: req.user?.handle,
+      }).populate("friendReqsReceived", "handle -_id");
+
+      if (!user) {
+        return res.status(404).send();
+      }
+      const friendRequestsReceivedHandles = user.friendReqsReceived.map(
+        (user: any) => user.handle,
+      );
+      res
+        .status(200)
+        .json({ friendRequestsReceived: friendRequestsReceivedHandles });
+    } catch (e) {
+      logger(
+        "/api/user/fetchFriendRequestsReceived",
+        "error in fetchFriendRequestsReceived: ",
+        e,
+      );
+      res.status(500).send();
+    }
+  },
+);
+
+// Fetch Friend Requests Sent
+router.get(
+  "/fetchFriendRequestsSent",
+  authUser,
+  async (req: Request, res: Response) => {
+    try {
+      const user = await User.findOne({
+        handle: req.user?.handle,
+      }).populate("friendReqsSent", "handle -_id");
+      if (!user) {
+        return res.status(404).send();
+      }
+      const friendRequestsSentHandles = user.friendReqsSent.map(
+        (user: any) => user.handle,
+      );
+      res.status(200).json({ friendRequestsSent: friendRequestsSentHandles });
+    } catch (e) {
+      logger(
+        "/api/user/fetchFriendRequestsSent",
+        "error in fetchFriendRequestsSent: ",
+        e,
+      );
+      res.status(500).send();
+    }
+  },
+);
+
 // Get a single user by ID or handle
 router.get("/getuser/:id", authUser, async (req: Request, res: Response) => {
   try {
     let user: any;
     if (Mongoose.Types.ObjectId.isValid(req.params.id)) {
-      user = await User.findById(req.params.id).select("-password");
+      user = await User.findById(req.params.id).select("-password -_id");
     } else {
-      user = await User.findOne({ handle: req.params.id }).select("-password");
+      user = await User.findOne({ handle: req.params.id }).select(
+        "-password -_id",
+      );
     }
     if (!user) {
       return res.status(404).send("User not found");
@@ -151,10 +280,37 @@ router.get("/getuser/:id", authUser, async (req: Request, res: Response) => {
   }
 });
 
+// Get current user by ID or handle
+router.get("/getCurrentUser", authUser, async (req: Request, res: Response) => {
+  let userToSend: CurrentUser
+  try {
+    let user = await User.findOne({ handle: req.user?.handle })
+      .select("-password -_id")
+      .populate("friends friendReqsSent friendReqsReceived", "handle -_id");
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+    userToSend = {
+      name: user.name,
+      handle: user.handle,
+      pfp: user.pfp,
+      friends: user.friends.map((f: any) => f.handle as string),
+      friendReqsSent: user.friendReqsSent.map((f: any) => f.handle as string),
+      friendReqsReceived: user.friendReqsReceived.map(
+        (f: any) => f.handle as string,
+      ),
+    };
+    res.send(userToSend);
+  } catch (error) {
+    logger("/api/user/getuser", "error in getuser: ", error);
+    res.status(500).send(error);
+  }
+});
+
 // Get all users
 router.get("/all", authUser, async (req: Request, res: Response) => {
   try {
-    const users = await User.find({}).select("-password");
+    const users = await User.find({}).select("-password -_id");
     res.send(users);
   } catch (error) {
     logger("/api/user/all", "error in all: ", error);
@@ -174,7 +330,7 @@ router.get("/search", authUser, async (req: Request, res: Response) => {
         { name: { $regex: query as string, $options: "i" } },
         { handle: { $regex: query as string, $options: "i" } },
       ],
-    }).select("name handle profilePicture");
+    }).select("name handle pfp");
 
     res.send(users);
   } catch (error) {

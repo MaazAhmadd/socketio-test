@@ -51,39 +51,48 @@ type RoomJoinData = {
   roomId: string;
 };
 interface Room {
+  id: string;
   members: Member[];
   videoPlayer: VideoPlayer | null;
-  status: string;
-  id: string;
+  privacy: string;
+  playback: string;
+  roomMic: boolean;
+  kicked: string[];
 }
+
 // random Music -> aesthetic,jazz,pop,rock,hip-hop,classical,electronic,rap,beatbox,bollywood
 // music suggestion platform with categories. // comment: make sure to suggest the original video so your vote gets counted
 interface Member {
-  handle: string;
-  profilePicture: string | null;
   name: string | null;
+  handle: string;
+  pfp: string | null;
   isConnected: boolean;
   isLeader: boolean;
-  micEnabled: boolean;
-  leaderPriorityCounter: number;
+  mic: boolean;
+  leaderPC: number;
   roomId: string | null;
-  // rooms: Room[];
 }
 
 interface VideoPlayer {
   isPlaying: boolean;
   sourceUrl: string;
-  totalDuration: number;
-  playedTill: number;
   thumbnailUrl: string;
   title: string;
+  totalDuration: number;
+  playedTill: number;
+  roomId: string;
 }
 
+type CurrentUser = DecodedUser & {
+  friends: string[];
+  friendReqsSent: string[];
+  friendReqsReceived: string[];
+};
+
 interface DecodedUser {
-  _id: string;
   name?: string;
-  profilePicture?: string;
   handle: string;
+  pfp?: string;
 }
 
 type VideoInfo = {
@@ -109,4 +118,5 @@ export type {
   RoomJoinData,
   VideoInfo,
   SupportedPlatforms,
+  CurrentUser,
 };

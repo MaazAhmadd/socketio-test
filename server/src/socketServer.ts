@@ -6,7 +6,6 @@ import {
   RoomCreationData,
   ServerToClientEvents,
 } from "../types/types";
-// import { giveLeader, makeMemberJoin, makeMemberLeave } from "./utils";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { ytInfoService } from "./ytRouter";
@@ -35,7 +34,7 @@ export default function socketServer(
       logger("auth middleware", "verifying token: ", token);
       const decoded = jwt.verify(
         token,
-        process.env.JWT_PRIVATE_KEY || "wefusdjnkcmjnkdsveuwdjnk34wefuijnk",
+        process.env.JWT_PRIVATE_KEY || "",
       );
       logger(
         "auth middleware",
@@ -179,12 +178,12 @@ async function makeRoom(
         create: [
           {
             handle: socket.user?.handle || "",
-            profilePicture: socket.user?.profilePicture || "",
+            pfp: socket.user?.pfp || "",
             name: socket.user?.name || "",
             isConnected: true,
             isLeader: true,
-            micEnabled: false,
-            leaderPriorityCounter: 0,
+            mic: false,
+            leaderPC: 0,
           },
         ],
       },
@@ -198,8 +197,8 @@ async function makeRoom(
           playedTill: 0,
         },
       },
-
-      status: "Public",
+      roomMic: false,
+      kicked: JSON.stringify([]),
     },
     include: {
       members: true,
@@ -229,12 +228,12 @@ async function joinRoom(
     // const memberBeenToRoom = member.length > 0;
     if (member) {
       const leader = await getCurrentLeader(prisma, roomId);
-      if (member.leaderPriorityCounter < leader!.leaderPriorityCounter) {
+      if (member.leaderPC < leader!.leaderPC) {
         logger(
           "joinRoom",
           "joining member deserves leader",
-          member.leaderPriorityCounter,
-          leader!.leaderPriorityCounter,
+          member.leaderPC,
+          leader!.leaderPC,
         );
         // update leader
         const updatedLeaderMember = await prisma.member.update({
@@ -274,11 +273,7 @@ async function joinRoom(
           roomId,
         },
       });
-      logger(
-        "joinRoom",
-        "totalMembers will be leaderPriorityCounter: ",
-        totalMembers,
-      );
+      logger("joinRoom", "totalMembers will be leaderPC: ", totalMembers);
       await prisma.room.update({
         where: {
           id: roomId,
@@ -288,12 +283,12 @@ async function joinRoom(
             create: [
               {
                 handle: socket.user?.handle || "",
-                profilePicture: socket.user?.profilePicture || "",
+                pfp: socket.user?.pfp || "",
                 name: socket.user?.name || "",
                 isConnected: true,
                 isLeader: false,
-                micEnabled: false,
-                leaderPriorityCounter: totalMembers,
+                mic: false,
+                leaderPC: totalMembers,
               },
             ],
           },
@@ -381,7 +376,7 @@ async function makeMemberLeave(prisma: PrismaClient, socket: CustomSocket) {
           isConnected: true,
         },
         orderBy: {
-          leaderPriorityCounter: "asc",
+          leaderPC: "asc",
         },
       },
     },
@@ -399,10 +394,10 @@ async function makeMemberLeave(prisma: PrismaClient, socket: CustomSocket) {
   logger("makeMemberLeave", "room: ", room?.members);
 
   let activeMembersWithHigherPC = room?.members.filter(
-    (m) => m.leaderPriorityCounter > currentUser!.leaderPriorityCounter,
+    (m) => m.leaderPC > currentUser!.leaderPC,
   );
   let activeMembersWithLowerPC = room?.members.filter(
-    (m) => m.leaderPriorityCounter < currentUser!.leaderPriorityCounter,
+    (m) => m.leaderPC < currentUser!.leaderPC,
   );
 
   if (activeMembersWithHigherPC && activeMembersWithHigherPC.length > 0) {
@@ -460,8 +455,8 @@ async function giveLeader(
     return false;
   }
 
-  const currentLeaderPC = member?.leaderPriorityCounter;
-  const targetMemberPC = target.leaderPriorityCounter;
+  const currentLeaderPC = member?.leaderPC;
+  const targetMemberPC = target.leaderPC;
 
   await prisma.member.updateMany({
     where: {
@@ -471,20 +466,20 @@ async function giveLeader(
       },
     },
     data: {
-      leaderPriorityCounter: -1,
+      leaderPC: -1,
     },
   });
   if (targetMemberPC - currentLeaderPC > 1) {
     await prisma.member.updateMany({
       where: {
         roomId: socket.roomId,
-        leaderPriorityCounter: {
+        leaderPC: {
           gte: currentLeaderPC,
           lt: targetMemberPC,
         },
       },
       data: {
-        leaderPriorityCounter: { increment: 1 },
+        leaderPC: { increment: 1 },
       },
     });
   } else {
@@ -496,7 +491,7 @@ async function giveLeader(
         },
       },
       data: {
-        leaderPriorityCounter: { increment: 1 },
+        leaderPC: { increment: 1 },
         isLeader: false,
       },
     });
@@ -509,7 +504,7 @@ async function giveLeader(
       },
     },
     data: {
-      leaderPriorityCounter: currentLeaderPC,
+      leaderPC: currentLeaderPC,
       isLeader: true,
     },
   });
@@ -531,7 +526,7 @@ export async function returnRoomWithActiveMembersInOrder(
           isConnected: true,
         },
         orderBy: {
-          leaderPriorityCounter: "asc",
+          leaderPC: "asc",
         },
       },
       videoPlayer: true,
@@ -539,11 +534,8 @@ export async function returnRoomWithActiveMembersInOrder(
   });
 }
 
-async function getCurrentLeaderPriorityCounter(
-  prisma: PrismaClient,
-  roomId: string,
-) {
-  return (await getCurrentLeader(prisma, roomId))!.leaderPriorityCounter;
+async function getCurrentleaderPC(prisma: PrismaClient, roomId: string) {
+  return (await getCurrentLeader(prisma, roomId))!.leaderPC;
 }
 async function getCurrentMemberPriorityCounter(
   prisma: PrismaClient,
@@ -551,7 +543,7 @@ async function getCurrentMemberPriorityCounter(
 ) {
   if (!socket.roomId) return false;
   return (await getMemberFromRoom(prisma, socket.user!.handle, socket.roomId))!
-    .leaderPriorityCounter;
+    .leaderPC;
 }
 export const deleteInactiveRooms = async (prisma: PrismaClient) => {
   const rooms = await prisma.room.findMany({

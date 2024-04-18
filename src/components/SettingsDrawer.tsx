@@ -10,7 +10,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import {useGlobalStore} from "@/state/store";
+import { useGlobalStore } from "@/state/store";
 
 export function SettingsDrawer() {
   const { logout, decodedAuthToken } = useGlobalStore((state) => ({
@@ -44,9 +44,9 @@ export function SettingsDrawer() {
           {/* </div> */}
           <div className=" flex flex-col items-center justify-center gap-2  p-4">
             <div className="flex w-full flex-col items-center justify-center rounded-md bg-primary-foreground/80 px-8 py-4">
-              {decodedAuthToken?.profilePicture ? (
+              {decodedAuthToken?.pfp ? (
                 <img
-                  src={decodedAuthToken?.profilePicture}
+                  src={decodedAuthToken?.pfp}
                   className="mb-2 h-24 w-24 rounded-full"
                   alt=""
                 />
@@ -58,7 +58,7 @@ export function SettingsDrawer() {
               </p>
               <p className="text-sm  text-muted-foreground">
                 {" "}
-                {decodedAuthToken?.handle || "Handle"}
+                @{decodedAuthToken?.handle || "Handle"}
               </p>
               <Button
                 variant="ghost"
