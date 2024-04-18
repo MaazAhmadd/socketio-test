@@ -36,9 +36,9 @@ const authUser = (req, res, next) => {
 };
 exports.authUser = authUser;
 // Create user
-router.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        (0, config_1.logger)("/api/user/register", "register router req.body: ", req.body);
+makeRoute("post", "/user/register", [], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        (0, config_1.logger)("/user/register", "register router req.body: ", req.body);
         const { name, handle, pfp, password } = req.body;
         let user = yield models_1.User.findOne({ handle });
         if (user) {
@@ -47,27 +47,24 @@ router.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, functio
         user = new models_1.User({ name, handle, pfp, password });
         yield user.save();
         res.status(201).send(user.generateAuthToken());
-    }
-    catch (error) {
-        (0, config_1.logger)("/api/user/register", "error in register: ", error);
-        res.status(400).send(error);
-    }
-}));
+    });
+});
 // Update user by id or handle whatever is provided
-router.put("/updateuser/:id", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const updates = Object.keys(req.body);
-    const allowedUpdates = ["name", "handle", "pfp", "password"];
-    const isValidOperation = updates.some((update) => allowedUpdates.includes(update));
-    if (!isValidOperation) {
-        return res.status(400).send({ error: "Invalid updates!" });
-    }
-    try {
+makeRoute("put", "/user/updateuser/:id", [exports.authUser], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
+        const updates = Object.keys(req.body);
+        const allowedUpdates = ["name", "handle", "pfp", "password"];
+        const isValidOperation = updates.some((update) => allowedUpdates.includes(update));
+        if (!isValidOperation) {
+            return res.status(400).send({ error: "Invalid updates!" });
+        }
         let user;
         if (mongoose_1.default.Types.ObjectId.isValid(req.params.id)) {
             user = yield models_1.User.findById(req.params.id);
         }
         else {
-            user = yield models_1.User.findOne({ handle: req.params.id });
+            user = yield models_1.User.findOne({ handle: (_a = req.user) === null || _a === void 0 ? void 0 : _a.handle });
         }
         if (!user) {
             return res.status(404).send("User not found");
@@ -75,21 +72,16 @@ router.put("/updateuser/:id", exports.authUser, (req, res) => __awaiter(void 0, 
         updates.forEach((update) => (user[update] = req.body[update]));
         yield user.save();
         res.send(user);
-    }
-    catch (e) {
-        (0, config_1.logger)("/api/user/updateuser", "error in updateuser: ", e);
-        res.status(400).send(e);
-    }
-}));
+    });
+});
 // Send Friend Request
-router.get("/sendFriendRequest/:receiverHandle", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    try {
+makeRoute("get", "/user/sendFriendRequest/:receiverHandle", [exports.authUser], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
         const user = yield models_1.User.findOne({
             handle: (_a = req.user) === null || _a === void 0 ? void 0 : _a.handle,
         });
         const friend = yield models_1.User.findOne({ handle: req.params.receiverHandle });
-        (0, config_1.logger)("/api/user/sendFriendRequest", "user: ", user, "friend: ", friend);
         if (!user || !friend) {
             return res.status(404).send();
         }
@@ -104,16 +96,13 @@ router.get("/sendFriendRequest/:receiverHandle", exports.authUser, (req, res) =>
         else {
             res.status(400).json({ message: "Friend request already sent." });
         }
-    }
-    catch (e) {
-        (0, config_1.logger)("/api/user/sendFriendRequest", "error in sendFriendRequest: ", e);
-        res.status(500).send();
-    }
-})); // Accept Friend Request
-router.get("/acceptFriendRequest/:senderHandle", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
-    try {
-        const user = yield models_1.User.findOne({ handle: (_b = req.user) === null || _b === void 0 ? void 0 : _b.handle });
+    });
+});
+// Accept Friend Request
+makeRoute("get", "/user/acceptFriendRequest/:senderHandle", [exports.authUser], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
+        const user = yield models_1.User.findOne({ handle: (_a = req.user) === null || _a === void 0 ? void 0 : _a.handle });
         const friend = yield models_1.User.findOne({ handle: req.params.senderHandle });
         if (!user || !friend) {
             return res.status(404).send();
@@ -133,18 +122,14 @@ router.get("/acceptFriendRequest/:senderHandle", exports.authUser, (req, res) =>
         else {
             res.status(400).json({ message: "no valid request to accept" });
         }
-    }
-    catch (e) {
-        (0, config_1.logger)("/api/user/acceptFriendRequest", "error in acceptFriendRequest: ", e);
-        res.status(500).send();
-    }
-}));
+    });
+});
 // Remove Friend
-router.get("/removeFriend/:friendHandle", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c;
-    try {
+makeRoute("get", "/user/removeFriend/:friendHandle", [exports.authUser], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
         const user = yield models_1.User.findOne({
-            handle: (_c = req.user) === null || _c === void 0 ? void 0 : _c.handle,
+            handle: (_a = req.user) === null || _a === void 0 ? void 0 : _a.handle,
         });
         const friend = yield models_1.User.findOne({ handle: req.params.friendHandle });
         if (!user || !friend) {
@@ -160,38 +145,28 @@ router.get("/removeFriend/:friendHandle", exports.authUser, (req, res) => __awai
         else {
             res.status(400).json({ message: "Friend not found." });
         }
-    }
-    catch (e) {
-        (0, config_1.logger)("/api/user/removeFriend", "error in removeFriend: ", e);
-        res.status(500).send();
-    }
-}));
+    });
+});
 // get Friendlist
-router.get("/fetchFriendlist", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d, _e;
-    try {
-        (0, config_1.logger)("/api/user/fetchFriendlist", "fetchFriendlist: ", (_d = req.user) === null || _d === void 0 ? void 0 : _d.handle);
+makeRoute("get", "/user/fetchFriendlist", [exports.authUser], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
         const user = yield models_1.User.findOne({
-            handle: (_e = req.user) === null || _e === void 0 ? void 0 : _e.handle,
+            handle: (_a = req.user) === null || _a === void 0 ? void 0 : _a.handle,
         }).populate("friends", "handle -_id");
-        (0, config_1.logger)("/api/user/fetchFriendlist", "user: ", user);
         if (!user) {
             return res.status(404).send();
         }
         const friendsHandles = user.friends.map((f) => f.handle);
         res.status(200).json({ friends: friendsHandles });
-    }
-    catch (e) {
-        (0, config_1.logger)("/api/user/fetchFriendlist", "error in fetchFriendlist: ", e);
-        res.status(500).send();
-    }
-}));
+    });
+});
 // Fetch Friend Requests Received
-router.get("/fetchFriendRequestsReceived", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _f;
-    try {
+makeRoute("get", "/user/fetchFriendRequestsReceived", [exports.authUser], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
         const user = yield models_1.User.findOne({
-            handle: (_f = req.user) === null || _f === void 0 ? void 0 : _f.handle,
+            handle: (_a = req.user) === null || _a === void 0 ? void 0 : _a.handle,
         }).populate("friendReqsReceived", "handle -_id");
         if (!user) {
             return res.status(404).send();
@@ -200,33 +175,25 @@ router.get("/fetchFriendRequestsReceived", exports.authUser, (req, res) => __awa
         res
             .status(200)
             .json({ friendRequestsReceived: friendRequestsReceivedHandles });
-    }
-    catch (e) {
-        (0, config_1.logger)("/api/user/fetchFriendRequestsReceived", "error in fetchFriendRequestsReceived: ", e);
-        res.status(500).send();
-    }
-}));
+    });
+});
 // Fetch Friend Requests Sent
-router.get("/fetchFriendRequestsSent", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _g;
-    try {
+makeRoute("get", "/user/fetchFriendRequestsSent", [exports.authUser], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
         const user = yield models_1.User.findOne({
-            handle: (_g = req.user) === null || _g === void 0 ? void 0 : _g.handle,
+            handle: (_a = req.user) === null || _a === void 0 ? void 0 : _a.handle,
         }).populate("friendReqsSent", "handle -_id");
         if (!user) {
             return res.status(404).send();
         }
         const friendRequestsSentHandles = user.friendReqsSent.map((user) => user.handle);
         res.status(200).json({ friendRequestsSent: friendRequestsSentHandles });
-    }
-    catch (e) {
-        (0, config_1.logger)("/api/user/fetchFriendRequestsSent", "error in fetchFriendRequestsSent: ", e);
-        res.status(500).send();
-    }
-}));
+    });
+});
 // Get a single user by ID or handle
-router.get("/getuser/:id", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
+makeRoute("get", "/user/getuser/:id", [exports.authUser], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
         let user;
         if (mongoose_1.default.Types.ObjectId.isValid(req.params.id)) {
             user = yield models_1.User.findById(req.params.id).select("-password -_id");
@@ -238,18 +205,14 @@ router.get("/getuser/:id", exports.authUser, (req, res) => __awaiter(void 0, voi
             return res.status(404).send("User not found");
         }
         res.send(user);
-    }
-    catch (error) {
-        (0, config_1.logger)("/api/user/getuser", "error in getuser: ", error);
-        res.status(500).send(error);
-    }
-}));
+    });
+});
 // Get current user by ID or handle
-router.get("/getCurrentUser", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _h;
-    let userToSend;
-    try {
-        let user = yield models_1.User.findOne({ handle: (_h = req.user) === null || _h === void 0 ? void 0 : _h.handle })
+makeRoute("get", "/user/getCurrentUser", [exports.authUser], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
+        let userToSend;
+        let user = yield models_1.User.findOne({ handle: (_a = req.user) === null || _a === void 0 ? void 0 : _a.handle })
             .select("-password -_id")
             .populate("friends friendReqsSent friendReqsReceived", "handle -_id");
         if (!user) {
@@ -264,28 +227,18 @@ router.get("/getCurrentUser", exports.authUser, (req, res) => __awaiter(void 0, 
             friendReqsReceived: user.friendReqsReceived.map((f) => f.handle),
         };
         res.send(userToSend);
-    }
-    catch (error) {
-        (0, config_1.logger)("/api/user/getuser", "error in getuser: ", error);
-        res.status(500).send(error);
-    }
-}));
+    });
+});
 // Get all users
-router.get("/all", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
+makeRoute("get", "/user/all", [exports.authUser], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
         const users = yield models_1.User.find({}).select("-password -_id");
         res.send(users);
-    }
-    catch (error) {
-        (0, config_1.logger)("/api/user/all", "error in all: ", error);
-        res.status(500).send(error);
-    }
-}));
+    });
+});
 // Search users by name or handle
-// /api/user
-router.get("/search", exports.authUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    (0, config_1.logger)("/api/user/search", "search query: ", req.query.q);
-    try {
+makeRoute("get", "/user/search", [exports.authUser], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
         const query = req.query.q;
         let users = yield models_1.User.find({
             $or: [
@@ -294,31 +247,22 @@ router.get("/search", exports.authUser, (req, res) => __awaiter(void 0, void 0, 
             ],
         }).select("name handle pfp");
         res.send(users);
-    }
-    catch (error) {
-        (0, config_1.logger)("/api/user/search", "error in search: ", error);
-        res.status(500).send(error);
-    }
-}));
-router.get("/check", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    (0, config_1.logger)("/api/user/check", "check query: ", req.query.q);
-    try {
+    });
+});
+// check if user exists
+makeRoute("get", "/user/check", [exports.authUser], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
         const handle = req.query.q;
         const user = yield models_1.User.findOne({ handle: handle });
         if (!user) {
             return res.status(200).send("false");
         }
         res.send("true");
-    }
-    catch (error) {
-        (0, config_1.logger)("/api/user/check", "error in check: ", error);
-        res.status(500).send(error);
-    }
-}));
+    });
+});
 // login user
-router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    (0, config_1.logger)("/api/user/login", "req.body: ", req.body);
-    try {
+makeRoute("post", "/user/login", [], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
         const { handle, password } = req.body;
         const user = yield models_1.User.findOne({ handle });
         if (!user) {
@@ -329,10 +273,25 @@ router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* 
             return res.status(400).send({ error: "Invalid handle or password" });
         }
         res.send(user.generateAuthToken());
-    }
-    catch (error) {
-        (0, config_1.logger)("/api/user/login", "error in login: ", error);
-        res.status(500).send(error);
-    }
-}));
+    });
+});
+function makeRoute(route, endpoint, middleware, fn, 
+// router: Router,
+errorMsg = "error on the server, check logs") {
+    return router[route](endpoint, middleware, (req, res) => __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield fn(req, res);
+        }
+        catch (error) {
+            (0, config_1.logger)(endpoint, errorMsg, error);
+            if (process.env.NODE_ENV === "production") {
+                res.status(500).send(errorMsg);
+            }
+            else {
+                if (error instanceof Error)
+                    res.status(500).send(error.message);
+            }
+        }
+    }));
+}
 exports.default = router;

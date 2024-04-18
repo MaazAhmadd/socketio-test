@@ -90,9 +90,9 @@ setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
 // }, 10_000);
 // }, 86_400_000);
 app.get("/api/test", (req, res) => res.send("Express Ready"));
-app.use("/api/user", userRouter_1.default);
-app.use("/api/room", roomRouter_1.default);
-app.use("/api/ytservice", ytRouter_1.default);
+app.use("/api", userRouter_1.default);
+app.use("/api", roomRouter_1.default);
+app.use("/api", ytRouter_1.default);
 server.listen(port, () => {
     if (config_1.disableGlobalLogging) {
         console.log("[production] server running at http://localhost:" + port);

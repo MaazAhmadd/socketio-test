@@ -8,17 +8,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -27,46 +16,59 @@ exports.ytInfoService = void 0;
 const express_1 = __importDefault(require("express"));
 const axios_1 = __importDefault(require("axios"));
 const config_1 = require("./config");
+const userRouter_1 = require("./userRouter");
 const router = express_1.default.Router();
-router.get("/", (_a, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
-    var { prisma } = _a, req = __rest(_a, ["prisma"]);
-    try {
-        const videoInfo = yield ytInfoService((_b = req.query) === null || _b === void 0 ? void 0 : _b.url, prisma);
+makeRoute("get", "/ytservice", [userRouter_1.authUser], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
+        const videoInfo = yield ytInfoService((_a = req.query) === null || _a === void 0 ? void 0 : _a.url, req.prisma);
         if (videoInfo) {
             return res.send(videoInfo);
         }
-        return res.status(404).send("video not found");
-    }
-    catch (error) {
-        (0, config_1.logger)("/api/ytservice", "error: ", error);
-        res.status(500).json({
-            errorMessage: "An error occurred on the server. [post - /api/ytservice]",
-            error,
-        });
-    }
-}));
-router.get("/search", (_c, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d, _e;
-    var { prisma } = _c, req = __rest(_c, ["prisma"]);
-    (0, config_1.logger)("/api/ytservice/search", "query: ", (_d = req.query) === null || _d === void 0 ? void 0 : _d.q);
-    try {
-        const response = yield searchVideos((_e = req.query) === null || _e === void 0 ? void 0 : _e.q, prisma);
-        if (response) {
-            (0, config_1.logger)("/api/ytservice/search", "videos found", response.length);
-            return res.send(response);
+        res.status(404).send("video not found");
+    });
+});
+makeRoute("get", "/ytservice/search", [userRouter_1.authUser], function (req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
+        (0, config_1.logger)("/ytservice/search", "query: ", (_a = req.query) === null || _a === void 0 ? void 0 : _a.q);
+        try {
+            const response = yield searchVideos((_b = req.query) === null || _b === void 0 ? void 0 : _b.q, req.prisma);
+            if (response) {
+                (0, config_1.logger)("/ytservice/search", "videos found", response.length);
+                return res.send(response);
+            }
+            (0, config_1.logger)("/ytservice/search", "videos not found");
+            return res.status(404).send("videos not found");
         }
-        (0, config_1.logger)("/api/ytservice/search", "videos not found");
-        return res.status(404).send("videos not found");
-    }
-    catch (error) {
-        (0, config_1.logger)("/api/ytservice/search", "error: ", error);
-        res.status(500).json({
-            errorMessage: "An error occurred on the server. [post - /api/ytservice]",
-            error: error.message,
-        });
-    }
-}));
+        catch (error) {
+            (0, config_1.logger)("/ytservice/search", "error: ", error);
+            res.status(500).json({
+                errorMessage: "An error occurred on the server. [post - /ytservice]",
+                error: error.message,
+            });
+        }
+    });
+});
+function makeRoute(route, endpoint, middleware, fn, 
+// router: Router,
+errorMsg = "error on the server, check logs") {
+    return router[route](endpoint, middleware, (req, res) => __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield fn(req, res);
+        }
+        catch (error) {
+            (0, config_1.logger)(endpoint, errorMsg, error);
+            if (process.env.NODE_ENV === "production") {
+                res.status(500).send(errorMsg);
+            }
+            else {
+                if (error instanceof Error)
+                    res.status(500).send(error.message);
+            }
+        }
+    }));
+}
 exports.default = router;
 function searchVideos(searchTerm, prisma) {
     return __awaiter(this, void 0, void 0, function* () {
