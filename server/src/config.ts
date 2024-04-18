@@ -1,3 +1,5 @@
+import { RequestHandler } from "express";
+
 export const mongodb =
   process.env.NODE_ENV === "production"
     ? (process.env.MONGODB_CON_STRING as string)
@@ -13,14 +15,15 @@ const loggingFns = {
   // userRouter.ts
   "authUser middleware": true,
   "/user/register": true,
-  "/user/updateuser": true,
-  "/user/sendFriendRequest": true,
-  "/user/acceptFriendRequest": true,
-  "/user/removeFriend": true,
+  "/user/updateuser/:id": true,
+  "/user/sendFriendRequest/:receiverHandle": true,
+  "/user/acceptFriendRequest/:senderHandle": true,
+  "/user/removeFriend/:friendHandle": true,
   "/user/fetchFriendlist": true,
   "/user/fetchFriendRequestsReceived": true,
   "/user/fetchFriendRequestsSent": true,
-  "/user/getuser": true,
+  "/user/getuser/:id": true,
+  "/user/getCurrentUser": true,
   "/user/all": true,
   "/user/search": true,
   "/user/check": true,

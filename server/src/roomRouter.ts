@@ -1,158 +1,74 @@
-import express, { Request, Response } from "express";
+import express, { Request, RequestHandler, Response } from "express";
 import { authUser } from "./userRouter";
 import { checkIfMemberAlreadyActive } from "./socketServer";
-import { logger } from "./config";
+import { FnNames, logger } from "./config";
 const router = express.Router();
-
-router.get(
+makeRoute(
+  "get",
   "/room/publicrooms",
-  authUser,
-  async ({ prisma, body, ...req }: Request, res: Response) => {
-    logger("/room/publicrooms", "handle: ", req.user?.handle);
-
-    try {
-      const rooms = await prisma?.room.findMany({
-        where: {
-          members: {
-            some: {
-              isConnected: true,
-            },
+  [authUser],
+  async function (req: Request, res: Response) {
+    const rooms = await req.prisma?.room.findMany({
+      where: {
+        members: {
+          some: {
+            isConnected: true,
           },
         },
-        include: {
-          members: {
-            where: {
-              isConnected: true,
-            },
-            orderBy: {
-              leaderPC: "asc",
-            },
+      },
+      include: {
+        members: {
+          where: {
+            isConnected: true,
           },
-          videoPlayer: true,
+          orderBy: {
+            leaderPC: "asc",
+          },
         },
-        take: 10,
-      });
-      res.status(200).json(rooms);
-    } catch (error) {
-      logger("/room/publicrooms", "error: ", error);
-      res.status(500).json({
-        errorMessage:
-          "An error occurred on the server. [get - /room/allrooms]",
-        error,
-      });
-    }
+        videoPlayer: true,
+      },
+      take: 10,
+    });
+    res.status(200).json(rooms);
   },
 );
-router.get(
+
+makeRoute(
+  "get",
   "/room/checkActiveMember",
-  authUser,
-  async (req: Request, res: Response) => {
-    try {
-      if (!req.prisma) return;
-      const isMemberAlreadyActive = await checkIfMemberAlreadyActive(
-        req.user?.handle,
-        req.prisma,
-      );
-      res.status(200).json(isMemberAlreadyActive);
-    } catch (error) {
-      logger("/room/checkActiveMember", "error: ", error);
-      res.status(500).json({
-        errorMessage:
-          "An error occurred on the server. [get - /room/checkActiveMember]",
-        error,
-      });
-    }
+  [authUser],
+  async function (req: Request, res: Response) {
+    const isMemberAlreadyActive = await checkIfMemberAlreadyActive(
+      req.user?.handle,
+      req.prisma!,
+    );
+    res.status(200).json(isMemberAlreadyActive);
   },
 );
 
+function makeRoute(
+  route: "get" | "post" | "put" | "delete" | "patch" | "options" | "head",
+  endpoint: FnNames,
+  middleware: RequestHandler[],
+  fn: (req: Request, res: Response) => Promise<any>,
+  // router: Router,
+  errorMsg: string = "error on the server, check logs",
+) {
+  return router[route](
+    endpoint,
+    middleware,
+    async (req: Request, res: Response) => {
+      try {
+        await fn(req, res);
+      } catch (error) {
+        logger(endpoint, errorMsg, error);
+        if (process.env.NODE_ENV === "production") {
+          res.status(500).send(errorMsg);
+        } else {
+          if (error instanceof Error) res.status(500).send(error.message);
+        }
+      }
+    },
+  );
+}
 export default router;
-
-// let roomss = [
-//   {
-//     id: "4bf817d4-17ee-44a5-9d2e-291333434f35",
-//     status: "Public",
-//     videoPlayer: {
-//       id: "d460ddee-0181-4ea9-8cf8-a920448197d8",
-//       isPlaying: false,
-//       sourceUrl: "https://www.youtube.com/watch?v=0-S5a0eXPoc",
-//       thumbnailUrl: "https://i.ytimg.com/vi/0-S5a0eXPoc/sddefault.jpg",
-//       title: "React Native Tutorial for Beginners - Build a React Native App",
-//       totalDuration: 0,
-//       playedTill: 0,
-//       roomId: "4bf817d4-17ee-44a5-9d2e-291333434f35",
-//     },
-//     members: [
-//       {
-//         id: "6094778a-caf3-4007-a05b-94d6d174a8d4",
-//         name: "user1name",
-//         handle: "user1handle",
-//         roomId: "4bf817d4-17ee-44a5-9d2e-291333434f35",
-//       },
-//       {
-//         id: "6094778a-caf3-4007-a05b-94d6d174a8d4",
-//         name: "user1name",
-//         handle: "user1handle",
-//         roomId: "4bf817d4-17ee-44a5-9d2e-291333434f35",
-//       },
-//       {
-//         id: "6094778a-caf3-4007-a05b-94d6d174a8d4",
-//         name: "user1name",
-//         handle: "user4handle",
-//         roomId: "4bf817d4-17ee-44a5-9d2e-291333434f35",
-//       },
-//       {
-//         id: "6094778a-caf3-4007-a05b-94d6d174a8d4",
-//         name: "user1name",
-//         handle: "user1handle",
-//         roomId: "4bf817d4-17ee-44a5-9d2e-291333434f35",
-//       },
-//       {
-//         id: "6094778a-caf3-4007-a05b-94d6d174a8d4",
-//         name: "user1name",
-//         handle: "user1handle",
-//         roomId: "4bf817d4-17ee-44a5-9d2e-291333434f35",
-//       },
-//       {
-//         id: "6094778a-caf3-4007-a05b-94d6d174a8d4",
-//         name: "user1name",
-//         handle: "user1handle",
-//         roomId: "4bf817d4-17ee-44a5-9d2e-291333434f35",
-//       },
-//       {
-//         id: "6094778a-caf3-4007-a05b-94d6d174a8d4",
-//         name: "user2name",
-//         handle: "user2handle",
-//         roomId: "4bf817d4-17ee-44a5-9d2e-291333434f35",
-//       },
-//       {
-//         id: "6094778a-caf3-4007-a05b-94d6d174a8d4",
-//         name: "user1name",
-//         handle: "user1handle",
-//         roomId: "4bf817d4-17ee-44a5-9d2e-291333434f35",
-//       },
-//       {
-//         id: "6094778a-caf3-4007-a05b-94d6d174a8d4",
-//         name: "user1name",
-//         handle: "user1handle",
-//         roomId: "4bf817d4-17ee-44a5-9d2e-291333434f35",
-//       },
-//       {
-//         id: "6094778a-caf3-4007-a05b-94d6d174a8d4",
-//         name: "user1name",
-//         handle: "user3handle",
-//         roomId: "4bf817d4-17ee-44a5-9d2e-291333434f35",
-//       },
-//       {
-//         id: "6094778a-caf3-4007-a05b-94d6d174a8d4",
-//         name: "user1name",
-//         handle: "user1handle",
-//         roomId: "4bf817d4-17ee-44a5-9d2e-291333434f35",
-//       },
-//     ],
-//   },
-// ];
-// let uniqueMembers = Array.from(
-//   roomss[0].members
-//     .reduce((map, item) => map.set(item.handle, item), new Map())
-//     .values(),
-// );

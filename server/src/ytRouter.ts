@@ -1,39 +1,40 @@
-import express, { Request, Response } from "express";
+import express, { Request, RequestHandler, Response, Router } from "express";
 import axios, { AxiosError } from "axios";
 import { PrismaClient } from "@prisma/client";
 import { VideoInfo } from "../types/types";
-import { logger } from "./config";
+import { FnNames, logger } from "./config";
+import { authUser } from "./userRouter";
 const router = express.Router();
 
-router.get("/ytservice", async ({ prisma, ...req }: Request, res: Response) => {
-  try {
-    const videoInfo = await ytInfoService(req.query?.url as string, prisma!);
+makeRoute(
+  "get",
+  "/ytservice",
+  [authUser],
+  async function (req: Request, res: Response) {
+    const videoInfo = await ytInfoService(
+      req.query?.url as string,
+      req.prisma!,
+    );
     if (videoInfo) {
       return res.send(videoInfo);
     }
-    return res.status(404).send("video not found");
-  } catch (error) {
-    logger("/ytservice", "error: ", error);
-    res.status(500).json({
-      errorMessage: "An error occurred on the server. [post - /ytservice]",
-      error,
-    });
-  }
-});
+    res.status(404).send("video not found");
+  },
+);
 
-router.get(
+makeRoute(
+  "get",
   "/ytservice/search",
-  async ({ prisma, ...req }: Request, res: Response) => {
+  [authUser],
+  async function (req: Request, res: Response) {
     logger("/ytservice/search", "query: ", req.query?.q);
-
     try {
-      const response = await searchVideos(req.query?.q as string, prisma!);
+      const response = await searchVideos(req.query?.q as string, req.prisma!);
       if (response) {
         logger("/ytservice/search", "videos found", response.length);
         return res.send(response);
       }
       logger("/ytservice/search", "videos not found");
-
       return res.status(404).send("videos not found");
     } catch (error: any) {
       logger("/ytservice/search", "error: ", error);
@@ -44,6 +45,32 @@ router.get(
     }
   },
 );
+
+function makeRoute(
+  route: "get" | "post" | "put" | "delete" | "patch" | "options" | "head",
+  endpoint: FnNames,
+  middleware: RequestHandler[],
+  fn: (req: Request, res: Response) => Promise<any>,
+  // router: Router,
+  errorMsg: string = "error on the server, check logs",
+) {
+  return router[route](
+    endpoint,
+    middleware,
+    async (req: Request, res: Response) => {
+      try {
+        await fn(req, res);
+      } catch (error) {
+        logger(endpoint, errorMsg, error);
+        if (process.env.NODE_ENV === "production") {
+          res.status(500).send(errorMsg);
+        } else {
+          if (error instanceof Error) res.status(500).send(error.message);
+        }
+      }
+    },
+  );
+}
 
 export default router;
 
