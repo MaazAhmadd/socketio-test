@@ -18,7 +18,7 @@ const axios_1 = __importDefault(require("axios"));
 const config_1 = require("./config");
 const userRouter_1 = require("./userRouter");
 const router = express_1.default.Router();
-makeRoute("get", "/ytservice", [userRouter_1.authUser], function (req, res) {
+(0, config_1.makeRoute)("get", "/ytservice", [userRouter_1.authUser], router, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a;
         const videoInfo = yield ytInfoService((_a = req.query) === null || _a === void 0 ? void 0 : _a.url, req.prisma);
@@ -28,7 +28,7 @@ makeRoute("get", "/ytservice", [userRouter_1.authUser], function (req, res) {
         res.status(404).send("video not found");
     });
 });
-makeRoute("get", "/ytservice/search", [userRouter_1.authUser], function (req, res) {
+(0, config_1.makeRoute)("get", "/ytservice/search", [userRouter_1.authUser], router, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, _b;
         (0, config_1.logger)("/ytservice/search", "query: ", (_a = req.query) === null || _a === void 0 ? void 0 : _a.q);
@@ -50,25 +50,6 @@ makeRoute("get", "/ytservice/search", [userRouter_1.authUser], function (req, re
         }
     });
 });
-function makeRoute(route, endpoint, middleware, fn, 
-// router: Router,
-errorMsg = "error on the server, check logs") {
-    return router[route](endpoint, middleware, (req, res) => __awaiter(this, void 0, void 0, function* () {
-        try {
-            yield fn(req, res);
-        }
-        catch (error) {
-            (0, config_1.logger)(endpoint, errorMsg, error);
-            if (process.env.NODE_ENV === "production") {
-                res.status(500).send(errorMsg);
-            }
-            else {
-                if (error instanceof Error)
-                    res.status(500).send(error.message);
-            }
-        }
-    }));
-}
 exports.default = router;
 function searchVideos(searchTerm, prisma) {
     return __awaiter(this, void 0, void 0, function* () {

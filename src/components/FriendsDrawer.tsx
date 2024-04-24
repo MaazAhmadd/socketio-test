@@ -14,6 +14,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { FriendlistAccordian } from "./friendlistAccordian";
+import api from "@/api/api";
+import toast from "react-hot-toast";
 
 export function FriendsDrawer() {
   return (
@@ -32,7 +34,18 @@ export function FriendsDrawer() {
             <Cross1Icon className="ml-5 mt-5 h-6 w-6 cursor-pointer   md:h-8 md:w-8" />
           </DrawerClose>
           <div className="mx-auto ml-4 mr-6 h-[100px] w-2 rounded-full bg-muted" />
-          <div></div>
+          {process.env.NODE_ENV === "development" && (
+            <div
+              onClick={() => {
+                api.get("/user/clearCache").then((res) => {
+                  toast.success(res.data);
+                });
+              }}
+              className="mb-4 cursor-pointer"
+            >
+              x
+            </div>
+          )}
         </div>
         {/* horizontal */}
         {/* <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted " /> */}
@@ -46,6 +59,7 @@ export function FriendsDrawer() {
             </DrawerTitle>
             {/* <DrawerDescription>Set your daily activity goal.</DrawerDescription> */}
             <div className="mb-4">
+              {/* // TODO add search functionality */}
               <Label className="sr-only" htmlFor="searchPeople">
                 Search Friends And Other People
               </Label>

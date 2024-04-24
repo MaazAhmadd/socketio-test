@@ -1,15 +1,13 @@
-import { isValidJwt } from "@/utils";
-import { jwtDecode } from "jwt-decode";
 import api from "@/api/api";
+import { produce } from "immer";
+import toast from "react-hot-toast";
 import {
-  DecodedUser,
+  CurrentUser,
   Member,
   RoomCreationData,
   RoomJoinData,
 } from "server/types/types";
 import { create } from "zustand";
-import { produce } from "immer";
-import toast from "react-hot-toast";
 
 export type Tabs = "public" | "createRoom" | "invited" | "friends";
 export type Routes = "authPage" | "homePage" | "roomPage";
@@ -20,10 +18,10 @@ const token = localStorage.getItem("auth_token");
 export const useGlobalStore = create<GlobalStore>((set) => ({
   globalLoading: false,
   setGlobalLoading: (loading: boolean) => set({ globalLoading: loading }),
-  decodedAuthToken: token && isValidJwt(token) ? jwtDecode(token) : null,
-  setAuthToken: (token: string) =>
+  currentUser: null,
+  setCurrentUser: (user: CurrentUser) =>
     set({
-      decodedAuthToken: token && isValidJwt(token) ? jwtDecode(token) : null,
+      currentUser: user,
     }),
   logout: () => {
     localStorage.removeItem("auth_token");
@@ -90,8 +88,8 @@ export const useRoomStore = create<RoomStore>((set) => ({
 interface GlobalStore {
   globalLoading: boolean;
   setGlobalLoading: (loading: boolean) => void;
-  decodedAuthToken: DecodedUser | null;
-  setAuthToken: (token: string) => void;
+  currentUser: CurrentUser | null;
+  setCurrentUser: (user: CurrentUser) => void;
   logout: () => void;
   showRoomTab: Tabs;
   setShowRoomTab: (tab: Tabs) => void;

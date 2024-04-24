@@ -4,14 +4,15 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL_PG_REMOTE")
-  // url      = env("DATABASE_URL_PG_LOCAL")
+  // url      = env("DATABASE_URL_PG_REMOTE")
+  url      = env("DATABASE_URL_PG_LOCAL")
   // provider = "sqlite"
   // url      = env("DATABASE_URL_SQLITE")
 }
 
 model Member {
   id          String  @id @default(uuid())
+  mongoId     String
   name        String?
   handle      String
   pfp         String?

@@ -31,14 +31,32 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useGetCurrentUser } from "@/hooks/userHooks";
 
 const Authenticated = () => {
+  const { showRoomTab, setShowRoomTab, setCurrentUser, setGlobalLoading } =
+    useGlobalStore((state) => ({
+      showRoomTab: state.showRoomTab,
+      setShowRoomTab: state.setShowRoomTab,
+      setCurrentUser: state.setCurrentUser,
+      setGlobalLoading: state.setGlobalLoading,
+    }));
   let { refetch: getPublicRooms } = useGetPublicRooms();
-
-  const { showRoomTab, setShowRoomTab } = useGlobalStore((state) => ({
-    showRoomTab: state.showRoomTab,
-    setShowRoomTab: state.setShowRoomTab,
-  }));
+  const { data: currentUser, isFetching, isLoading } = useGetCurrentUser();
+  useEffect(() => {
+    // console.log(
+    //   "useEffect called with currentUser:",
+    //   isLoading,
+    //   isFetching,
+    //   currentUser,
+    // );
+    setCurrentUser(currentUser);
+    if (isLoading) {
+      setGlobalLoading(true);
+    } else {
+      setGlobalLoading(false);
+    }
+  }, [isLoading, isFetching]);
   return (
     <>
       <SettingsDrawer />
@@ -174,18 +192,7 @@ const Public = () => {
               No public rooms
             </p>
           )}
-          {isFetching && (
-            <div className="flex h-[20vh] items-center justify-center">
-              <div
-                className="text-surface inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
-                role="status"
-              >
-                <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
-                  Loading...
-                </span>
-              </div>
-            </div>
-          )}
+          {isFetching && <Spinner />}
           {!isFetching &&
             publicRooms?.map((room) => {
               console.log("[publicRooms] room: ", room);
@@ -378,18 +385,7 @@ const CreateRoom = () => {
             platform to search from...
           </p>
         )}
-        {isFetchingSearchResults && (
-          <div className="flex h-[20vh] items-center justify-center">
-            <div
-              className="text-surface inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
-              role="status"
-            >
-              <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
-                Loading...
-              </span>
-            </div>
-          </div>
-        )}
+        {isFetchingSearchResults && <Spinner />}
         {!isFetchingSearchResults &&
           searchResults?.map((r) => {
             return <ResultCard key={r.ytId} result={r} />;
@@ -543,3 +539,18 @@ export function LikedVideosDialog() {
     </Dialog>
   );
 }
+
+export const Spinner = ({ className }: { className?: string }) => {
+  return (
+    <div className={cn("flex h-[20vh] items-center justify-center", className)}>
+      <div
+        className="text-surface inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
+        role="status"
+      >
+        <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+          Loading...
+        </span>
+      </div>
+    </div>
+  );
+};

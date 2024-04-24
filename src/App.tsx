@@ -5,7 +5,8 @@ import { Toaster } from "react-hot-toast";
 import Authenticated from "./components/Authenticated";
 import RoomPage from "./components/Room";
 import Unauthenticated from "./components/Unauthenticated";
-import {useGlobalStore} from "./state/store";
+import { useGlobalStore } from "./state/store";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 export default function App() {
   const route = useGlobalStore((state) => state.route);
@@ -25,6 +26,7 @@ export default function App() {
           {route == "authPage" && <Unauthenticated />}
           {route == "homePage" && <Authenticated />}
           {route == "roomPage" && <RoomPage />}
+          <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
       </ThemeProvider>
     </>

@@ -53,7 +53,7 @@ type RoomJoinData = {
 interface Room {
   id: string;
   members: Member[];
-  videoPlayer: VideoPlayer | null;
+  videoPlayer?: VideoPlayer | null;
   privacy: string;
   playback: string;
   roomMic: boolean;
@@ -63,14 +63,15 @@ interface Room {
 // random Music -> aesthetic,jazz,pop,rock,hip-hop,classical,electronic,rap,beatbox,bollywood
 // music suggestion platform with categories. // comment: make sure to suggest the original video so your vote gets counted
 interface Member {
-  name: string | null;
+  mongoId: string;
+  name?: string | null;
   handle: string;
-  pfp: string | null;
+  pfp?: string | null;
   isConnected: boolean;
   isLeader: boolean;
   mic: boolean;
   leaderPC: number;
-  roomId: string | null;
+  roomId?: string | null;
 }
 
 interface VideoPlayer {
@@ -83,16 +84,23 @@ interface VideoPlayer {
   roomId: string;
 }
 
-type CurrentUser = DecodedUser & {
-  friends: string[];
-  friendReqsSent: string[];
-  friendReqsReceived: string[];
-};
+type CurrentUser =
+  | {
+      _id: string;
+      name: string;
+      handle: string;
+      pfp: string;
+      friends: string[];
+      friendReqsSent: string[];
+      friendReqsReceived: string[];
+    }
+  | undefined;
 
-interface DecodedUser {
-  name?: string;
+interface NormalUser {
+  _id: string;
+  name: string;
   handle: string;
-  pfp?: string;
+  pfp: string;
 }
 
 type VideoInfo = {
@@ -112,7 +120,7 @@ export type {
   Rooms,
   Member,
   Room,
-  DecodedUser,
+  NormalUser,
   VideoPlayer,
   RoomCreationData,
   RoomJoinData,

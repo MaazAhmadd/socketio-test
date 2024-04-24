@@ -16,6 +16,7 @@ exports.deleteInactiveRooms = exports.returnRoomWithActiveMembersInOrder = expor
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const ytRouter_1 = require("./ytRouter");
 const config_1 = require("./config");
+const models_1 = require("./models");
 function socketServer(io, prisma) {
     // disconnect all members and sockets
     initializeSocketServer(io, prisma);
@@ -30,10 +31,11 @@ function socketServer(io, prisma) {
                 return next(new Error("Authentication error"));
             }
             (0, config_1.logger)("auth middleware", "verifying token: ", token);
-            const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_PRIVATE_KEY || "");
-            (0, config_1.logger)("auth middleware", "token found, handle: ", decoded.handle);
+            let decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_PRIVATE_KEY || "");
+            (0, config_1.logger)("auth middleware", "token found, handle: ", decoded._id);
             if (decoded) {
-                socket.user = decoded;
+                const user = yield models_1.User.findById(decoded._id).select("name handle pfp");
+                socket.user = user;
                 (0, config_1.logger)("auth middleware", "connecting back sockets");
                 if (socket.roomId) {
                     yield prisma.member.updateMany({
@@ -132,7 +134,7 @@ function socketServer(io, prisma) {
 exports.default = socketServer;
 function makeRoom(socket, prisma, url) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         (0, config_1.logger)("makeRoom", "url: ", url);
         const videoInfo = yield (0, ytRouter_1.ytInfoService)(url, prisma);
         // if (!videoInfo) {
@@ -143,13 +145,14 @@ function makeRoom(socket, prisma, url) {
                 members: {
                     create: [
                         {
-                            handle: ((_a = socket.user) === null || _a === void 0 ? void 0 : _a.handle) || "",
-                            pfp: ((_b = socket.user) === null || _b === void 0 ? void 0 : _b.pfp) || "",
-                            name: ((_c = socket.user) === null || _c === void 0 ? void 0 : _c.name) || "",
+                            handle: (_a = socket.user) === null || _a === void 0 ? void 0 : _a.handle,
+                            pfp: (_b = socket.user) === null || _b === void 0 ? void 0 : _b.pfp,
+                            name: (_c = socket.user) === null || _c === void 0 ? void 0 : _c.name,
                             isConnected: true,
                             isLeader: true,
                             mic: false,
                             leaderPC: 0,
+                            mongoId: (_d = socket.user) === null || _d === void 0 ? void 0 : _d._id,
                         },
                     ],
                 },
@@ -157,8 +160,8 @@ function makeRoom(socket, prisma, url) {
                     create: {
                         isPlaying: false,
                         sourceUrl: url,
-                        thumbnailUrl: (videoInfo === null || videoInfo === void 0 ? void 0 : videoInfo.thumbnail) || "",
-                        title: (videoInfo === null || videoInfo === void 0 ? void 0 : videoInfo.title) || "",
+                        thumbnailUrl: videoInfo === null || videoInfo === void 0 ? void 0 : videoInfo.thumbnail,
+                        title: videoInfo === null || videoInfo === void 0 ? void 0 : videoInfo.title,
                         totalDuration: 0,
                         playedTill: 0,
                     },
@@ -175,19 +178,19 @@ function makeRoom(socket, prisma, url) {
 }
 function checkIfMemberAlreadyActive(handle, prisma) {
     return __awaiter(this, void 0, void 0, function* () {
-        const member = yield prisma.member.findMany({
+        const member = yield prisma.member.findFirst({
             where: {
                 handle,
                 isConnected: true,
             },
         });
-        return member.length > 0;
+        return member ? true : false;
     });
 }
 exports.checkIfMemberAlreadyActive = checkIfMemberAlreadyActive;
 function joinRoom(socket, prisma, roomId) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         try {
             const member = yield getMemberFromRoom(prisma, socket.user.handle, roomId);
             // const memberBeenToRoom = member.length > 0;
@@ -244,13 +247,14 @@ function joinRoom(socket, prisma, roomId) {
                         members: {
                             create: [
                                 {
-                                    handle: ((_a = socket.user) === null || _a === void 0 ? void 0 : _a.handle) || "",
-                                    pfp: ((_b = socket.user) === null || _b === void 0 ? void 0 : _b.pfp) || "",
-                                    name: ((_c = socket.user) === null || _c === void 0 ? void 0 : _c.name) || "",
+                                    handle: (_a = socket.user) === null || _a === void 0 ? void 0 : _a.handle,
+                                    pfp: (_b = socket.user) === null || _b === void 0 ? void 0 : _b.pfp,
+                                    name: (_c = socket.user) === null || _c === void 0 ? void 0 : _c.name,
                                     isConnected: true,
                                     isLeader: false,
                                     mic: false,
                                     leaderPC: totalMembers,
+                                    mongoId: (_d = socket.user) === null || _d === void 0 ? void 0 : _d._id,
                                 },
                             ],
                         },
@@ -347,7 +351,7 @@ function makeMemberLeave(prisma, socket) {
             // check if there's another connected member, give leader to lowest priorityCounter
             const updatedLeaderMember = yield prisma.member.updateMany({
                 where: {
-                    handle: activeMembersWithHigherPC[0].handle || "",
+                    handle: activeMembersWithHigherPC[0].handle,
                     roomId: socket.roomId,
                 },
                 data: {

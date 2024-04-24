@@ -1,16 +1,31 @@
-import express, {
-  NextFunction,
-  Request,
-  Response,
-  RequestHandler,
-  Router,
-} from "express";
-const router = express.Router();
-import { User } from "./models";
+import express, { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import Mongoose from "mongoose";
-import { CurrentUser, DecodedUser } from "../types/types";
-import { FnNames, logger } from "./config";
+import mongoose from "mongoose";
+import { NormalUser } from "../types/types";
+import { clearCacheAndLog, logger, makeRoute } from "./config";
+import { User } from "./models";
+import multer from "multer";
+import cloudinary from "cloudinary";
+import { z } from "zod";
+
+const router = express.Router();
+const upload = multer({ dest: "uploads/" });
+
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const cacheKeys = {
+  FRIENDLIST: "friend-list-",
+  FRIENDREQSRECEIVED: "friend-requests-received-",
+  FRIENDREQSSENT: "friend-requests-sent-",
+  USERNORMAL: "user-normal-",
+  USERCURRENT: "user-current-",
+  USERSEARCH: "user-search-",
+  USERCHECK: "user-check-",
+};
 
 // middleware to check if x-auth-token token attached and valid
 export const authUser = (req: Request, res: Response, next: NextFunction) => {
@@ -21,8 +36,9 @@ export const authUser = (req: Request, res: Response, next: NextFunction) => {
     const decoded = jwt.verify(
       token as string,
       process.env.JWT_PRIVATE_KEY || "",
-    );
-    req.user = decoded as DecodedUser;
+    ) as { _id: string };
+
+    req.user = decoded;
     next();
   } catch (ex) {
     logger("authUser middleware", "error in middleware: ", ex);
@@ -35,12 +51,18 @@ makeRoute(
   "post",
   "/user/register",
   [],
+  router,
   async function (req: Request, res: Response) {
     logger("/user/register", "register router req.body: ", req.body);
-    const { name, handle, pfp, password } = req.body as DecodedUser & {
+    const { name, handle, pfp, password } = req.body as NormalUser & {
       password: string;
     };
     let user = await User.findOne({ handle });
+    // .cache(
+    //   60,
+    //   cacheKeys.USERNORMAL + handle,
+    // );
+    // .exec();
     if (user) {
       return res.status(200).send(user.generateAuthToken());
     }
@@ -51,48 +73,155 @@ makeRoute(
   },
 );
 
-// Update user by id or handle whatever is provided
+// Update user name
 makeRoute(
   "put",
-  "/user/updateuser/:id",
+  "/user/updateusername",
   [authUser],
+  router,
   async function (req: Request, res: Response) {
-    const updates = Object.keys(req.body);
-    const allowedUpdates = ["name", "handle", "pfp", "password"];
-    const isValidOperation = updates.some((update) =>
-      allowedUpdates.includes(update),
-    );
-    if (!isValidOperation) {
-      return res.status(400).send({ error: "Invalid updates!" });
+    const updateBodySchema = z.object({
+      name: z.string().max(4096, "name is too long"),
+    });
+    const { error } = updateBodySchema.safeParse(req.body);
+    if (error) {
+      return res.status(400).send(error.issues[0].message);
     }
-    let user: any;
-    if (Mongoose.Types.ObjectId.isValid(req.params.id)) {
-      user = await User.findById(req.params.id);
-    } else {
-      user = await User.findOne({ handle: req.user?.handle });
-    }
+    const userId = req.user?._id;
+    let user = await User.findById(userId);
     if (!user) {
       return res.status(404).send("User not found");
     }
-    updates.forEach((update) => ((user as any)[update] = req.body[update]));
+    user.name = req.body.name;
     await user.save();
-    res.send(user);
+    clearCacheAndLog("/user/updateusername", [
+      cacheKeys.USERNORMAL + userId,
+      cacheKeys.USERCURRENT + userId,
+    ]);
+    res.status(200).send(user);
+  },
+);
+// Update user handle
+makeRoute(
+  "put",
+  "/user/updateuserhandle",
+  [authUser],
+  router,
+  async function (req: Request, res: Response) {
+    const updateBodySchema = z.object({
+      handle: z
+        .string()
+        .min(6, "handle is too short")
+        .max(4096, "handle is too long"),
+    });
+    const { error } = updateBodySchema.safeParse(req.body);
+    if (error) {
+      return res.status(400).send(error.issues[0].message);
+    }
+    const alreadyExistingUser = await User.findOne({ handle: req.body.handle });
+    if (alreadyExistingUser) {
+      return res.status(400).send("handle taken");
+    }
+    const userId = req.user?._id;
+    let user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+    user.handle = req.body.handle;
+    await user.save();
+    clearCacheAndLog("/user/updateuserhandle", [
+      cacheKeys.USERNORMAL + userId,
+      cacheKeys.USERCURRENT + userId,
+    ]);
+    res.status(200).send(user);
+  },
+);
+// Update user password
+makeRoute(
+  "put",
+  "/user/updateuserpassword",
+  [authUser],
+  router,
+  async function (req: Request, res: Response) {
+    const updateBodySchema = z.object({
+      password: z
+        .string()
+        .min(6, "password is too short")
+        .max(4096, "password is too long"),
+    });
+    const { error } = updateBodySchema.safeParse(req.body);
+    if (error) {
+      return res.status(400).send(error.issues[0].message);
+    }
+
+    const userId = req.user?._id;
+    let user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+    user.password = req.body.password;
+    await user.save();
+    clearCacheAndLog("/user/updateuserpassword", [
+      cacheKeys.USERNORMAL + userId,
+      cacheKeys.USERCURRENT + userId,
+    ]);
+    res.status(200).send(user);
+  },
+);
+// Update user pfp
+makeRoute(
+  "put",
+  "/user/updateuserpfp",
+  [authUser, upload.single("image")],
+  router,
+  async function (req: Request, res: Response) {
+    const userId = req.user?._id;
+    logger("/user/updateuserpfp", "userId: ", userId);
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+    logger("/user/updateuserpfp", "req.file: ", req.file?.filename);
+    if (user.profilePicId) {
+      await cloudinary.v2.uploader.destroy(user.profilePicId);
+    }
+    const result = await cloudinary.v2.uploader.upload(req.file!.path);
+    user.pfp = result.secure_url;
+    user.profilePicId = result.public_id;
+    await user.save();
+    clearCacheAndLog("/user/updateuserpfp", [
+      cacheKeys.USERNORMAL + userId,
+      cacheKeys.USERCURRENT + userId,
+    ]);
+    res.status(200).send(user);
   },
 );
 
 // Send Friend Request
 makeRoute(
-  "get",
-  "/user/sendFriendRequest/:receiverHandle",
+  "post",
+  "/user/sendFriendRequest/:receiverId",
   [authUser],
+  router,
   async function (req: Request, res: Response) {
-    const user = await User.findOne({
-      handle: req.user?.handle,
-    });
-    const friend = await User.findOne({ handle: req.params.receiverHandle });
+    if (req.user?._id === req.params.receiverId) {
+      return res
+        .status(400)
+        .json({ message: "You cannot send a friend request to yourself." });
+    }
+    const user = await User.findById(req.user?._id);
+    const friend = await User.findById(req.params.receiverId);
     if (!user || !friend) {
       return res.status(404).send();
     }
+    logger(
+      "/user/sendFriendRequest/:receiverId",
+      "user",
+      user,
+      "friend: ",
+      friend,
+    );
     if (
       !friend.friends.includes(friend._id) &&
       !user.friendReqsSent.includes(friend._id)
@@ -101,64 +230,131 @@ makeRoute(
       user.friendReqsSent.push(friend._id);
       await user.save();
       await friend.save();
-      res.status(200).json({ message: "Friend request sent successfully." });
+      clearCacheAndLog("/user/sendFriendRequest/:receiverId", [
+        cacheKeys.USERNORMAL + friend._id,
+        cacheKeys.USERCURRENT + user._id,
+      ]);
+      res.status(200).send("Friend request sent!");
     } else {
       res.status(400).json({ message: "Friend request already sent." });
     }
   },
 );
 
+// Cancel Sent Friend Request
+makeRoute(
+  "post",
+  "/user/cancelFriendRequest/:receiverId",
+  [authUser],
+  router,
+  async function (req: Request, res: Response) {
+    const user = await User.findById(req.user?._id);
+    const friend = await User.findById(req.params.receiverId);
+    if (!user || !friend) {
+      return res.status(404).send();
+    }
+
+    if (user.friendReqsSent.includes(friend._id)) {
+      user.friendReqsSent.pull(friend._id);
+      friend.friendReqsReceived.pull(user._id);
+      await user.save();
+      await friend.save();
+      clearCacheAndLog("/user/sendFriendRequest/:receiverId", [
+        cacheKeys.USERNORMAL + friend._id,
+        cacheKeys.USERCURRENT + user._id,
+      ]);
+      res.status(200).send("Friend request canceled!");
+    } else {
+      res.status(400).json({ message: "No friend request to cancel." });
+    }
+  },
+);
+
 // Accept Friend Request
 makeRoute(
-  "get",
-  "/user/acceptFriendRequest/:senderHandle",
+  "post",
+  "/user/acceptFriendRequest/:senderId",
   [authUser],
+  router,
   async function (req: Request, res: Response) {
-    const user = await User.findOne({ handle: req.user?.handle });
-    const friend = await User.findOne({ handle: req.params.senderHandle });
+    const user = await User.findById(req.user?._id);
+    const friend = await User.findById(req.params.senderId);
     if (!user || !friend) {
       return res.status(404).send();
     }
 
     if (
-      friend.friendReqsReceived.includes(user._id) &&
+      friend.friendReqsSent.includes(user._id) &&
       !user.friends.includes(friend._id)
     ) {
-      friend.friendReqsReceived.pull(user._id);
+      friend.friendReqsSent.pull(user._id);
       friend.friends.push(user._id);
-      user.friendReqsSent.pull(friend._id);
+      user.friendReqsReceived.pull(friend._id);
       user.friends.push(friend._id);
       await friend.save();
       await user.save();
-      res
-        .status(200)
-        .json({ message: "Friend request accepted successfully." });
+      clearCacheAndLog("/user/sendFriendRequest/:receiverId", [
+        cacheKeys.USERNORMAL + friend._id,
+        cacheKeys.USERCURRENT + user._id,
+      ]);
+      res.status(200).send("Friend request accepted!");
     } else {
       res.status(400).json({ message: "no valid request to accept" });
     }
   },
 );
 
-// Remove Friend
+// Reject Received Friend Request
 makeRoute(
-  "get",
-  "/user/removeFriend/:friendHandle",
+  "post",
+  "/user/rejectFriendRequest/:senderId",
   [authUser],
+  router,
   async function (req: Request, res: Response) {
-    const user = await User.findOne({
-      handle: req.user?.handle,
-    });
-    const friend = await User.findOne({ handle: req.params.friendHandle });
+    const user = await User.findById(req.user?._id);
+    const friend = await User.findById(req.params.senderId);
     if (!user || !friend) {
       return res.status(404).send();
     }
+    if (user.friendReqsReceived.includes(friend._id)) {
+      user.friendReqsReceived.pull(friend._id);
+      friend.friendReqsSent.pull(user._id);
+      await user.save();
+      await friend.save();
+      clearCacheAndLog("/user/sendFriendRequest/:receiverId", [
+        cacheKeys.USERNORMAL + friend._id,
+        cacheKeys.USERCURRENT + user._id,
+      ]);
+      res.status(200).send("Friend request rejected!");
+    } else {
+      res.status(400).json({ message: "No friend request to reject." });
+    }
+  },
+);
 
+// Remove Friend
+makeRoute(
+  "post",
+  "/user/removeFriend/:friendId",
+  [authUser],
+  router,
+  async function (req: Request, res: Response) {
+    const user = await User.findById(req.user?._id);
+    const friend = await User.findById(req.params.friendId);
+    if (!user || !friend) {
+      return res.status(404).send();
+    }
+    logger("/user/removeFriend/:friendId", "user", user, "friend: ", friend);
     if (user.friends.includes(friend._id)) {
       user.friends.pull(friend._id);
       friend.friends.pull(user._id);
       await user.save();
       await friend.save();
-      res.status(200).json({ message: "Friend removed successfully." });
+      clearCacheAndLog("/user/sendFriendRequest/:receiverId", [
+        cacheKeys.USERNORMAL + friend._id,
+        cacheKeys.USERCURRENT + user._id,
+      ]);
+      res.status(200).send("Friend removed!");
     } else {
       res.status(400).json({ message: "Friend not found." });
     }
@@ -170,15 +366,13 @@ makeRoute(
   "get",
   "/user/fetchFriendlist",
   [authUser],
+  router,
   async function (req: Request, res: Response) {
-    const user = await User.findOne({
-      handle: req.user?.handle,
-    }).populate("friends", "handle -_id");
+    const user = await User.findById(req.user?._id).select("friends");
     if (!user) {
       return res.status(404).send();
     }
-    const friendsHandles = user.friends.map((f: any) => f.handle);
-    res.status(200).json({ friends: friendsHandles });
+    res.status(200).json(user.friends);
   },
 );
 
@@ -187,20 +381,13 @@ makeRoute(
   "get",
   "/user/fetchFriendRequestsReceived",
   [authUser],
+  router,
   async function (req: Request, res: Response) {
-    const user = await User.findOne({
-      handle: req.user?.handle,
-    }).populate("friendReqsReceived", "handle -_id");
-
-    if (!user) {
-      return res.status(404).send();
-    }
-    const friendRequestsReceivedHandles = user.friendReqsReceived.map(
-      (user: any) => user.handle,
+    const user = await User.findById(req.user?._id).select(
+      "friendReqsReceived",
     );
-    res
-      .status(200)
-      .json({ friendRequestsReceived: friendRequestsReceivedHandles });
+    if (!user) return res.status(404).send();
+    res.status(200).json(user.friendReqsReceived);
   },
 );
 
@@ -209,17 +396,11 @@ makeRoute(
   "get",
   "/user/fetchFriendRequestsSent",
   [authUser],
+  router,
   async function (req: Request, res: Response) {
-    const user = await User.findOne({
-      handle: req.user?.handle,
-    }).populate("friendReqsSent", "handle -_id");
-    if (!user) {
-      return res.status(404).send();
-    }
-    const friendRequestsSentHandles = user.friendReqsSent.map(
-      (user: any) => user.handle,
-    );
-    res.status(200).json({ friendRequestsSent: friendRequestsSentHandles });
+    const user = await User.findById(req.user?._id).select("friendReqsSent");
+    if (!user) return res.status(404).send();
+    res.status(200).json(user.friendReqsSent);
   },
 );
 
@@ -228,57 +409,47 @@ makeRoute(
   "get",
   "/user/getuser/:id",
   [authUser],
+  router,
   async function (req: Request, res: Response) {
-    let user: any;
-    if (Mongoose.Types.ObjectId.isValid(req.params.id)) {
-      user = await User.findById(req.params.id).select("-password -_id");
+    // setTimeout(async () => {
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      let user = await User.findById(req.params.id)
+        .select("-password -friends -friendReqsSent -friendReqsReceived")
+        .cache(60, cacheKeys.USERNORMAL + req.params.id);
+      // .exec();
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
+      res.send(user);
     } else {
-      user = await User.findOne({ handle: req.params.id }).select(
-        "-password -_id",
-      );
+      let user = await User.findOne({ handle: req.params.id })
+        .select("-password -friends -friendReqsSent -friendReqsReceived")
+        .cache(60, cacheKeys.USERNORMAL + req.params.id);
+      // .exec();
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
+      res.send(user);
     }
-    if (!user) {
-      return res.status(404).send("User not found");
-    }
-    res.send(user);
+    // }, 100);
   },
 );
 
-// Get current user by ID or handle
+// Get current user
 makeRoute(
   "get",
   "/user/getCurrentUser",
   [authUser],
+  router,
   async function (req: Request, res: Response) {
-    let userToSend: CurrentUser;
-    let user = await User.findOne({ handle: req.user?.handle })
-      .select("-password -_id")
-      .populate("friends friendReqsSent friendReqsReceived", "handle -_id");
-    if (!user) {
-      return res.status(404).send("User not found");
-    }
-    userToSend = {
-      name: user.name,
-      handle: user.handle,
-      pfp: user.pfp,
-      friends: user.friends.map((f: any) => f.handle as string),
-      friendReqsSent: user.friendReqsSent.map((f: any) => f.handle as string),
-      friendReqsReceived: user.friendReqsReceived.map(
-        (f: any) => f.handle as string,
-      ),
-    };
-    res.send(userToSend);
-  },
-);
-
-// Get all users
-makeRoute(
-  "get",
-  "/user/all",
-  [authUser],
-  async function (req: Request, res: Response) {
-    const users = await User.find({}).select("-password -_id");
-    res.send(users);
+    // let userToSend: CurrentUser;
+    let user = await User.findById(req.user?._id)
+      .select("-password")
+      .cache(60, cacheKeys.USERCURRENT + req.user?._id);
+    // .exec();
+    if (!user) return res.status(404).send("User not found");
+    logger("/user/getCurrentUser", "user", user);
+    res.send(user);
   },
 );
 
@@ -287,6 +458,7 @@ makeRoute(
   "get",
   "/user/search",
   [authUser],
+  router,
   async function (req: Request, res: Response) {
     const query = req.query.q;
     let users = await User.find({
@@ -294,7 +466,10 @@ makeRoute(
         { name: { $regex: query as string, $options: "i" } },
         { handle: { $regex: query as string, $options: "i" } },
       ],
-    }).select("name handle pfp");
+    })
+      .select("name handle pfp")
+      .cache(60, cacheKeys.USERSEARCH + query);
+    // .exec();
 
     res.send(users);
   },
@@ -304,14 +479,20 @@ makeRoute(
 makeRoute(
   "get",
   "/user/check",
-  [authUser],
+  [],
+  router,
   async function (req: Request, res: Response) {
     const handle = req.query.q;
     const user = await User.findOne({ handle: handle as string });
+    // .cache(
+    //   60,
+    //   cacheKeys.USERCHECK + handle,
+    // );
+    // .exec();
     if (!user) {
       return res.status(200).send("false");
     }
-    res.send("true");
+    res.status(200).send("true");
   },
 );
 
@@ -320,6 +501,7 @@ makeRoute(
   "post",
   "/user/login",
   [],
+  router,
   async function (req: Request, res: Response) {
     const { handle, password } = req.body;
     const user = await User.findOne({ handle });
@@ -334,30 +516,16 @@ makeRoute(
   },
 );
 
-function makeRoute(
-  route: "get" | "post" | "put" | "delete" | "patch" | "options" | "head",
-  endpoint: FnNames,
-  middleware: RequestHandler[],
-  fn: (req: Request, res: Response) => Promise<any>,
-  // router: Router,
-  errorMsg: string = "error on the server, check logs",
-) {
-  return router[route](
-    endpoint,
-    middleware,
-    async (req: Request, res: Response) => {
-      try {
-        await fn(req, res);
-      } catch (error) {
-        logger(endpoint, errorMsg, error);
-        if (process.env.NODE_ENV === "production") {
-          res.status(500).send(errorMsg);
-        } else {
-          if (error instanceof Error) res.status(500).send(error.message);
-        }
-      }
-    },
-  );
-}
+// login user
+makeRoute(
+  "get",
+  "/user/clearCache",
+  [],
+  router,
+  async function (req: Request, res: Response) {
+    clearCacheAndLog("/user/clearCache", null);
+    res.status(200).send("cleared cache");
+  },
+);
 
 export default router;

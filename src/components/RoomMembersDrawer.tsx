@@ -15,7 +15,7 @@ export function RoomMembersDrawer() {
     currentRoom_members: s.currentRoom_members,
   }));
   const { decodedAuthToken } = useGlobalStore((s) => ({
-    decodedAuthToken: s.decodedAuthToken,
+    decodedAuthToken: s.currentUser,
   }));
   console.log("[RoomMembersDrawer] currentRoom_members: ", currentRoom_members);
 

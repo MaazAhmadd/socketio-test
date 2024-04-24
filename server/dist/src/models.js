@@ -42,10 +42,13 @@ const UserSchema = new mongoose_1.Schema({
     name: { type: String, index: true },
     handle: { type: String, required: true, unique: true, index: true },
     pfp: { type: String },
+    profilePicId: { type: String },
     password: { type: String, required: true },
     friends: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" }],
     friendReqsSent: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" }],
     friendReqsReceived: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" }],
+    recentsUsers: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" }],
+    recentsVideos: [{ type: String }],
 });
 UserSchema.methods.toJSON = function () {
     const user = this;
@@ -61,9 +64,10 @@ UserSchema.methods.comparePassword = function (candidatePassword) {
 };
 UserSchema.methods.generateAuthToken = function () {
     const token = jsonwebtoken_1.default.sign({
-        name: this.name,
-        pfp: this.pfp,
-        handle: this.handle,
+        _id: this._id,
+        // name: this.name,
+        // pfp: this.pfp,
+        // handle: this.handle,
     }, process.env.JWT_PRIVATE_KEY || "");
     return token;
 };
