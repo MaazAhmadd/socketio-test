@@ -288,7 +288,11 @@ const UpdateProfilePic: React.FC = () => {
         console.log(response.data);
       } catch (error) {
         setLoadingState(false);
-        setErrorState("Failed to update profile picture");
+        if ((error as AxiosError).response?.data == "File is too large") {
+          setErrorState("File is too large. Max file size is 2MB");
+        } else {
+          setErrorState("Failed to update profile picture");
+        }
         console.error("Error uploading file", error);
       }
     }

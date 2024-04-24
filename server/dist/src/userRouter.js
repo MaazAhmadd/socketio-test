@@ -21,8 +21,9 @@ const models_1 = require("./models");
 const multer_1 = __importDefault(require("multer"));
 const cloudinary_1 = __importDefault(require("cloudinary"));
 const zod_1 = require("zod");
+const stream_1 = require("stream");
 const router = express_1.default.Router();
-const upload = (0, multer_1.default)({ dest: "uploads/" });
+const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage() });
 cloudinary_1.default.v2.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -160,26 +161,44 @@ exports.authUser = authUser;
 // Update user pfp
 (0, config_1.makeRoute)("put", "/user/updateuserpfp", [exports.authUser, upload.single("image")], router, function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b;
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
+        var _a, _b, _c, _d;
+        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
+        if (!allowedTypes.includes((_a = req.file) === null || _a === void 0 ? void 0 : _a.mimetype)) {
+            return res.status(400).send("Invalid file type");
+        }
+        // Check file size (max 2MB)
+        if (((_b = req.file) === null || _b === void 0 ? void 0 : _b.size) > 2000000) {
+            return res.status(400).send("File is too large");
+        }
+        const userId = (_c = req.user) === null || _c === void 0 ? void 0 : _c._id;
         (0, config_1.logger)("/user/updateuserpfp", "userId: ", userId);
         const user = yield models_1.User.findById(userId);
         if (!user) {
             return res.status(404).send("User not found");
         }
-        (0, config_1.logger)("/user/updateuserpfp", "req.file: ", (_b = req.file) === null || _b === void 0 ? void 0 : _b.filename);
         if (user.profilePicId) {
             yield cloudinary_1.default.v2.uploader.destroy(user.profilePicId);
         }
-        const result = yield cloudinary_1.default.v2.uploader.upload(req.file.path);
-        user.pfp = result.secure_url;
-        user.profilePicId = result.public_id;
-        yield user.save();
-        (0, config_1.clearCacheAndLog)("/user/updateuserpfp", [
-            cacheKeys.USERNORMAL + userId,
-            cacheKeys.USERCURRENT + userId,
-        ]);
-        res.status(200).send(user);
+        // Convert buffer to a readable stream
+        const readableStream = new stream_1.Readable();
+        readableStream.push((_d = req.file) === null || _d === void 0 ? void 0 : _d.buffer);
+        readableStream.push(null);
+        // Upload the stream to cloudinary
+        const streamUpload = cloudinary_1.default.v2.uploader.upload_stream((error, result) => {
+            if (error) {
+                console.error(error);
+                return;
+            }
+            user.pfp = result === null || result === void 0 ? void 0 : result.secure_url;
+            user.profilePicId = result === null || result === void 0 ? void 0 : result.public_id;
+            user.save();
+            (0, config_1.clearCacheAndLog)("/user/updateuserpfp", [
+                cacheKeys.USERNORMAL + userId,
+                cacheKeys.USERCURRENT + userId,
+            ]);
+            res.status(200).send(user);
+        });
+        readableStream.pipe(streamUpload);
     });
 });
 // Send Friend Request

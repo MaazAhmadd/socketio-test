@@ -7,10 +7,10 @@ import { User } from "./models";
 import multer from "multer";
 import cloudinary from "cloudinary";
 import { z } from "zod";
+import { Readable } from "stream";
 
 const router = express.Router();
-const upload = multer({ dest: "uploads/" });
-
+const upload = multer({ storage: multer.memoryStorage() });
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -175,6 +175,14 @@ makeRoute(
   [authUser, upload.single("image")],
   router,
   async function (req: Request, res: Response) {
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
+    if (!allowedTypes.includes(req.file?.mimetype!)) {
+      return res.status(400).send("Invalid file type");
+    }
+    // Check file size (max 2MB)
+    if (req.file?.size! > 2_000_000) {
+      return res.status(400).send("File is too large");
+    }
     const userId = req.user?._id;
     logger("/user/updateuserpfp", "userId: ", userId);
 
@@ -182,19 +190,34 @@ makeRoute(
     if (!user) {
       return res.status(404).send("User not found");
     }
-    logger("/user/updateuserpfp", "req.file: ", req.file?.filename);
     if (user.profilePicId) {
       await cloudinary.v2.uploader.destroy(user.profilePicId);
     }
-    const result = await cloudinary.v2.uploader.upload(req.file!.path);
-    user.pfp = result.secure_url;
-    user.profilePicId = result.public_id;
-    await user.save();
-    clearCacheAndLog("/user/updateuserpfp", [
-      cacheKeys.USERNORMAL + userId,
-      cacheKeys.USERCURRENT + userId,
-    ]);
-    res.status(200).send(user);
+
+    // Convert buffer to a readable stream
+    const readableStream = new Readable();
+    readableStream.push(req.file?.buffer);
+    readableStream.push(null);
+
+    // Upload the stream to cloudinary
+    const streamUpload = cloudinary.v2.uploader.upload_stream(
+      (error, result) => {
+        if (error) {
+          console.error(error);
+          return;
+        }
+        user.pfp = result?.secure_url!;
+        user.profilePicId = result?.public_id!;
+        user.save();
+        clearCacheAndLog("/user/updateuserpfp", [
+          cacheKeys.USERNORMAL + userId,
+          cacheKeys.USERCURRENT + userId,
+        ]);
+        res.status(200).send(user);
+      },
+    );
+
+    readableStream.pipe(streamUpload);
   },
 );
 
