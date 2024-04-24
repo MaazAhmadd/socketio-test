@@ -24,6 +24,7 @@ import {
 } from "@/hooks/userHooks";
 import { AxiosError } from "axios";
 import { Icons } from "./icons";
+import { useWindowSize } from "@/hooks/utilHooks";
 
 export function SettingsDrawer() {
   const [isEditOn, setIsEditOn] = useState(false);
@@ -41,7 +42,7 @@ export function SettingsDrawer() {
           <GearIcon className="h-4 w-4 md:h-6 md:w-6" />
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="ml-0 mr-24 max-w-[80vw] bg-background/80">
+      <DrawerContent className="ml-0 mr-24 max-w-[85vw] bg-background/80">
         {/* horizontal */}
         {/* <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted " /> */}
         {/* vertical */}
@@ -55,7 +56,7 @@ export function SettingsDrawer() {
             {/* <DrawerDescription>Set your daily activity goal.</DrawerDescription> */}
           </DrawerHeader>
           {/* </div> */}
-          <div className=" flex flex-col items-center justify-center gap-2  p-4">
+          <div className=" flex flex-col items-center justify-center gap-2 md:p-4 ">
             {!isEditOn ? (
               <div className="flex w-full flex-col items-center justify-center rounded-md bg-primary-foreground/80 px-8 py-4">
                 <MemberPfpIcon
@@ -80,15 +81,11 @@ export function SettingsDrawer() {
                 </Button>
               </div>
             ) : (
-              <div className="flex w-full flex-col justify-center gap-2 rounded-md bg-primary-foreground/80 px-8 py-4">
+              <div className="flex w-full flex-col justify-center gap-2 rounded-md bg-primary-foreground/80 px-2 py-4 md:px-6">
                 <UpdateProfilePic />
                 <UpdateName />
                 <UpdateHandle />
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => setIsEditOn(false)}
-                >
+                <Button className="mt-4" onClick={() => setIsEditOn(false)}>
                   Done
                 </Button>
               </div>
@@ -111,7 +108,7 @@ export function SettingsDrawer() {
           <DrawerClose asChild>
             <Cross1Icon className="mr-5 mt-5 h-6 w-6 cursor-pointer   md:h-8 md:w-8" />
           </DrawerClose>
-          <div className="mx-auto ml-4 mr-6 h-[100px] w-2 rounded-full bg-muted" />
+          <div className="mx-auto ml-4 mr-4 h-[100px] w-2 rounded-full bg-muted" />
           <div></div>
         </div>
       </DrawerContent>
@@ -127,6 +124,7 @@ const UpdateHandle = () => {
     error: error,
     isSuccess,
   } = useUpdateUserHandle();
+  const { width } = useWindowSize();
 
   useEffect(() => {
     if (currentUser) {
@@ -163,6 +161,7 @@ const UpdateHandle = () => {
             if (newHandle == currentUser?.handle) return;
             updateUserHandle(newHandle);
           }}
+          size={width < 768 ? "sm" : "default"}
         >
           Update
         </Button>
@@ -174,6 +173,7 @@ const UpdateName = () => {
   const { data: currentUser, isLoading } = useGetCurrentUser();
   const [newName, setNewName] = useState<string>(currentUser?.name || "");
   const { mutate: updateUsername, isSuccess } = useUpdateUserName();
+  const { width } = useWindowSize();
 
   useEffect(() => {
     if (currentUser) {
@@ -205,6 +205,7 @@ const UpdateName = () => {
             if (newName == currentUser?.name) return;
             updateUsername(newName);
           }}
+          size={width < 768 ? "sm" : "default"}
         >
           Update
         </Button>
@@ -219,16 +220,48 @@ const UpdateProfilePic: React.FC = () => {
   const [loadingState, setLoadingState] = useState<boolean>(false);
   const [errorState, setErrorState] = useState<string>("");
   const [successState, setSuccessState] = useState<string>("");
+  const { width } = useWindowSize();
   const queryClient = useQueryClient();
 
-  const fileChangedHandler = (event: ChangeEvent<HTMLInputElement>) => {
+  const fileChangedHandler = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files ? event.target.files[0] : null;
     setSelectedFile(file);
 
     // Create a URL representing the selected file
     if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
+    } else {
+    }
+    if (file) {
+      try {
+        setPreviewUrl(URL.createObjectURL(file));
+        setLoadingState(true);
+        let fileToUpload = file;
+        if (file.type !== "image/gif") {
+          const compressedBlob = await compressImage(file);
+          fileToUpload = new File([compressedBlob], file.name, {
+            type: file.type,
+          });
+        }
+        const formData = new FormData();
+        formData.append("image", fileToUpload, fileToUpload.name);
+        const response = await api.put("/user/updateuserpfp", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        setLoadingState(false);
+        setSuccessState("Profile picture updated successfully");
+        queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+        console.log(response.data);
+      } catch (error) {
+        setLoadingState(false);
+        if ((error as AxiosError).response?.data == "File is too large") {
+          setErrorState("File is too large. Max file size is 2MB");
+        } else {
+          setErrorState("Failed to update profile picture");
+        }
+        console.error("Error uploading file", error);
+      }
     } else {
       setPreviewUrl(null);
     }
@@ -314,9 +347,16 @@ const UpdateProfilePic: React.FC = () => {
         />
       )}
       <div>
-        <Label htmlFor="profilePic" className="text-sm">
-          Update Profile Picture:
-        </Label>
+        <div className="flex justify-between">
+          <Label htmlFor="profilePic" className="text-sm">
+            Update Profile Picture:
+          </Label>
+          <div>
+            {loadingState && (
+              <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+            )}
+          </div>
+        </div>
         {errorState && <p className="text-sm text-red-400">{errorState}</p>}
         {successState && (
           <p className="text-sm text-green-400">{successState}</p>
@@ -328,12 +368,12 @@ const UpdateProfilePic: React.FC = () => {
             className="cursor-pointer bg-muted-foreground text-background"
             onChange={fileChangedHandler}
           />
-          <Button onClick={uploadHandler}>
+          {/* <Button onClick={uploadHandler} size={width < 768 ? "sm" : "default"}>
             {loadingState && (
               <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
             )}
             Upload
-          </Button>
+          </Button> */}
         </div>
       </div>
     </div>

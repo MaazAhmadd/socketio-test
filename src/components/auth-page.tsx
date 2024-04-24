@@ -75,17 +75,17 @@ export default function AuthenticationPage() {
   return (
     <>
       <div className="container relative  grid h-[100vh] flex-col items-center justify-center gap-4 md:gap-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
-        <div className="relative  flex h-full flex-col bg-muted text-white dark:border-r max-sm:py-8 md:p-10">
+        <div className="relative  flex h-full flex-col bg-muted text-white dark:border-r max-sm:py-4 md:p-10">
           <div className="full-bleed absolute inset-0 bg-zinc-900" />
           <div className="relative z-20 flex items-center  font-medium">
-            <TextGradient className="text-3xl md:text-5xl">
+            <TextGradient className="mb-2 text-2xl md:text-4xl">
               Gather Groove
             </TextGradient>{" "}
           </div>
           <ModeToggle className="fixed right-4 top-4" />
-          <br />
-          <div className="relative z-20 my-auto flex items-center font-medium md:pr-40">
-            <p className="text-md md:text-2xl">
+          {/* <br /> */}
+          <div className="relative z-20 my-auto flex flex-col items-center font-medium md:pr-40">
+            <p className="text-md hidden  md:block md:text-2xl">
               Welcome to{" "}
               <TextGradient className="text-lg md:text-3xl" inline={true}>
                 {" "}
@@ -94,8 +94,18 @@ export default function AuthenticationPage() {
               Sign up and step into a world where watching videos becomes a
               social experience. Explore public rooms and watch videos from
               YouTube, Netflix, Prime, Drive, and more, all in perfect sync.
-              <br />
-              <br />
+            </p>
+            <p className="text-md md:hidden md:text-2xl">
+              Welcome to{" "}
+              <TextGradient className="text-lg md:text-3xl" inline={true}>
+                {" "}
+                Gather Groove{" "}
+              </TextGradient>{" "}
+              Sign up, Explore public rooms and watch videos from YouTube,
+              Netflix, Prime, Drive, and more, all in perfect sync.
+            </p>
+
+            <p className="text-md hidden md:block md:text-2xl">
               Meet new friends, chat, and enjoy videos together. With{" "}
               <TextGradient className="text-lg md:text-3xl" inline={true}>
                 {" "}
@@ -103,6 +113,13 @@ export default function AuthenticationPage() {
               </TextGradient>{" "}
               , you're not just watching, you're connecting. Join us and make
               every watch party a blast!
+            </p>
+            <p className="text-md md:hidden md:text-2xl">
+              Meet new friends, chat, and enjoy videos together. With{" "}
+              <TextGradient className="text-lg md:text-3xl" inline={true}>
+                {" "}
+                Gather Groove{" "}
+              </TextGradient>{" "}
             </p>
           </div>
 
@@ -118,7 +135,7 @@ export default function AuthenticationPage() {
                 Enter unique handle to Login or Register
               </p>
             </div>
-            <div className="grid gap-6">
+            <div className="grid gap-2 md:gap-6">
               <form onSubmit={onSubmit}>
                 <div className="grid gap-2">
                   <div className="grid gap-1">
@@ -228,7 +245,7 @@ export default function AuthenticationPage() {
                   </span>
                 </div>
               </div>
-              <p className="mb-[-20px] text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 coming soon...
               </p>
               <Button
