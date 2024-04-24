@@ -7,6 +7,8 @@ import RoomPage from "./components/Room";
 import Unauthenticated from "./components/Unauthenticated";
 import { useGlobalStore } from "./state/store";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { ErrorBoundary } from "react-error-boundary";
+import ErrorFallback from "./components/ErrorFallback";
 
 export default function App() {
   const route = useGlobalStore((state) => state.route);
@@ -19,15 +21,17 @@ export default function App() {
 
   return (
     <>
-      <GlobalLoading />
-      <ToasterComponent />
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <QueryClientProvider>
-          {route == "authPage" && <Unauthenticated />}
-          {route == "homePage" && <Authenticated />}
-          {route == "roomPage" && <RoomPage />}
-          <ReactQueryDevtools initialIsOpen={false} />
-        </QueryClientProvider>
+        <ErrorBoundary fallback={<ErrorFallback />}>
+          <GlobalLoading />
+          <ToasterComponent />
+          <QueryClientProvider>
+            {route == "authPage" && <Unauthenticated />}
+            {route == "homePage" && <Authenticated />}
+            {route == "roomPage" && <RoomPage />}
+            <ReactQueryDevtools initialIsOpen={false} />
+          </QueryClientProvider>
+        </ErrorBoundary>
       </ThemeProvider>
     </>
   );
