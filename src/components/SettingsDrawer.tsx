@@ -1,4 +1,4 @@
-import { GearIcon, Cross1Icon, Pencil2Icon } from "@radix-ui/react-icons";
+import api from "@/api/api";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -10,21 +10,21 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { useGlobalStore } from "@/state/store";
-import { MemberPfpIcon } from "./RoomCard";
-import { ChangeEvent, useEffect, useState } from "react";
-import api from "@/api/api";
-import { useQueryClient } from "@tanstack/react-query";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 import {
   useGetCurrentUser,
   useUpdateUserHandle,
   useUpdateUserName,
 } from "@/hooks/userHooks";
-import { AxiosError } from "axios";
-import { Icons } from "./icons";
 import { useWindowSize } from "@/hooks/utilHooks";
+import { useGlobalStore } from "@/state/store";
+import { Cross1Icon, GearIcon, Pencil2Icon } from "@radix-ui/react-icons";
+import { useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
+import { ChangeEvent, useEffect, useState } from "react";
+import { MemberPfpIcon } from "./RoomCard";
+import { Icons } from "./icons";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 export function SettingsDrawer() {
   const [isEditOn, setIsEditOn] = useState(false);
@@ -215,17 +215,15 @@ const UpdateName = () => {
 };
 const UpdateProfilePic: React.FC = () => {
   const { data: currentUser } = useGetCurrentUser();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loadingState, setLoadingState] = useState<boolean>(false);
   const [errorState, setErrorState] = useState<string>("");
   const [successState, setSuccessState] = useState<string>("");
-  const { width } = useWindowSize();
   const queryClient = useQueryClient();
 
   const fileChangedHandler = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files ? event.target.files[0] : null;
-    setSelectedFile(file);
 
     // Create a URL representing the selected file
     if (file) {
@@ -295,39 +293,39 @@ const UpdateProfilePic: React.FC = () => {
     });
   };
 
-  const uploadHandler = async () => {
-    if (selectedFile) {
-      try {
-        setLoadingState(true);
-        let fileToUpload = selectedFile;
-        if (selectedFile.type !== "image/gif") {
-          const compressedBlob = await compressImage(selectedFile);
-          fileToUpload = new File([compressedBlob], selectedFile.name, {
-            type: selectedFile.type,
-          });
-        }
-        const formData = new FormData();
-        formData.append("image", fileToUpload, fileToUpload.name);
-        const response = await api.put("/user/updateuserpfp", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        setLoadingState(false);
-        setSuccessState("Profile picture updated successfully");
-        queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-        console.log(response.data);
-      } catch (error) {
-        setLoadingState(false);
-        if ((error as AxiosError).response?.data == "File is too large") {
-          setErrorState("File is too large. Max file size is 2MB");
-        } else {
-          setErrorState("Failed to update profile picture");
-        }
-        console.error("Error uploading file", error);
-      }
-    }
-  };
+  // const uploadHandler = async () => {
+  //   if (selectedFile) {
+  //     try {
+  //       setLoadingState(true);
+  //       let fileToUpload = selectedFile;
+  //       if (selectedFile.type !== "image/gif") {
+  //         const compressedBlob = await compressImage(selectedFile);
+  //         fileToUpload = new File([compressedBlob], selectedFile.name, {
+  //           type: selectedFile.type,
+  //         });
+  //       }
+  //       const formData = new FormData();
+  //       formData.append("image", fileToUpload, fileToUpload.name);
+  //       const response = await api.put("/user/updateuserpfp", formData, {
+  //         headers: {
+  //           "Content-Type": "multipart/form-data",
+  //         },
+  //       });
+  //       setLoadingState(false);
+  //       setSuccessState("Profile picture updated successfully");
+  //       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+  //       console.log(response.data);
+  //     } catch (error) {
+  //       setLoadingState(false);
+  //       if ((error as AxiosError).response?.data == "File is too large") {
+  //         setErrorState("File is too large. Max file size is 2MB");
+  //       } else {
+  //         setErrorState("Failed to update profile picture");
+  //       }
+  //       console.error("Error uploading file", error);
+  //     }
+  //   }
+  // };
 
   return (
     <div className="flex flex-col items-center gap-4">
