@@ -31,8 +31,6 @@ export function SettingsDrawer() {
     logout: state.logout,
   }));
   const { data: currentUser } = useGetCurrentUser();
-
-  if (!currentUser) return;
   return (
     <Drawer direction="left">
       <DrawerTrigger asChild>
@@ -62,8 +60,8 @@ export function SettingsDrawer() {
               <div className="flex w-full flex-col items-center justify-center rounded-md bg-primary-foreground/80 px-8 py-4">
                 <MemberPfpIcon
                   isFriend={true}
-                  _id={currentUser._id}
-                  pfp={currentUser.pfp}
+                  _id={currentUser?._id!}
+                  pfp={currentUser?.pfp!}
                   className="mb-2 h-24 w-24"
                 />
                 <p className=" text-primary">{currentUser?.name || "Name"}</p>
