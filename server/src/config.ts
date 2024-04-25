@@ -6,9 +6,8 @@ export const mongodb =
     ? (process.env.MONGODB_CON_STRING as string)
     : "mongodb://localhost:27017/chatappAuth";
 
-export const disableGlobalLogging =
-  // true // enable global logging
-  process.env.NODE_ENV === "production" ? true : false;
+export const disableGlobalLogging = false; // enable global logging
+// process.env.NODE_ENV === "production" ? true : false;
 const loggingFns = {
   // roomRouter.ts
   "/room/publicrooms": false,
@@ -59,9 +58,9 @@ const loggingFns = {
 export type FnNames = keyof typeof loggingFns;
 
 export function logger(fnName: FnNames, label: string = "", ...args: any[]) {
-  if (disableGlobalLogging) {
-    return;
-  }
+  // if (disableGlobalLogging) {
+  //   return;
+  // }
   if (loggingFns[fnName] === true) {
     const datenow = new Date();
     let hr: any = datenow.getHours(),
@@ -89,9 +88,22 @@ export function makeRoute(
       } catch (error) {
         logger(endpoint, errorMsg, error);
         if (process.env.NODE_ENV === "production") {
-          res.status(500).send(errorMsg);
+          // res.status(500).send(errorMsg);
+          if (error instanceof Error) {
+            res.status(500).json({
+              errorName: error.name,
+              errorMessage: error.message,
+              errorStack: error.stack,
+            });
+          }
         } else {
-          if (error instanceof Error) res.status(500).send(error.message);
+          if (error instanceof Error) {
+            res.status(500).json({
+              errorName: error.name,
+              errorMessage: error.message,
+              errorStack: error.stack,
+            });
+          }
         }
       }
     },

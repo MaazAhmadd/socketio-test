@@ -6,7 +6,7 @@ import Authenticated from "./components/Authenticated";
 import RoomPage from "./components/Room";
 import Unauthenticated from "./components/Unauthenticated";
 import { useGlobalStore } from "./state/store";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+// import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "./components/ErrorFallback";
 
@@ -29,7 +29,7 @@ export default function App() {
             {route == "authPage" && <Unauthenticated />}
             {route == "homePage" && <Authenticated />}
             {route == "roomPage" && <RoomPage />}
-            <ReactQueryDevtools initialIsOpen={false} />
+            {/* <ReactQueryDevtools initialIsOpen={false} /> */}
           </QueryClientProvider>
         </ErrorBoundary>
       </ThemeProvider>

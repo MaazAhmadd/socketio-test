@@ -17,9 +17,8 @@ const recachegoose_1 = __importDefault(require("recachegoose"));
 exports.mongodb = process.env.NODE_ENV === "production"
     ? process.env.MONGODB_CON_STRING
     : "mongodb://localhost:27017/chatappAuth";
-exports.disableGlobalLogging = 
-// true // enable global logging
-process.env.NODE_ENV === "production" ? true : false;
+exports.disableGlobalLogging = false; // enable global logging
+// process.env.NODE_ENV === "production" ? true : false;
 const loggingFns = {
     // roomRouter.ts
     "/room/publicrooms": false,
@@ -67,9 +66,9 @@ const loggingFns = {
     getVideoInfo: true,
 };
 function logger(fnName, label = "", ...args) {
-    if (exports.disableGlobalLogging) {
-        return;
-    }
+    // if (disableGlobalLogging) {
+    //   return;
+    // }
     if (loggingFns[fnName] === true) {
         const datenow = new Date();
         let hr = datenow.getHours(), m = datenow.getMinutes(), s = datenow.getSeconds();
@@ -85,11 +84,23 @@ function makeRoute(route, endpoint, middleware, router, fn, errorMsg = "error on
         catch (error) {
             logger(endpoint, errorMsg, error);
             if (process.env.NODE_ENV === "production") {
-                res.status(500).send(errorMsg);
+                // res.status(500).send(errorMsg);
+                if (error instanceof Error) {
+                    res.status(500).json({
+                        errorName: error.name,
+                        errorMessage: error.message,
+                        errorStack: error.stack,
+                    });
+                }
             }
             else {
-                if (error instanceof Error)
-                    res.status(500).send(error.message);
+                if (error instanceof Error) {
+                    res.status(500).json({
+                        errorName: error.name,
+                        errorMessage: error.message,
+                        errorStack: error.stack,
+                    });
+                }
             }
         }
     }));
