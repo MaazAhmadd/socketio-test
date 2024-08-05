@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import { NormalUser } from "../types/types";
+import { NormalUser } from "./types";
 import { clearCacheAndLog, logger, makeRoute } from "./config";
 import { User } from "./models";
 import multer from "multer";

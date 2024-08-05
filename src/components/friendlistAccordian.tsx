@@ -19,7 +19,7 @@ import { Button } from "./ui/button";
 import { Spinner } from "./Authenticated";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
-import { CurrentUser } from "server/types/types";
+import { CurrentUser } from "server/src/types";
 
 export function FriendlistAccordian() {
   let recents = [
