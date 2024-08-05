@@ -10,7 +10,7 @@ export const disableGlobalLogging = false; // enable global logging
 // process.env.NODE_ENV === "production" ? true : false;
 const loggingFns = {
   // roomRouter.ts
-  "/room/publicrooms": false,
+  "/room/publicrooms": true,
   "/room/checkActiveMember": true,
   // userRouter.ts
   "authUser middleware": true,

@@ -8,7 +8,7 @@ makeRoute(
   "/room/publicrooms",
   [authUser],
   router,
-  async function (req: Request, res: Response) {
+  async function (req, res) {
     const rooms = await req.prisma?.room.findMany({
       where: {
         members: {
@@ -39,7 +39,7 @@ makeRoute(
   "/room/checkActiveMember",
   [authUser],
   router,
-  async function (req: Request, res: Response) {
+  async function (req, res) {
     const member = await req.prisma!.member.findFirst({
       where: {
         mongoId: req.user?._id,
