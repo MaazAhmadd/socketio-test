@@ -1,7 +1,7 @@
 import { Server, Socket } from "socket.io";
 import {
   ClientToServerEvents,
-  DecodedUser,
+  NormalUser,
   InterServerEvents,
   RoomCreationData,
   ServerToClientEvents,
@@ -10,8 +10,9 @@ import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { ytInfoService } from "./ytRouter";
 import { logger } from "./config";
+import { User } from "./models";
 interface CustomSocket extends Socket {
-  user?: DecodedUser;
+  user?: NormalUser;
   roomId?: string;
 }
 export default function socketServer(
@@ -32,20 +33,15 @@ export default function socketServer(
       }
 
       logger("auth middleware", "verifying token: ", token);
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_PRIVATE_KEY || "",
-      );
-      logger(
-        "auth middleware",
-        "token found, handle: ",
-        (decoded as DecodedUser).handle,
-      );
+      let decoded = jwt.verify(token, process.env.JWT_PRIVATE_KEY || "") as {
+        _id: string;
+      };
 
+      logger("auth middleware", "token found, handle: ", decoded._id);
       if (decoded) {
-        socket.user = decoded as DecodedUser;
+        const user = await User.findById(decoded._id).select("name handle pfp");
+        socket.user = user as NormalUser;
         logger("auth middleware", "connecting back sockets");
-
         if (socket.roomId) {
           await prisma.member.updateMany({
             where: {
@@ -177,13 +173,14 @@ async function makeRoom(
       members: {
         create: [
           {
-            handle: socket.user?.handle || "",
-            pfp: socket.user?.pfp || "",
-            name: socket.user?.name || "",
+            handle: socket.user?.handle!,
+            pfp: socket.user?.pfp!,
+            name: socket.user?.name!,
             isConnected: true,
             isLeader: true,
             mic: false,
             leaderPC: 0,
+            mongoId: socket.user?._id!,
           },
         ],
       },
@@ -191,8 +188,8 @@ async function makeRoom(
         create: {
           isPlaying: false,
           sourceUrl: url,
-          thumbnailUrl: videoInfo?.thumbnail || "",
-          title: videoInfo?.title || "",
+          thumbnailUrl: videoInfo?.thumbnail!,
+          title: videoInfo?.title!,
           totalDuration: 0,
           playedTill: 0,
         },
@@ -210,13 +207,13 @@ export async function checkIfMemberAlreadyActive(
   handle: string | undefined,
   prisma: PrismaClient,
 ) {
-  const member = await prisma.member.findMany({
+  const member = await prisma.member.findFirst({
     where: {
       handle,
       isConnected: true,
     },
   });
-  return member.length > 0;
+  return member ? true : false;
 }
 async function joinRoom(
   socket: CustomSocket,
@@ -282,13 +279,14 @@ async function joinRoom(
           members: {
             create: [
               {
-                handle: socket.user?.handle || "",
-                pfp: socket.user?.pfp || "",
-                name: socket.user?.name || "",
+                handle: socket.user?.handle!,
+                pfp: socket.user?.pfp!,
+                name: socket.user?.name!,
                 isConnected: true,
                 isLeader: false,
                 mic: false,
                 leaderPC: totalMembers,
+                mongoId: socket.user?._id!,
               },
             ],
           },
@@ -404,7 +402,7 @@ async function makeMemberLeave(prisma: PrismaClient, socket: CustomSocket) {
     // check if there's another connected member, give leader to lowest priorityCounter
     const updatedLeaderMember = await prisma.member.updateMany({
       where: {
-        handle: activeMembersWithHigherPC[0].handle || "",
+        handle: activeMembersWithHigherPC[0].handle!,
         roomId: socket.roomId,
       },
       data: {

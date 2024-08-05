@@ -2,7 +2,7 @@ import express, { Request, RequestHandler, Response, Router } from "express";
 import axios, { AxiosError } from "axios";
 import { PrismaClient } from "@prisma/client";
 import { VideoInfo } from "./types";
-import { FnNames, logger } from "./config";
+import { FnNames, logger, makeRoute } from "./config";
 import { authUser } from "./userRouter";
 const router = express.Router();
 
@@ -10,6 +10,7 @@ makeRoute(
   "get",
   "/ytservice",
   [authUser],
+  router,
   async function (req: Request, res: Response) {
     const videoInfo = await ytInfoService(
       req.query?.url as string,
@@ -26,6 +27,7 @@ makeRoute(
   "get",
   "/ytservice/search",
   [authUser],
+  router,
   async function (req: Request, res: Response) {
     logger("/ytservice/search", "query: ", req.query?.q);
     try {
@@ -45,32 +47,6 @@ makeRoute(
     }
   },
 );
-
-function makeRoute(
-  route: "get" | "post" | "put" | "delete" | "patch" | "options" | "head",
-  endpoint: FnNames,
-  middleware: RequestHandler[],
-  fn: (req: Request, res: Response) => Promise<any>,
-  // router: Router,
-  errorMsg: string = "error on the server, check logs",
-) {
-  return router[route](
-    endpoint,
-    middleware,
-    async (req: Request, res: Response) => {
-      try {
-        await fn(req, res);
-      } catch (error) {
-        logger(endpoint, errorMsg, error);
-        if (process.env.NODE_ENV === "production") {
-          res.status(500).send(errorMsg);
-        } else {
-          if (error instanceof Error) res.status(500).send(error.message);
-        }
-      }
-    },
-  );
-}
 
 export default router;
 

@@ -5,10 +5,11 @@ import jwt from "jsonwebtoken";
 interface IMongooseArray<T> extends Types.Array<T> {
   pull(...args: any[]): this;
 }
-export interface IUser extends Document {
+interface IUser extends Document {
   name: string;
   handle: string;
   pfp: string;
+  profilePicId: string;
   password: string;
   friends: IMongooseArray<Types.ObjectId>;
   friendReqsSent: IMongooseArray<Types.ObjectId>;
@@ -21,10 +22,13 @@ const UserSchema: Schema = new Schema({
   name: { type: String, index: true },
   handle: { type: String, required: true, unique: true, index: true },
   pfp: { type: String },
+  profilePicId: { type: String },
   password: { type: String, required: true },
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   friendReqsSent: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   friendReqsReceived: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  recentsUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  recentsVideos: [{ type: String }],
 });
 UserSchema.methods.toJSON = function () {
   const user = this;
@@ -41,9 +45,10 @@ UserSchema.methods.comparePassword = async function (
 UserSchema.methods.generateAuthToken = function () {
   const token = jwt.sign(
     {
-      name: this.name,
-      pfp: this.pfp,
-      handle: this.handle,
+      _id: this._id,
+      // name: this.name,
+      // pfp: this.pfp,
+      // handle: this.handle,
     },
     process.env.JWT_PRIVATE_KEY || "",
   );
@@ -51,5 +56,5 @@ UserSchema.methods.generateAuthToken = function () {
 };
 
 const User = mongoose.model<IUser>("User", UserSchema);
-
+export type { IUser };
 export { User };

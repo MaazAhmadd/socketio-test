@@ -1,0 +1,12 @@
+diff --git a/node_modules/mongoose/types/query.d.ts b/node_modules/mongoose/types/query.d.ts
+index 32a502e..a8bd459 100644
+--- a/node_modules/mongoose/types/query.d.ts
++++ b/node_modules/mongoose/types/query.d.ts
+@@ -258,6 +258,7 @@ declare module 'mongoose' {
+     box(lower: number[], upper: number[]): this;
+     box(val: any): this;
+ 
++    cache(ttl?: number, customKey?: string): this;
+     /**
+      * Casts this query to the schema of `model`.
+      *

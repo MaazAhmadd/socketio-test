@@ -1,8 +1,8 @@
 import { cn, getHexColorFromString } from "@/lib/utils";
-import { DecodedUser, Member, Room } from "server/src/types";
+import { Room } from "server/src/types";
 import React from "react";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
-import { useFetchFriendlist } from "@/hooks/userHooks";
+import { useGlobalStore } from "@/state/store";
 interface RoomCardProps {
   room: Room;
   className?: string;
@@ -14,6 +14,9 @@ const RoomCard: React.FC<RoomCardProps> = ({
   onClick,
   ...props
 }) => {
+  const { currentUser } = useGlobalStore((s) => ({
+    currentUser: s.currentUser,
+  }));
   return (
     <li className={cn("", className)} {...props} onClick={onClick}>
       <div className="flex h-[100px] justify-between gap-4">
@@ -34,7 +37,13 @@ const RoomCard: React.FC<RoomCardProps> = ({
             <div className="no-scrollbar flex gap-2 overflow-x-scroll">
               {room.members.map((m) => {
                 return (
-                  <MemberPfpIcon key={m.handle} m={m} className="size-[42px]" />
+                  <MemberPfpIcon
+                    key={m.handle}
+                    _id={m.mongoId}
+                    pfp={m.pfp!}
+                    isFriend={currentUser?.friends.includes(m.handle)}
+                    className="size-[42px]"
+                  />
                 );
               })}
             </div>
@@ -51,31 +60,31 @@ const RoomCard: React.FC<RoomCardProps> = ({
 };
 
 export const MemberPfpIcon = ({
-  m,
+  _id,
+  pfp,
+  isFriend,
   className,
 }: {
-  m: Member | DecodedUser;
+  _id: string;
+  pfp?: string;
+  isFriend?: boolean;
   className?: string;
 }) => {
-  const { data: friendlist } = useFetchFriendlist();
-  const isFriend = friendlist?.includes(m.handle);
+  const randomColor = getHexColorFromString(_id);
 
-  const randomColor = getHexColorFromString(m.handle);
-
-  return m.pfp ? (
+  return pfp ? (
     <img
-      src={m.pfp}
+      src={pfp}
       alt=""
-      key={m.handle}
       className={cn(
-        "size-[42px] rounded-full border border-muted p-[2px]",
+        "size-[42px] rounded-full border border-muted p-[2px] object-cover",
         isFriend ? "border-primary" : "", // if friend
         className,
       )}
     />
   ) : (
     <div
-      key={m.handle}
+      key={_id}
       style={{
         backgroundImage: `linear-gradient(to bottom, ${randomColor} 0%, ${randomColor} 100%), linear-gradient(to bottom, hsl(var(--muted)) 0%, hsl(var(--muted)) 100%)`,
         backgroundClip: "content-box, padding-box",

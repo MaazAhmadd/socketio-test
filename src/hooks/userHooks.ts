@@ -1,7 +1,7 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
 import api from "@/api/api";
 import { isValidJwt } from "@/utils";
-import { CurrentUser, DecodedUser } from "server/src/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CurrentUser, NormalUser } from "server/src/types";
 
 export const useLoginUser = () => {
   const loginUser = async (formData: Record<string, any>) => {
@@ -56,13 +56,46 @@ export const useRegisterUser = () => {
 
   return useMutation({ mutationFn: registerUser });
 };
-export const useGetUser = (handle: string) => {
-  const getUser = async () => {
-    const response = await api.get("/user/getuser/" + handle);
+
+export const useUpdateUserName = () => {
+  const queryClient = useQueryClient();
+  const updateUsername = async (newName: string) => {
+    const response = await api.put("/user/updateusername", { name: newName });
+    queryClient.invalidateQueries({ queryKey: ["currentUser"] });
     return response.data;
   };
-  return useQuery<DecodedUser>({
-    queryKey: ["user", handle],
+  return useMutation({ mutationFn: updateUsername });
+};
+export const useUpdateUserHandle = () => {
+  const queryClient = useQueryClient();
+  const updateUserHandle = async (newHandle: string) => {
+    const response = await api.put("/user/updateuserhandle", {
+      handle: newHandle,
+    });
+    queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    return response.data;
+  };
+  return useMutation({ mutationFn: updateUserHandle });
+};
+export const useUpdateUserPassword = () => {
+  const queryClient = useQueryClient();
+  const updateUserPassword = async (newPassword: string) => {
+    const response = await api.put("/user/updateuserpassword", {
+      password: newPassword,
+    });
+    queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    return response.data;
+  };
+  return useMutation({ mutationFn: updateUserPassword });
+};
+
+export const useGetUser = (idOrHandle: string) => {
+  const getUser = async () => {
+    const response = await api.get("/user/getuser/" + idOrHandle);
+    return response.data;
+  };
+  return useQuery<NormalUser>({
+    queryKey: ["user", idOrHandle],
     queryFn: getUser,
   });
 };
@@ -78,48 +111,94 @@ export const useGetCurrentUser = () => {
   });
 };
 
-export const useFetchFriendlist = () => {
-  const fetchFriendlist = async () => {
-    try {
-      const response = await api.get("/user/fetchFriendlist");
-      return response.data.friends;
-    } catch (error) {
-      console.error("|| error in useFetchFriendlist", error);
-      throw error;
-    }
+// const friendRoutes = {
+// "/user/sendFriendRequest/:receiverHandle": true,
+// "/user/cancelFriendRequest/:receiverHandle": true,
+// "/user/acceptFriendRequest/:senderHandle": true,
+// "/user/rejectFriendRequest/:senderHandle": true,
+// "/user/removeFriend/:friendHandle": true,
+// "/user/fetchFriendlist": true,
+// "/user/fetchFriendRequestsReceived": true,
+// "/user/fetchFriendRequestsSent": true,
+// };
+export const useSendFriendRequest = () => {
+  const queryClient = useQueryClient();
+  const sendFriendRequest = async (receiverId: string) => {
+    const response = await api.post("/user/sendFriendRequest/" + receiverId);
+    queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    return response.data;
   };
-  return useQuery<string[]>({
-    queryKey: ["friends"],
-    queryFn: fetchFriendlist,
-  });
+  return useMutation({ mutationFn: sendFriendRequest });
 };
-export const useFetchFriendRequestsSent = () => {
-  const fetchFriendRequestsSent = async () => {
-    try {
-      const response = await api.get("/user/fetchFriendRequestsSent");
-      return response.data.friendRequestsSent;
-    } catch (error) {
-      console.error("|| error in useFetchFriendRequestsSent", error);
-      throw error;
-    }
+
+export const useCancelFriendRequest = () => {
+  const queryClient = useQueryClient();
+  const cancelFriendRequest = async (receiverId: string) => {
+    const response = await api.post("/user/cancelFriendRequest/" + receiverId);
+    queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    return response.data;
   };
-  return useQuery<string[]>({
-    queryKey: ["friendRequestsSent"],
-    queryFn: fetchFriendRequestsSent,
-  });
+  return useMutation({ mutationFn: cancelFriendRequest });
 };
-export const useFetchFriendRequestsReceived = () => {
-  const fetchFriendRequestsReceived = async () => {
-    try {
-      const response = await api.get("/user/fetchFriendRequestsReceived");
-      return response.data.friendRequestsReceived;
-    } catch (error) {
-      console.error("|| error in useFetchFriendRequestsReceived", error);
-      throw error;
-    }
+
+export const useAcceptFriendRequest = () => {
+  const queryClient = useQueryClient();
+  const acceptFriendRequest = async (senderId: string) => {
+    const response = await api.post("/user/acceptFriendRequest/" + senderId);
+    queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    return response.data;
   };
-  return useQuery<string[]>({
-    queryKey: ["friendRequestsReceived"],
-    queryFn: fetchFriendRequestsReceived,
-  });
+  return useMutation({ mutationFn: acceptFriendRequest });
 };
+
+export const useRejectFriendRequest = () => {
+  const queryClient = useQueryClient();
+  const rejectFriendRequest = async (senderId: string) => {
+    const response = await api.post("/user/rejectFriendRequest/" + senderId);
+    queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    return response.data;
+  };
+  return useMutation({ mutationFn: rejectFriendRequest });
+};
+
+export const useRemoveFriend = () => {
+  const queryClient = useQueryClient();
+  const removeFriend = async (friendId: string) => {
+    const response = await api.post("/user/removeFriend/" + friendId);
+    queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    return response.data;
+  };
+
+  return useMutation({ mutationFn: removeFriend });
+};
+
+// export const useFetchFriendlist = () => {
+//   const fetchFriendlist = async () => {
+//     const response = await api.get("/user/fetchFriendlist");
+//     return response.data;
+//   };
+//   return useQuery<string[]>({
+//     queryKey: ["friendList"],
+//     queryFn: fetchFriendlist,
+//   });
+// };
+// export const useFetchFriendRequestsSent = () => {
+//   const fetchFriendRequestsSent = async () => {
+//     const response = await api.get("/user/fetchFriendRequestsSent");
+//     return response.data;
+//   };
+//   return useQuery<string[]>({
+//     queryKey: ["friendRequestsSent"],
+//     queryFn: fetchFriendRequestsSent,
+//   });
+// };
+// export const useFetchFriendRequestsReceived = () => {
+//   const fetchFriendRequestsReceived = async () => {
+//     const response = await api.get("/user/fetchFriendRequestsReceived");
+//     return response.data;
+//   };
+//   return useQuery<string[]>({
+//     queryKey: ["friendRequestsReceived"],
+//     queryFn: fetchFriendRequestsReceived,
+//   });
+// };

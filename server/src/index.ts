@@ -4,7 +4,7 @@ import { Server } from "socket.io";
 // import cors from "cors";
 import {
   ClientToServerEvents,
-  DecodedUser,
+  NormalUser,
   InterServerEvents,
   ServerToClientEvents,
 } from "./types";
@@ -100,7 +100,7 @@ module.exports = app;
 
 declare module "express-serve-static-core" {
   export interface Request {
-    user?: DecodedUser;
+    user?: { _id: string };
     prisma?: PrismaClient;
     // Add other properties as needed
   }

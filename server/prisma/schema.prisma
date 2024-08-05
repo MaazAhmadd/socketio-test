@@ -12,13 +12,14 @@ datasource db {
 
 model Member {
   id          String  @id @default(uuid())
+  mongoId     String
   name        String?
   handle      String
   pfp         String?
   isConnected Boolean
   isLeader    Boolean
   mic         Boolean
-  leaderPC    Int  // leader priority counter
+  leaderPC    Int // leader priority counter
   Room        Room?   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId      String?
 

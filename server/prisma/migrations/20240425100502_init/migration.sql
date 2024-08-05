@@ -1,6 +1,7 @@
 -- CreateTable
 CREATE TABLE "Member" (
     "id" TEXT NOT NULL,
+    "mongoId" TEXT NOT NULL,
     "name" TEXT,
     "handle" TEXT NOT NULL,
     "pfp" TEXT,
