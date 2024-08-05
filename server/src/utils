@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { Rooms } from "../types/types";
+import { Rooms } from "./types";
 
 function makeMemberLeave(
   rooms: Rooms,

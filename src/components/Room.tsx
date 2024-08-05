@@ -2,7 +2,7 @@ import { useGlobalStore, useRoomStore } from "@/state/store";
 import ConnectionStatus from "./ConnectionStatus";
 import { useEffect } from "react";
 import { socket } from "@/socket";
-import { Member, Room } from "server/types/types";
+import { Member, Room } from "server/src/types";
 import { Button } from "./ui/button";
 import { useWindowSize } from "@/hooks/utilHooks";
 import toast from "react-hot-toast";

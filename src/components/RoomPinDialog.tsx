@@ -16,7 +16,7 @@ import { useDebounce } from "@/hooks/utilHooks";
 import { useRoomStore, useGlobalStore } from "@/state/store";
 import { DrawingPinFilledIcon } from "@radix-ui/react-icons";
 import { useEffect, useState } from "react";
-import { SupportedPlatforms } from "server/types/types";
+import { SupportedPlatforms } from "server/src/types";
 import {
   LikedVideosDialog,
   RecentVideosDialog,

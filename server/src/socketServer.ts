@@ -5,7 +5,7 @@ import {
   InterServerEvents,
   RoomCreationData,
   ServerToClientEvents,
-} from "../types/types";
+} from "./types";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { ytInfoService } from "./ytRouter";

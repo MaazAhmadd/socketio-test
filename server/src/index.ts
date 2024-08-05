@@ -7,7 +7,7 @@ import {
   DecodedUser,
   InterServerEvents,
   ServerToClientEvents,
-} from "../types/types";
+} from "./types";
 import { connectDB } from "./db";
 import roomRouter from "./roomRouter";
 import userRouter from "./userRouter";

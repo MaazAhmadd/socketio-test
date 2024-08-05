@@ -1,7 +1,7 @@
 import express, { Request, RequestHandler, Response, Router } from "express";
 import axios, { AxiosError } from "axios";
 import { PrismaClient } from "@prisma/client";
-import { VideoInfo } from "../types/types";
+import { VideoInfo } from "./types";
 import { FnNames, logger } from "./config";
 import { authUser } from "./userRouter";
 const router = express.Router();

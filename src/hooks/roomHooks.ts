@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/api/api";
-import { Room, SupportedPlatforms, VideoInfo } from "server/types/types";
+import { Room, SupportedPlatforms, VideoInfo } from "server/src/types";
 
 export const useGetPublicRooms = () => {
   async function getPublicRooms() {

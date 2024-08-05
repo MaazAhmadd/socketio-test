@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDebounce } from "@/hooks/utilHooks";
-import { SupportedPlatforms, VideoInfo } from "server/types/types";
+import { SupportedPlatforms, VideoInfo } from "server/src/types";
 export type Tabs = "public" | "invited" | "friends" | "createRoom";
 import {
   Dialog,

@@ -6,7 +6,7 @@ import {
   Member,
   RoomCreationData,
   RoomJoinData,
-} from "server/types/types";
+} from "server/src/types";
 import { create } from "zustand";
 import { produce } from "immer";
 import toast from "react-hot-toast";

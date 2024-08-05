@@ -2,7 +2,7 @@ import { io, Socket } from "socket.io-client";
 import {
   ClientToServerEvents,
   ServerToClientEvents,
-} from "../server/types/types";
+} from "../server/src/types";
 
 const URL =
   process.env.NODE_ENV == "development"

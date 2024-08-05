@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import api from "@/api/api";
 import { isValidJwt } from "@/utils";
-import { CurrentUser, DecodedUser } from "server/types/types";
+import { CurrentUser, DecodedUser } from "server/src/types";
 
 export const useLoginUser = () => {
   const loginUser = async (formData: Record<string, any>) => {

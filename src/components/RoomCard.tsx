@@ -1,5 +1,5 @@
 import { cn, getHexColorFromString } from "@/lib/utils";
-import { DecodedUser, Member, Room } from "server/types/types";
+import { DecodedUser, Member, Room } from "server/src/types";
 import React from "react";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { useFetchFriendlist } from "@/hooks/userHooks";

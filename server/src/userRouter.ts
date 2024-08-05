@@ -9,7 +9,7 @@ const router = express.Router();
 import { User } from "./models";
 import jwt from "jsonwebtoken";
 import Mongoose from "mongoose";
-import { CurrentUser, DecodedUser } from "../types/types";
+import { CurrentUser, DecodedUser } from "./types";
 import { FnNames, logger } from "./config";
 
 // middleware to check if x-auth-token token attached and valid
