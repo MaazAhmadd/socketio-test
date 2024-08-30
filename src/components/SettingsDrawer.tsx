@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import api from "@/api";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -25,6 +25,7 @@ import { MemberPfpIcon } from "./RoomCard";
 import { Icons } from "./icons";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { cn, getHexColorFromString } from "@/lib/utils";
 
 export function SettingsDrawer() {
   const [isEditOn, setIsEditOn] = useState(false);
@@ -59,8 +60,7 @@ export function SettingsDrawer() {
           <div className=" flex flex-col items-center justify-center gap-2 md:p-4 ">
             {!isEditOn ? (
               <div className="flex w-full flex-col items-center justify-center rounded-md bg-primary-foreground/80 px-8 py-4">
-                <MemberPfpIcon
-                  isFriend={true}
+                <ProfilePicPreview
                   _id={currentUser?._id!}
                   pfp={currentUser?.pfp!}
                   className="mb-2 h-24 w-24"
@@ -330,18 +330,12 @@ const UpdateProfilePic: React.FC = () => {
   return (
     <div className="flex flex-col items-center gap-4">
       {previewUrl ? (
-        <MemberPfpIcon
-          _id=""
-          isFriend={true}
-          pfp={previewUrl}
-          className="size-24"
-        />
+        <ProfilePicPreview _id="" pfp={previewUrl} className="size-24" />
       ) : (
-        <MemberPfpIcon
+        <ProfilePicPreview
           _id={currentUser?._id!}
-          isFriend={true}
           pfp={currentUser?.pfp}
-          className="size-24 "
+          className="size-24"
         />
       )}
       <div>
@@ -375,5 +369,40 @@ const UpdateProfilePic: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+export const ProfilePicPreview = ({
+  _id,
+  pfp,
+  className,
+}: {
+  _id: string;
+  pfp?: string;
+  className?: string;
+}) => {
+  const randomColor = getHexColorFromString(_id);
+
+  return pfp ? (
+    <img
+      src={pfp}
+      alt=""
+      className={cn(
+        "size-[42px] rounded-full border   border-primary object-cover p-[2px]",
+        className,
+      )}
+    />
+  ) : (
+    <div
+      key={_id}
+      style={{
+        backgroundImage: `linear-gradient(to bottom, ${randomColor} 0%, ${randomColor} 100%), linear-gradient(to bottom, hsl(var(--muted)) 0%, hsl(var(--muted)) 100%)`,
+        backgroundClip: "content-box, padding-box",
+      }}
+      className={cn(
+        "size-[42px] rounded-full border border-primary p-[2px]",
+        className,
+      )}
+    ></div>
   );
 };

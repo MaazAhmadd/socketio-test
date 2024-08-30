@@ -1,8 +1,11 @@
+import { Repository } from "redis-om";
+
 interface ServerToClientEvents {
   roomDesc: (data: Room) => void;
   memberList: (data: Member[]) => void;
   message: (data: { sender: string; msg: string }) => void;
   stateError: (data: string) => void;
+  activeMemberListUpdate: (data: string[]) => void; 
 
   // noArg: () => void;
   // sendMessage: (value: string) => void;
@@ -19,11 +22,13 @@ interface ServerToClientEvents {
 }
 
 interface ClientToServerEvents {
-  createRoom: (data: RoomCreationData) => void;
-  joinRoom: (data: RoomJoinData) => void;
-  giveLeader: (targetMember: string) => void;
-  sendMessage: (msg: string) => void;
+  // createRoom: (data: { videoUrl: string; roomId: string }) => void;
+  joinRoom: (data: { roomId: string }) => void;
+  giveLeader: (data: { targetMember: string; roomId: string }) => void;
+  sendMessage: (data: { msg: string; roomId: string }) => void;
   leaveRoom: () => void;
+  // memberJoin: (data: Member) => void;
+  // memberLeave: (data: string) => void;
 
   // message: (data: string, userId: string) => void;
   // getRooms: () => void;
@@ -50,57 +55,64 @@ type RoomCreationData = {
 type RoomJoinData = {
   roomId: string;
 };
-interface Room {
-  id: string;
-  members: Member[];
-  videoPlayer?: VideoPlayer | null;
-  privacy: string;
-  playback: string;
-  roomMic: boolean;
-  kicked: string[];
-}
-
-// random Music -> aesthetic,jazz,pop,rock,hip-hop,classical,electronic,rap,beatbox,bollywood
-// music suggestion platform with categories. // comment: make sure to suggest the original video so your vote gets counted
+// Define Member interface
 interface Member {
   mongoId: string;
-  name?: string | null;
+  // isConnected: boolean;
+  name?: string;
   handle: string;
-  pfp?: string | null;
-  isConnected: boolean;
-  isLeader: boolean;
+  pfp?: string;
   mic: boolean;
-  leaderPC: number;
-  roomId?: string | null;
+  country?: string;
+  // roomId?: string;
+  // isLeader: boolean;
+  // leaderPC: number;
+  [key: string]: any;
 }
 
-interface VideoPlayer {
-  isPlaying: boolean;
-  sourceUrl: string;
-  thumbnailUrl: string;
-  title: string;
-  totalDuration: number;
-  playedTill: number;
-  roomId: string;
+// Define Room interface
+interface Room {
+  privacy: number;
+  playback: number;
+  roomMic: boolean;
+  membersJoinedList?: string[];
+  activeMembersList?: string[];
+  activeMembersCount?: number;
+  countries: string[];
+  kicked: string[];
+  createdByMongoId: string[];
+  createdAt: number;
+  // searchKeywords: string;
+  v_isPlaying: boolean;
+  v_sourceUrl: string;
+  v_thumbnailUrl: string;
+  v_title: string;
+  v_totalDuration: number;
+  v_playedTill: number;
+  entityId?: string;
+  // members?: Member[];
+  [key: string]: any;
 }
 
-type CurrentUser =
-  | {
-      _id: string;
-      name: string;
-      handle: string;
-      pfp: string;
-      friends: string[];
-      friendReqsSent: string[];
-      friendReqsReceived: string[];
-    }
-  | undefined;
+type CurrentUser = {
+  _id: string;
+  name: string;
+  handle: string;
+  pfp: string;
+  country: string;
+  friends: string[];
+  friendReqsSent: string[];
+  friendReqsReceived: string[];
+  recentsUsers: string[];
+  recentsVideos: string[];
+};
 
 interface NormalUser {
   _id: string;
   name: string;
   handle: string;
   pfp: string;
+  country: string;
 }
 
 type VideoInfo = {
@@ -112,6 +124,10 @@ type VideoInfo = {
 
 type SupportedPlatforms = "youtube" | "netflix" | "prime";
 
+type RedisSchemas = {
+  member: Repository<Member>;
+  room: Repository<Room>;
+};
 export type {
   ServerToClientEvents,
   ClientToServerEvents,
@@ -121,10 +137,10 @@ export type {
   Member,
   Room,
   NormalUser,
-  VideoPlayer,
   RoomCreationData,
   RoomJoinData,
   VideoInfo,
   SupportedPlatforms,
   CurrentUser,
+  RedisSchemas,
 };

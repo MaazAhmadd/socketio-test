@@ -4,16 +4,21 @@ import cachegoose from "recachegoose";
 export const mongodb =
   process.env.NODE_ENV === "production"
     ? (process.env.MONGODB_CON_STRING as string)
-    : "mongodb://localhost:27017/chatappAuth";
+    : // : (process.env.MONGODB_CON_STRING as string);
+      "mongodb://localhost:27017/chatappAuth";
 
 export const disableGlobalLogging = false; // enable global logging
 // process.env.NODE_ENV === "production" ? true : false;
 const loggingFns = {
   // roomRouter.ts
-  "/room/publicrooms": true,
+  "/room/userrooms": true,
   "/room/checkActiveMember": true,
+  "/room/makeRoom": true,
+  "/room/deleteAllRooms": true,
+  "/room/deleteAllMembers": true,
+  "/room/getRoom/:roomId": true,
   // userRouter.ts
-  "authUser middleware": true,
+  "authUser-middleware": true,
   "/user/register": true,
   "/user/updateusername": true,
   "/user/updateuserhandle": true,
@@ -36,11 +41,13 @@ const loggingFns = {
   // ytRouter.ts
   "/ytservice": true,
   "/ytservice/search": true,
+  "/ytservice/test": true,
   // socketServer.ts
-  "auth middleware": false,
-  "socket createRoom": true,
-  "socket disconnect": true,
-  "socket leaveRoom": true,
+  "socket-event": true,
+  "auth-middleware": true,
+  "socket-createRoom": true,
+  "socket-disconnect": true,
+  "socket-leaveRoom": true,
   makeMemberLeave: true,
   initializeSocketServer: true,
   deleteInactiveRooms: true,
@@ -61,13 +68,26 @@ export function logger(fnName: FnNames, label: string = "", ...args: any[]) {
   // if (disableGlobalLogging) {
   //   return;
   // }
+  // const only: FnNames[] = [
+  //   "joinRoom",
+  //   "makeMemberLeave",
+  //   "server",
+  //   "connectDB",
+  //   "/room/userrooms"
+  // ];
   if (loggingFns[fnName] === true) {
+    // if (only && !only.includes(fnName)) {
+    //   return;
+    // }
     const datenow = new Date();
     let hr: any = datenow.getHours(),
       m: any = datenow.getMinutes(),
       s: any = datenow.getSeconds();
 
-    console.log(`[${hr % 12}:${m}:${s}][${fnName}] ${label} : `, ...args);
+    console.log(
+      `[${hr % 12}:${m}:${s}][${fnName}] ${label}${args.length > 0 ? ":" : ""} `,
+      ...args,
+    );
   }
 }
 
@@ -84,9 +104,11 @@ export function makeRoute(
     middleware,
     async (req: Request, res: Response) => {
       try {
+        logger(endpoint, "started");
         await fn(req, res);
       } catch (error) {
-        logger(endpoint, errorMsg, error);
+        console.trace("[logger] error: ", error);
+        // logger(endpoint, errorMsg, error);
         if (process.env.NODE_ENV === "production") {
           // res.status(500).send(errorMsg);
           if (error instanceof Error) {

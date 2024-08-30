@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useGetPublicRooms, useGetSearchResults } from "@/hooks/roomHooks";
+import {
+  useGetUserRooms,
+  useGetSearchResults,
+  useMakeRoom,
+} from "@/hooks/roomHooks";
 import { cn } from "@/lib/utils";
 import { useGlobalStore, useRoomStore } from "@/state/store";
 import { useEffect, useRef, useState } from "react";
@@ -31,32 +35,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useGetCurrentUser } from "@/hooks/userHooks";
+import { useNavigate } from "react-router-dom";
 
 const Authenticated = () => {
-  const { showRoomTab, setShowRoomTab, setCurrentUser, setGlobalLoading } =
-    useGlobalStore((state) => ({
-      showRoomTab: state.showRoomTab,
-      setShowRoomTab: state.setShowRoomTab,
-      setCurrentUser: state.setCurrentUser,
-      setGlobalLoading: state.setGlobalLoading,
-    }));
-  let { refetch: getPublicRooms } = useGetPublicRooms();
-  const { data: currentUser, isFetching, isLoading } = useGetCurrentUser();
-  useEffect(() => {
-    // console.log(
-    //   "useEffect called with currentUser:",
-    //   isLoading,
-    //   isFetching,
-    //   currentUser,
-    // );
-    setCurrentUser(currentUser);
-    if (isLoading) {
-      setGlobalLoading(true);
-    } else {
-      setGlobalLoading(false);
-    }
-  }, [isLoading, isFetching]);
+  const { showRoomTab, setShowRoomTab } = useGlobalStore((state) => ({
+    showRoomTab: state.showRoomTab,
+    setShowRoomTab: state.setShowRoomTab,
+  }));
+  let { refetch: getPublicRooms } = useGetUserRooms();
+
   return (
     <>
       <SettingsDrawer />
@@ -158,21 +145,11 @@ const Public = () => {
   //   22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
   //   41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
   // ]);
-  let { data: publicRooms, isFetching } = useGetPublicRooms();
-  const {
-    setRoute,
-
-    setGlobalLoading,
-  } = useGlobalStore((s) => ({
-    setRoute: s.setRoute,
-    setGlobalLoading: s.setGlobalLoading,
+  const navigate = useNavigate();
+  let { data: publicRooms, isFetching } = useGetUserRooms();
+  const { setRoomData } = useRoomStore((s) => ({
+    setRoomData: s.setRoomData,
   }));
-  const { setRoomJoinData_RoomId, setRoomCreationRequestType } = useRoomStore(
-    (s) => ({
-      setRoomJoinData_RoomId: s.setRoomJoinData_RoomId,
-      setRoomCreationRequestType: s.setRoomCreationRequestType,
-    }),
-  );
 
   return (
     <ScrollArea
@@ -192,19 +169,17 @@ const Public = () => {
               No public rooms
             </p>
           )}
-          {isFetching && <Spinner />}
-          {!isFetching &&
-            publicRooms?.map((room) => {
+          {publicRooms &&
+            publicRooms.length > 0 &&
+            publicRooms.map((room) => {
               console.log("[publicRooms] room: ", room);
               return (
                 <RoomCard
-                  key={room.id}
+                  key={room.entityId}
                   room={room}
                   onClick={() => {
-                    setRoomJoinData_RoomId(room.id);
-                    setRoomCreationRequestType("join");
-                    setGlobalLoading(true);
-                    setRoute("roomPage");
+                    setRoomData(room);
+                    navigate("/room/" + room.entityId);
                   }}
                   className="mx-2  mr-4 mt-2 cursor-pointer overflow-hidden rounded-xl border border-background bg-background hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground"
                   // primary muted-foreground
@@ -283,21 +258,19 @@ const Friends = () => {
 
 const CreateRoom = () => {
   const [videoUrl, setVideoUrl] = useState("");
-  const [disableBtn, setDisableBtn] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPlatform, setSelectedPlatform] =
     useState<SupportedPlatforms>("youtube");
+  const navigate = useNavigate();
+  const {
+    data: room,
+    mutate: makeRoom,
+    isPending: creatingRoom,
+  } = useMakeRoom();
 
-  const { setRoute, setGlobalLoading } = useGlobalStore((s) => ({
-    setRoute: s.setRoute,
-    setGlobalLoading: s.setGlobalLoading,
+  const { setRoomData } = useRoomStore((s) => ({
+    setRoomData: s.setRoomData,
   }));
-  const { setRoomCreationData_VideoUrl, setRoomCreationRequestType } =
-    useRoomStore((s) => ({
-      setRoomCreationData_VideoUrl: s.setRoomCreationData_VideoUrl,
-      setRoomCreationRequestType: s.setRoomCreationRequestType,
-    }));
-
   const debouncedSearchQuery = useDebounce(searchQuery, 1000);
 
   const { data: searchResults, isFetching: isFetchingSearchResults } =
@@ -305,23 +278,20 @@ const CreateRoom = () => {
 
   const onSubmitUrlForm = async (e: React.FormEvent) => {
     e.preventDefault();
-    setDisableBtn(true);
     if (videoUrl) {
       console.log(
         "[createRoom onsubmit] about to createRoom videoUrl: ",
         videoUrl,
       );
-      setGlobalLoading(true);
-      setRoomCreationData_VideoUrl(videoUrl);
-      setRoomCreationRequestType("create");
-      setRoute("roomPage");
+      makeRoom(videoUrl);
     }
   };
   useEffect(() => {
-    setTimeout(() => {
-      setDisableBtn(false);
-    }, 2000);
-  }, [disableBtn]);
+    if (room) {
+      setRoomData(room);
+      navigate("/room/" + room?.entityId!);
+    }
+  }, [creatingRoom]);
 
   console.log("[createRoom] searchResults: ", searchResults);
 
@@ -349,10 +319,10 @@ const CreateRoom = () => {
           autoCapitalize="none"
           autoCorrect="off"
           autoComplete="off"
-          disabled={disableBtn}
+          disabled={creatingRoom}
         />
-        <Button disabled={disableBtn} type="submit" className="">
-          {disableBtn && (
+        <Button disabled={creatingRoom || !videoUrl} type="submit" className="">
+          {creatingRoom && (
             <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
           )}
           Create Room
@@ -375,7 +345,7 @@ const CreateRoom = () => {
           autoCapitalize="none"
           autoCorrect="off"
           autoComplete="off"
-          disabled={disableBtn}
+          disabled={creatingRoom}
         />
       </div>
       <div className="mx-4 mt-4 flex flex-wrap justify-center gap-4 overflow-y-hidden md:mx-10">
@@ -400,22 +370,17 @@ const CreateRoom = () => {
 };
 
 export const ResultCard = ({ result }: { result: VideoInfo }) => {
-  const { setRoute, setGlobalLoading } = useGlobalStore((s) => ({
-    setRoute: s.setRoute,
-    setGlobalLoading: s.setGlobalLoading,
-  }));
-  const { setRoomCreationData_VideoUrl, setRoomCreationRequestType } =
-    useRoomStore((s) => ({
-      setRoomCreationData_VideoUrl: s.setRoomCreationData_VideoUrl,
-      setRoomCreationRequestType: s.setRoomCreationRequestType,
-    }));
+  const navigate = useNavigate();
+  const { data: room, mutate: makeRoom, isPending } = useMakeRoom();
+  useEffect(() => {
+    if (room) {
+      navigate("/room/" + room?.entityId!);
+    }
+  }, [isPending]);
   return (
     <div
       onClick={() => {
-        setGlobalLoading(true);
-        setRoomCreationData_VideoUrl(result.ytId);
-        setRoomCreationRequestType("create");
-        setRoute("roomPage");
+        makeRoom(result.ytId);
       }}
       className="h-[135px] w-[180px] cursor-pointer rounded-sm border border-muted hover:border-muted-foreground"
       style={{

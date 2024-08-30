@@ -1,15 +1,18 @@
-import api from "@/api/api";
+import api from "@/api";
 import { isValidJwt } from "@/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { CurrentUser, NormalUser } from "server/src/types";
 
 export const useLoginUser = () => {
+  const navigate = useNavigate();
   const loginUser = async (formData: Record<string, any>) => {
     try {
       const response = await api.post("/user/login/", formData);
       if (response.data && isValidJwt(response.data)) {
         localStorage.setItem("auth_token", response.data);
         window.location.reload();
+        // navigate("/home");
       }
       // await new Promise((resolve): any => setTimeout(() => resolve(""), 10));
       return response.data;
@@ -40,12 +43,14 @@ export const useCheckUser = (
   });
 };
 export const useRegisterUser = () => {
+  const navigate = useNavigate();
   const registerUser = async (formData: Record<string, any>) => {
     try {
       const response = await api.post("/user/register/", formData);
       if (response.data && isValidJwt(response.data)) {
         localStorage.setItem("auth_token", response.data);
         window.location.reload();
+        // navigate("/home");
       }
       return response.data;
     } catch (error) {
@@ -56,7 +61,6 @@ export const useRegisterUser = () => {
 
   return useMutation({ mutationFn: registerUser });
 };
-
 export const useUpdateUserName = () => {
   const queryClient = useQueryClient();
   const updateUsername = async (newName: string) => {
@@ -89,7 +93,7 @@ export const useUpdateUserPassword = () => {
   return useMutation({ mutationFn: updateUserPassword });
 };
 
-export const useGetUser = (idOrHandle: string) => {
+export const useGetNormalUser = (idOrHandle: string) => {
   const getUser = async () => {
     const response = await api.get("/user/getuser/" + idOrHandle);
     return response.data;
@@ -123,8 +127,10 @@ export const useGetCurrentUser = () => {
 // };
 export const useSendFriendRequest = () => {
   const queryClient = useQueryClient();
-  const sendFriendRequest = async (receiverId: string) => {
-    const response = await api.post("/user/sendFriendRequest/" + receiverId);
+  const sendFriendRequest = async (receiverId: string): Promise<string> => {
+    const response = await api.post<string>(
+      "/user/sendFriendRequest/" + receiverId,
+    );
     queryClient.invalidateQueries({ queryKey: ["currentUser"] });
     return response.data;
   };
@@ -171,34 +177,3 @@ export const useRemoveFriend = () => {
 
   return useMutation({ mutationFn: removeFriend });
 };
-
-// export const useFetchFriendlist = () => {
-//   const fetchFriendlist = async () => {
-//     const response = await api.get("/user/fetchFriendlist");
-//     return response.data;
-//   };
-//   return useQuery<string[]>({
-//     queryKey: ["friendList"],
-//     queryFn: fetchFriendlist,
-//   });
-// };
-// export const useFetchFriendRequestsSent = () => {
-//   const fetchFriendRequestsSent = async () => {
-//     const response = await api.get("/user/fetchFriendRequestsSent");
-//     return response.data;
-//   };
-//   return useQuery<string[]>({
-//     queryKey: ["friendRequestsSent"],
-//     queryFn: fetchFriendRequestsSent,
-//   });
-// };
-// export const useFetchFriendRequestsReceived = () => {
-//   const fetchFriendRequestsReceived = async () => {
-//     const response = await api.get("/user/fetchFriendRequestsReceived");
-//     return response.data;
-//   };
-//   return useQuery<string[]>({
-//     queryKey: ["friendRequestsReceived"],
-//     queryFn: fetchFriendRequestsReceived,
-//   });
-// };

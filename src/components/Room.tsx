@@ -10,50 +10,44 @@ import { RoomSettingsDrawer } from "./RoomSettingsDrawer";
 import { TextGradient } from "./auth-page";
 import { RoomPinDialog } from "./RoomPinDialog";
 import { RoomMembersDrawer } from "./RoomMembersDrawer";
+import { useNavigate, useParams } from "react-router-dom";
+import { useGetRoom } from "@/hooks/roomHooks";
 
 const RoomPage = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const { data: room, isLoading } = useGetRoom(id!);
+  console.log("[Room] id: ", id);
+
   const { width, height } = useWindowSize();
 
-  const {
-    // globalLoading,
-    setGlobalLoading,
-    setConnected,
-
-    connected,
-    setRoute,
-  } = useGlobalStore((s) => ({
-    globalLoading: s.globalLoading,
-    setGlobalLoading: s.setGlobalLoading,
+  const { setConnected, connected } = useGlobalStore((s) => ({
     setConnected: s.setConnected,
-
     connected: s.connected,
-    setRoute: s.setRoute,
   }));
-  const {
-    roomCreationData,
-    roomCreationRequestType,
-    roomJoinData,
-    setCurrentRoom_members,
-  } = useRoomStore((s) => ({
-    roomCreationData: s.roomCreationData,
-    roomCreationRequestType: s.roomCreationRequestType,
-    roomJoinData: s.roomJoinData,
-    currentRoom_members: s.currentRoom_members,
-    setCurrentRoom_members: s.setCurrentRoom_members,
-  }));
+
+  const { roomData, setRoomData, updateActiveMembersList } = useRoomStore(
+    (s) => ({
+      roomData: s.roomData,
+      setRoomData: s.setRoomData,
+      updateActiveMembersList: s.updateActiveMembersList,
+    }),
+  );
+  console.log("[Room] roomData: ", roomData);
+
+  useEffect(() => {
+    if (room) {
+      setRoomData(room);
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     console.log("[Room] Render, w-h", width, height);
-    // socket.io.opts.query = { token: encodedAuthToken };
-    socket.connect();
-    if (!connected) {
-      // to avoid joining room on component rerender during development
-      if (roomCreationRequestType == "create") {
-        socket.emit("createRoom", roomCreationData);
-      } else if (roomCreationRequestType == "join") {
-        socket.emit("joinRoom", roomJoinData);
-      }
-    }
+    // socket.io.opts.query = { token: localStorage.getItem("auth_token") };
+    // socket.connect();
+    // if (connected) {
+    socket.emit("joinRoom", { roomId: id! });
+    // }
 
     function onConnect() {
       console.log("[socket connect] connected");
@@ -66,33 +60,33 @@ const RoomPage = () => {
     }
 
     function onStateError(err: string) {
-      setGlobalLoading(false);
       console.log("[socket stateError] stateError: ", err);
-      toast.error(err); 
+      toast.error(err);
       setConnected(false);
-      setRoute("homePage");
+      // navigate("/home");
     }
 
     function onRoomDesc(data: Room) {
-      setGlobalLoading(false);
+      toast.success("room description received");
       console.log("[socket roomDesc] roomDesc: ", data);
+      setRoomData(data);
     }
 
     function onConnectError(err: Error) {
       console.log("[socket connect_error] connect_error: ", err);
-      toast.error(err.message); 
+      toast.error(err.message);
       setConnected(false);
-      setRoute("homePage");
+      // navigate("/home");
     }
-    function onMemberList(data: Member[]) {
-      setGlobalLoading(false);
-      toast.success("room members received");
-      console.log("[socket memberList] memberList: ", data);
-      setCurrentRoom_members(data);
+    function onActiveMemberListUpdate(data: string[]) {
+      toast.success("room memberJoin received");
+      console.log("[socket memberJoin] memberJoin: ", data);
+      updateActiveMembersList(data);
     }
+
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
-    socket.on("memberList", onMemberList);
+    socket.on("activeMemberListUpdate", onActiveMemberListUpdate);
     socket.on("roomDesc", onRoomDesc);
     socket.on("stateError", onStateError);
     socket.on("connect_error", onConnectError);
@@ -100,16 +94,16 @@ const RoomPage = () => {
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
-      socket.off("memberList", onMemberList);
+      socket.off("activeMemberListUpdate", onActiveMemberListUpdate);
       socket.off("roomDesc", onRoomDesc);
       socket.off("stateError", onStateError);
       socket.off("connect_error", onConnectError);
     };
   }, []);
   function onLeaveRoom() {
-    socket.emit("leaveRoom"); 
+    socket.emit("leaveRoom");
     setConnected(false);
-    setRoute("homePage");
+    navigate("/home");
   }
   // mobile videoplayer height 33vh
   // desktop chat width 30vw

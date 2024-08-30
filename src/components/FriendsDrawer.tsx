@@ -14,7 +14,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { FriendlistAccordian } from "./friendlistAccordian";
-import api from "@/api/api";
+import api from "@/api";
 import toast from "react-hot-toast";
 
 export function FriendsDrawer() {

@@ -9,12 +9,14 @@ import * as React from "react";
 import { ModeToggle } from "./theme-toggle";
 import toast from "react-hot-toast";
 import { useDebounce } from "@/hooks/utilHooks";
+import { Navigate } from "react-router-dom";
 
 export default function AuthenticationPage() {
-  // const { setAuthToken, setRoute } = useGlobalStore((s) => ({
-  //   setAuthToken: s.setAuthToken,
-  //   setRoute: s.setRoute,
-  // }));
+  const token = localStorage.getItem("auth_token");
+
+  if (token) {
+    return <Navigate to="/home" />;
+  }
 
   const [registerStateError, setRegisterStateError] = React.useState("");
   const [registerState, setRegisterState] = React.useState("");
@@ -245,9 +247,7 @@ export default function AuthenticationPage() {
                   </span>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                coming soon...
-              </p>
+              <p className="text-sm text-muted-foreground">coming soon...</p>
               <Button
                 variant="outline"
                 type="button"

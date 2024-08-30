@@ -1,17 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
-import api from "@/api/api";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import api from "@/api";
 import { Room, SupportedPlatforms, VideoInfo } from "server/src/types";
 
-export const useGetPublicRooms = () => {
-  async function getPublicRooms() {
-    const response = await api.get("/room/publicrooms");
-    console.log("[useGetPublicRooms] all rooms: ", response.data);
-
+export const useGetUserRooms = () => {
+  type ReturnObj = {
+    publicRooms: Room[];
+    friendsRooms: Room[];
+    invitedRooms: Room[];
+  };
+  async function getUserRooms() {
+    const response = await api.get("/room/userrooms");
+    console.log("[useGetUserRooms] all rooms: ", response.data);
     return response.data;
   }
-  return useQuery<Room[]>({
+  return useQuery<ReturnObj>({
     queryKey: ["rooms"],
-    queryFn: getPublicRooms,
+    queryFn: getUserRooms,
     staleTime: 1000 * 5, // 5 seconds
   });
 };
@@ -44,4 +48,21 @@ export const useGetSearchResults = (
     queryKey: ["ytsearchresults", debouncedValue],
     queryFn: fetchFn,
   });
+};
+
+export const useMakeRoom = () => {
+  const makeRoom = async (url: string) => {
+    const response = await api.post<Room>("/room/makeRoom", { url });
+    return response.data;
+  };
+  return useMutation({ mutationFn: makeRoom });
+};
+
+export const useGetRoom = (roomId: string) => {
+  // "/room/getRoom/:roomId"
+  const getRoom = async () => {
+    const response = await api.get<Room>("/room/getRoom/" + roomId);
+    return response.data;
+  };
+  return useQuery({ queryKey: ["room", roomId], queryFn: getRoom });
 };

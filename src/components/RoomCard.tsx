@@ -2,7 +2,8 @@ import { cn, getHexColorFromString } from "@/lib/utils";
 import { Room } from "server/src/types";
 import React from "react";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
-import { useGlobalStore } from "@/state/store";
+import { useGetCurrentUser, useGetNormalUser } from "@/hooks/userHooks";
+import { trimString } from "@/pages/home";
 interface RoomCardProps {
   room: Room;
   className?: string;
@@ -14,40 +15,45 @@ const RoomCard: React.FC<RoomCardProps> = ({
   onClick,
   ...props
 }) => {
-  const { currentUser } = useGlobalStore((s) => ({
-    currentUser: s.currentUser,
-  }));
+  const { data } = useGetCurrentUser();
+  if (data) {
+    // sort room members based on friends come first
+    let friends = data.friends;
+    room.activeMembersList!.sort((a, b) => {
+      if (friends.includes(a) && friends.includes(b)) {
+        return friends.indexOf(a) - friends.indexOf(b);
+      }
+      if (friends.includes(a)) return -1;
+      if (friends.includes(b)) return 1;
+      return 0;
+    });
+  }
   return (
     <li className={cn("", className)} {...props} onClick={onClick}>
       <div className="flex h-[100px] justify-between gap-4">
-        {room.videoPlayer?.thumbnailUrl ? (
+        {room.v_thumbnailUrl ? (
           <img
-            src={room.videoPlayer?.thumbnailUrl}
+            src={room.v_thumbnailUrl}
             alt=""
             className="w-full min-w-[100px] max-w-[150px] object-contain"
           />
         ) : (
           <div className="w-full min-w-[100px] max-w-[150px] bg-slate-400"></div>
         )}
-        <div className="flex w-full flex-col justify-between py-1 pr-2">
+        <div className="flex w-full flex-col justify-between py-2 pr-2">
           <div className="text-sm font-bold leading-tight md:text-base">
-            {room.videoPlayer?.title}
+            {trimString(room.v_title)}
           </div>
           <div className="flex">
             <div className="no-scrollbar flex gap-2 overflow-x-scroll">
-              {room.members.map((m) => {
+              {room.activeMembersList?.map((m) => {
+                console.log("[roomCard] member:", m);
                 return (
-                  <MemberPfpIcon
-                    key={m.handle}
-                    _id={m.mongoId}
-                    pfp={m.pfp!}
-                    isFriend={currentUser?.friends.includes(m.handle)}
-                    className="size-[42px]"
-                  />
+                  <MemberPfpIcon key={m} _id={m} className="size-[42px]" />
                 );
               })}
             </div>
-            {room.members.length > 4 && (
+            {room.activeMembersList && room.activeMembersList.length > 4 && (
               <span className="ml-1 flex items-center rounded-r-sm bg-muted">
                 <ChevronRightIcon className="h-3 w-3 text-muted-foreground" />
               </span>
@@ -61,40 +67,42 @@ const RoomCard: React.FC<RoomCardProps> = ({
 
 export const MemberPfpIcon = ({
   _id,
-  pfp,
-  isFriend,
   className,
 }: {
   _id: string;
-  pfp?: string;
-  isFriend?: boolean;
   className?: string;
 }) => {
   const randomColor = getHexColorFromString(_id);
-
-  return pfp ? (
-    <img
-      src={pfp}
-      alt=""
-      className={cn(
-        "size-[42px] rounded-full border border-muted p-[2px] object-cover",
-        isFriend ? "border-primary" : "", // if friend
-        className,
-      )}
-    />
-  ) : (
-    <div
-      key={_id}
-      style={{
-        backgroundImage: `linear-gradient(to bottom, ${randomColor} 0%, ${randomColor} 100%), linear-gradient(to bottom, hsl(var(--muted)) 0%, hsl(var(--muted)) 100%)`,
-        backgroundClip: "content-box, padding-box",
-      }}
-      className={cn(
-        "size-[42px] rounded-full border border-muted p-[2px]",
-        isFriend ? "border-primary" : "", // if friend
-        className,
-      )}
-    ></div>
+  const { data: user } = useGetNormalUser(_id);
+  const { data: currentUser } = useGetCurrentUser();
+  const isFriend =
+    currentUser?._id === _id || currentUser?.friends.includes(_id);
+  return (
+    user &&
+    (user.pfp ? (
+      <img
+        src={user.pfp}
+        alt=""
+        className={cn(
+          "size-[42px] rounded-full border border-muted object-cover p-[2px]",
+          isFriend ? "border-primary" : "", // if friend
+          className,
+        )}
+      />
+    ) : (
+      <div
+        key={_id}
+        style={{
+          backgroundImage: `linear-gradient(to bottom, ${randomColor} 0%, ${randomColor} 100%), linear-gradient(to bottom, hsl(var(--muted)) 0%, hsl(var(--muted)) 100%)`,
+          backgroundClip: "content-box, padding-box",
+        }}
+        className={cn(
+          "size-[42px] rounded-full border border-muted p-[2px]",
+          isFriend ? "border-primary" : "", // if friend
+          className,
+        )}
+      ></div>
+    ))
   );
 };
 export default RoomCard;

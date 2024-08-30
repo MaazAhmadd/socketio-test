@@ -12,7 +12,7 @@ const URL =
 export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
   URL as string,
   {
-    autoConnect: false,
+    // autoConnect: false,
     query: { token: localStorage.getItem("auth_token") },
   },
 );

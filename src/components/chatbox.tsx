@@ -99,38 +99,10 @@ export function CardsChat() {
   }, [messages]);
   return (
     <>
-      <Card className=" max-w-md w-full">
-        <CardHeader className="flex flex-row items-center">
-          <div className="flex items-center space-x-4">
-            <Avatar>
-              <AvatarImage src="/avatars/01.png" alt="Image" />
-              <AvatarFallback>OM</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm font-medium leading-none">Sofia Davis</p>
-              <p className="text-sm text-muted-foreground">m@example.com</p>
-            </div>
-          </div>
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  className="ml-auto rounded-full"
-                  onClick={() => setOpen(true)}
-                >
-                  <PlusIcon className="h-4 w-4" />
-                  <span className="sr-only">New message</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent sideOffset={10}>New message</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </CardHeader>
+      <Card className="w-full max-w-md">
         <CardContent>
           <ScrollArea viewportRef={scrollAreaRef}>
-            <div className="space-y-4 pr-4 max-h-[60vh]">
+            <div className="max-h-[60vh] space-y-4 pr-4">
               {messages.map((message, index) => (
                 <div
                   key={index}
@@ -138,7 +110,7 @@ export function CardsChat() {
                     "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
                     message.role === "user"
                       ? "ml-auto bg-primary text-primary-foreground"
-                      : "bg-muted"
+                      : "bg-muted",
                   )}
                 >
                   {message.content}
@@ -200,15 +172,15 @@ export function CardsChat() {
                       if (selectedUsers.includes(user)) {
                         return setSelectedUsers(
                           selectedUsers.filter(
-                            (selectedUser) => selectedUser !== user
-                          )
+                            (selectedUser) => selectedUser !== user,
+                          ),
                         );
                       }
 
                       return setSelectedUsers(
                         [...users].filter((u) =>
-                          [...selectedUsers, user].includes(u)
-                        )
+                          [...selectedUsers, user].includes(u),
+                        ),
                       );
                     }}
                   >

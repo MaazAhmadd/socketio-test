@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useGetSearchResults } from "@/hooks/roomHooks";
+import { useGetSearchResults, useMakeRoom } from "@/hooks/roomHooks";
 import { useDebounce } from "@/hooks/utilHooks";
 import { useRoomStore, useGlobalStore } from "@/state/store";
 import { DrawingPinFilledIcon } from "@radix-ui/react-icons";
@@ -23,6 +23,7 @@ import {
   ResultCard,
   SelectSearchPlatform,
 } from "./Authenticated";
+import { useNavigate } from "react-router-dom";
 export type Tabs = "public" | "invited" | "friends" | "createRoom";
 
 export function RoomPinDialog() {
@@ -32,16 +33,9 @@ export function RoomPinDialog() {
   const [selectedPlatform, setSelectedPlatform] =
     useState<SupportedPlatforms>("youtube");
 
-  const { setRoute, setGlobalLoading } = useGlobalStore((s) => ({
-    setRoute: s.setRoute,
-    setGlobalLoading: s.setGlobalLoading,
-  }));
+  // const navigate = useNavigate();
 
-  const { setRoomCreationData_VideoUrl, setRoomCreationRequestType } =
-    useRoomStore((s) => ({
-      setRoomCreationData_VideoUrl: s.setRoomCreationData_VideoUrl,
-      setRoomCreationRequestType: s.setRoomCreationRequestType,
-    }));
+  // const { mutate: makeRoom,data:room } = useMakeRoom();
 
   const debouncedSearchQuery = useDebounce(searchQuery, 1000);
 
@@ -56,10 +50,9 @@ export function RoomPinDialog() {
         "[createRoom onsubmit] about to createRoom videoUrl: ",
         videoUrl,
       );
-      setGlobalLoading(true);
-      setRoomCreationData_VideoUrl(videoUrl);
-      setRoomCreationRequestType("create");
-      setRoute("roomPage");
+      // setRoomCreationData_VideoUrl(videoUrl);
+      // setRoomCreationRequestType("create");
+      // navigate("/room/" + videoUrl);
     }
   };
   useEffect(() => {
@@ -67,7 +60,6 @@ export function RoomPinDialog() {
       setDisableBtn(false);
     }, 2000);
   }, [disableBtn]);
- 
 
   return (
     <Dialog>
@@ -162,5 +154,3 @@ export function RoomPinDialog() {
     </Dialog>
   );
 }
-
- 

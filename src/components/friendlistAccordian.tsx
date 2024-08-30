@@ -8,7 +8,7 @@ import {
   useAcceptFriendRequest,
   useCancelFriendRequest,
   useGetCurrentUser,
-  useGetUser,
+  useGetNormalUser,
   useRejectFriendRequest,
   useRemoveFriend,
   useSendFriendRequest,
@@ -105,7 +105,7 @@ const Friend = ({
   _id: string;
   currentUser: CurrentUser;
 }) => {
-  const { data: targetUser } = useGetUser(_id);
+  const { data: targetUser } = useGetNormalUser(_id);
   const { mutate: removeFriend, isPending } = useRemoveFriend();
 
   useEffect(() => {
@@ -164,7 +164,7 @@ const FriendRequest = ({
   _id: string;
   currentUser: CurrentUser;
 }) => {
-  const { data: targetUser } = useGetUser(_id);
+  const { data: targetUser } = useGetNormalUser(_id);
   const { mutate: acceptFriendRequest, isPending: isPendingAccept } =
     useAcceptFriendRequest();
   const { mutate: rejectFriendRequest, isPending: isPendingReject } =
@@ -238,7 +238,7 @@ const Recent = ({
   _id: string;
   currentUser?: CurrentUser | null;
 }) => {
-  const { data: targetUser } = useGetUser(_id);
+  const { data: targetUser } = useGetNormalUser(_id);
   const { mutate: addFriend, isPending: isPendingAdd } = useSendFriendRequest();
   const { mutate: cancelFriendRequest, isPending: isPendingCancel } =
     useCancelFriendRequest();

@@ -11,9 +11,16 @@
 // import { TypographyDemo } from "./typography-demo";
 // import { DrawerDemo } from "./drawer-demo";
 // import { CardsChat } from "./chatbox";
+import { Navigate } from "react-router-dom";
 import AuthenticationPage from "./auth-page";
 
 const Unauthenticated = () => {
+  const token = localStorage.getItem("auth_token");
+
+  if (token) {
+    return <Navigate to="/home" />;
+  }
+
   return (
     <AuthenticationPage />
     // <div className="md:p-6 overflow-hidden">
