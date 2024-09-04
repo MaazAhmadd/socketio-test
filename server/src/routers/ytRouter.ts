@@ -21,17 +21,13 @@ makeRoute(
   [authUser],
   router,
   async function (req, res) {
-    logger("/ytservice/search", "query: ", req.query?.q);
     try {
       const response = await searchVideos(req.query?.q as string);
       if (response) {
-        logger("/ytservice/search", "videos found", response.length);
         return res.send(response);
       }
-      logger("/ytservice/search", "videos not found");
       return res.status(404).send("videos not found");
     } catch (error: any) {
-      logger("/ytservice/search", "error: ", error);
       res.status(500).json({
         errorMessage: "An error occurred on the server. [post - /ytservice]",
         error: error.message,
@@ -49,7 +45,6 @@ makeRoute(
 //     const randomytid = Array.from({ length: 10 }).map((m) =>
 //       Math.random().toString(36).slice(2),
 //     );
-//     logger("/ytservice/test", "randomytid", randomytid);
 //     try {
 //       const itemtoadd: YtVideo[] = randomytid.map((m) => ({
 //         ytId: m,
@@ -69,7 +64,6 @@ makeRoute(
 //         .status(201)
 //         .json({ message: "10 items added", ids: itemtoadd.map((m) => m.ytId) });
 //     } catch (error: any) {
-//       logger("/ytservice/test", "error: ", error);
 //       res.status(500).json({
 //         errorMessage: "An error occurred on the server. [post - /ytservice]",
 //         error: error.message,
@@ -121,22 +115,17 @@ export async function ytInfoService(url: string): Promise<YtVideoType | null> {
 
 async function addNewItem(newItem: YtVideoType) {
   const count = await YtVideo.countDocuments({});
-  logger("/ytservice/test", "count: ", count);
   if (count >= 1000) {
     const items = await YtVideo.find({})
       .sort({ updatedAt: -1 })
       .skip(899)
       .limit(1);
-    logger("/ytservice/test", "items retreived: ", items.length);
 
     const oldestItem = items[0];
-    logger("/ytservice/test", "oldestItem: ", oldestItem);
 
     const deleted = await YtVideo.deleteMany({
       updatedAt: { $lt: oldestItem.updatedAt },
     });
-
-    logger("/ytservice/test", "older items deleted: ", deleted);
   }
   const ytVideo = new YtVideo(newItem);
   await ytVideo.save();
@@ -144,14 +133,11 @@ async function addNewItem(newItem: YtVideoType) {
 }
 
 function youTubeGetID(url: string) {
-  logger("youTubeGetID", "url: ", url);
   let _url = url.split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/)/);
   return _url[2] !== undefined ? _url[2].split(/[^0-9a-z_\-]/i)[0] : _url[0];
 }
 
 async function getVideoInfo(videoId: string): Promise<YtVideoType | null> {
-  logger("getVideoInfo", "videoId: ", videoId);
-
   let apiKey = process.env.YOUTUBE_API_KEY;
 
   try {

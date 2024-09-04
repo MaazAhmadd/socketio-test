@@ -3,9 +3,9 @@ import { Repository } from "redis-om";
 interface ServerToClientEvents {
   roomDesc: (data: Room) => void;
   memberList: (data: Member[]) => void;
-  message: (data: { sender: string; msg: string }) => void;
+  message: (data: Message) => void;
   stateError: (data: string) => void;
-  activeMemberListUpdate: (data: string[]) => void; 
+  activeMemberListUpdate: (data: string[]) => void;
 
   // noArg: () => void;
   // sendMessage: (value: string) => void;
@@ -25,7 +25,8 @@ interface ClientToServerEvents {
   // createRoom: (data: { videoUrl: string; roomId: string }) => void;
   joinRoom: (data: { roomId: string }) => void;
   giveLeader: (data: { targetMember: string; roomId: string }) => void;
-  sendMessage: (data: { msg: string; roomId: string }) => void;
+  // sendMessage: (data: { msg: string; roomId: string }) => void;
+  sendMessage: (msg: string) => void;
   leaveRoom: () => void;
   // memberJoin: (data: Member) => void;
   // memberLeave: (data: string) => void;
@@ -94,6 +95,14 @@ interface Room {
   [key: string]: any;
 }
 
+type Message = {
+  id: number;
+  msg: string;
+  sender: string;
+  time: number;
+  system?: boolean;
+};
+
 type CurrentUser = {
   _id: string;
   name: string;
@@ -134,6 +143,7 @@ export type {
   InterServerEvents,
   SocketData,
   Rooms,
+  Message,
   Member,
   Room,
   NormalUser,

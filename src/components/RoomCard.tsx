@@ -16,10 +16,14 @@ const RoomCard: React.FC<RoomCardProps> = ({
   ...props
 }) => {
   const { data } = useGetCurrentUser();
+  if (!data) return <></>;
+  if (!room || !room.activeMembersList || room.activeMembersList?.length! < 1)
+    return <></>;
+  let activeMembersList = [...room?.activeMembersList!];
   if (data) {
     // sort room members based on friends come first
     let friends = data.friends;
-    room.activeMembersList!.sort((a, b) => {
+    activeMembersList.sort((a, b) => {
       if (friends.includes(a) && friends.includes(b)) {
         return friends.indexOf(a) - friends.indexOf(b);
       }
@@ -46,14 +50,15 @@ const RoomCard: React.FC<RoomCardProps> = ({
           </div>
           <div className="flex">
             <div className="no-scrollbar flex gap-2 overflow-x-scroll">
-              {room.activeMembersList?.map((m) => {
+              {/* <div className="flex gap-2 overflow-x-scroll"> */}
+              {activeMembersList?.map((m) => {
                 console.log("[roomCard] member:", m);
                 return (
                   <MemberPfpIcon key={m} _id={m} className="size-[42px]" />
                 );
               })}
             </div>
-            {room.activeMembersList && room.activeMembersList.length > 4 && (
+            {activeMembersList.length > 4 && (
               <span className="ml-1 flex items-center rounded-r-sm bg-muted">
                 <ChevronRightIcon className="h-3 w-3 text-muted-foreground" />
               </span>

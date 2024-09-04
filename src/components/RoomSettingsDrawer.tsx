@@ -6,6 +6,7 @@ import {
   DrawerContent,
   DrawerDescription,
   DrawerHeader,
+  DrawerOverlay,
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
@@ -19,12 +20,25 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "./ui/slider";
 import { cn } from "@/lib/utils";
+import { useGlobalStore } from "@/state/store";
 
 export function RoomSettingsDrawer() {
+  const { roomSettingsDrawer, setRoomSettingsDrawer } = useGlobalStore((s) => ({
+    roomSettingsDrawer: s.roomSettingsDrawer,
+    setRoomSettingsDrawer: s.setRoomSettingsDrawer,
+  }));
   return (
-    <Drawer direction="top">
+    <Drawer
+      direction="top"
+      open={roomSettingsDrawer}
+      onClose={() => setRoomSettingsDrawer(false)}
+    >
+      <DrawerOverlay
+        className="bg-black/0"
+        onClick={() => setRoomSettingsDrawer(false)}
+      />
       <DrawerTrigger asChild>
-        <Button variant="outline" className="">
+        <Button variant="outline" onClick={() => setRoomSettingsDrawer(true)}>
           <GearIcon className="h-4 w-4 md:h-6 md:w-6" />
         </Button>
       </DrawerTrigger>
@@ -38,7 +52,7 @@ export function RoomSettingsDrawer() {
               Settings
             </DrawerTitle>
           </DrawerHeader>
-          <div className="flex w-[80vw] flex-col gap-2 rounded-md bg-muted/70 px-8 py-4 md:w-[28vw]">
+          <div className="flex w-[85vw] flex-col gap-2 rounded-md bg-muted/40 px-8 py-4 md:w-[28vw]">
             <div className="flex items-center justify-between">
               <DrawerDescription>Room Privacy:</DrawerDescription>
               <SelectRoomPrivacy />
@@ -73,10 +87,7 @@ export function RoomSettingsDrawer() {
         </div>
         <div className="flex w-full items-center justify-between ">
           <div></div>
-          <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted " />
-          <DrawerClose asChild>
-            <Cross1Icon className="my-4 mr-5 h-6 w-6 cursor-pointer   md:h-8 md:w-8" />
-          </DrawerClose>
+          <div className="mx-auto mb-2 mt-4 h-2 w-[100px] rounded-full bg-muted" />
         </div>
       </DrawerContent>
     </Drawer>

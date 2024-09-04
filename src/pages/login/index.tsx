@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCheckUser, useLoginUser, useRegisterUser } from "@/hooks/userHooks";
 import { cn } from "@/lib/utils";
-// import {useGlobalStore} from "@/state/store";
 import * as React from "react";
 import { ModeToggle } from "@/components/theme-toggle";
 import toast from "react-hot-toast";
@@ -41,15 +40,10 @@ export default function LoginPage() {
   const { data: checkUser } = useCheckUser(
     registerState,
     debouncedRegisterState,
-    passwordStateError.length > 0 || registerStateError.length > 0,
+    passwordStateError.length > 0 ||
+      registerStateError.length > 0 ||
+      registerState.length < 1,
   );
-
-  // React.useEffect(() => {
-  //   setAuthToken(dataLogin || dataRegister || null);
-  //   if (dataLogin || dataRegister) {
-  //     setRoute("homePage");
-  //   }
-  // }, [dataLogin, dataRegister]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +61,7 @@ export default function LoginPage() {
       toast.error("error check console");
       return;
     }
-    if (String(checkUser) === "true") {
+    if (checkUser) {
       login(formData);
     } else {
       register(formData);

@@ -2,6 +2,7 @@ import { produce } from "immer";
 import {
   CurrentUser,
   Member,
+  Message,
   NormalUser,
   Room,
   RoomJoinData,
@@ -24,11 +25,29 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
 
   connected: false,
   setConnected: (connected: boolean) => set({ connected }),
+
+  roomMembersDrawer: false,
+  setRoomMembersDrawer: (open: boolean) => set({ roomMembersDrawer: open }),
+  roomSettingsDrawer: false,
+  setRoomSettingsDrawer: (open: boolean) => set({ roomSettingsDrawer: open }),
 }));
 
 export const useRoomStore = create<RoomStore>((set) => ({
   roomData: null,
-  setRoomData: (data: Room) =>
+  messages: [],
+  addMessage: (data: Message) =>
+    set(
+      produce((state: RoomStore) => {
+        state.messages.push(data);
+      }),
+    ),
+  setMessages: (data: Message[]) =>
+    set(
+      produce((state: RoomStore) => {
+        state.messages = data;
+      }),
+    ),
+  setRoomData: (data: Room | null) =>
     set(
       produce((state: RoomStore) => {
         state.roomData = data;
@@ -51,9 +70,16 @@ interface GlobalStore {
   setShowRoomTab: (tab: Tabs) => void;
   connected: boolean;
   setConnected: (connected: boolean) => void;
+  roomMembersDrawer: boolean;
+  setRoomMembersDrawer: (open: boolean) => void;
+  roomSettingsDrawer: boolean;
+  setRoomSettingsDrawer: (open: boolean) => void;
 }
 interface RoomStore {
   roomData: Room | null;
-  setRoomData: (data: Room) => void;
+  messages: Message[];
+  setMessages: (data: Message[]) => void;
+  addMessage: (data: Message) => void;
+  setRoomData: (data: Room | null) => void;
   updateActiveMembersList: (members: string[]) => void;
 }

@@ -2,7 +2,7 @@ import { useGlobalStore, useRoomStore } from "@/state/store";
 import ConnectionStatus from "@/components/ConnectionStatus";
 import { useEffect } from "react";
 import { socket } from "@/socket";
-import { Room } from "server/src/types";
+import { Message, Room } from "server/src/types";
 import { Button } from "@/components/ui/button";
 import { useWindowSize } from "@/hooks/utilHooks";
 import toast from "react-hot-toast";
@@ -13,12 +13,15 @@ import { RoomMembersDrawer } from "@/components/RoomMembersDrawer";
 import { useNavigate, useParams } from "react-router-dom";
 import { useGetRoom } from "@/hooks/roomHooks";
 import { CardsChat } from "@/components/chatbox";
+import { Chat } from "./chat";
 
 const RoomPage = () => {
+  console.log("[Room] render");
   const navigate = useNavigate();
   const { id } = useParams();
-  const { data: room, isLoading } = useGetRoom(id!);
   console.log("[Room] id: ", id);
+  const { data: room, isLoading, refetch: refetchRoom } = useGetRoom(id!);
+  console.log("[Room] room: ", room, isLoading);
 
   const { width, height } = useWindowSize();
 
@@ -27,36 +30,49 @@ const RoomPage = () => {
     connected: s.connected,
   }));
 
-  const { roomData, setRoomData, updateActiveMembersList } = useRoomStore(
-    (s) => ({
-      roomData: s.roomData,
-      setRoomData: s.setRoomData,
-      updateActiveMembersList: s.updateActiveMembersList,
-    }),
-  );
+  const {
+    roomData,
+    setRoomData,
+    updateActiveMembersList,
+    addMessage,
+    setMessages,
+  } = useRoomStore((s) => ({
+    roomData: s.roomData,
+    setRoomData: s.setRoomData,
+    updateActiveMembersList: s.updateActiveMembersList,
+    addMessage: s.addMessage,
+    setMessages: s.setMessages,
+  }));
+
   console.log("[Room] roomData: ", roomData);
 
   useEffect(() => {
-    if (room) {
-      setRoomData(room);
+    console.log("[Room] loading effect");
+    async function fetchRoom() {
+      if (roomData) {
+        await refetchRoom();
+      }
     }
-  }, [isLoading]);
+    fetchRoom();
+  }, [id]);
 
   useEffect(() => {
-    console.log("[Room] Render, w-h", width, height);
+    console.log("[Room] once effect");
+    socket.connect();
     // socket.io.opts.query = { token: localStorage.getItem("auth_token") };
-    // socket.connect();
     // if (connected) {
-    socket.emit("joinRoom", { roomId: id! });
     // }
 
     function onConnect() {
       console.log("[socket connect] connected");
+      socket.emit("joinRoom", { roomId: id! });
       setConnected(true);
     }
 
     function onDisconnect() {
       console.log("[socket disconnect] disconnected");
+      setRoomData(null);
+      setMessages([]);
       setConnected(false);
     }
 
@@ -68,7 +84,6 @@ const RoomPage = () => {
     }
 
     function onRoomDesc(data: Room) {
-      toast.success("room description received");
       console.log("[socket roomDesc] roomDesc: ", data);
       setRoomData(data);
     }
@@ -80,9 +95,12 @@ const RoomPage = () => {
       // navigate("/home");
     }
     function onActiveMemberListUpdate(data: string[]) {
-      toast.success("room memberJoin received");
       console.log("[socket memberJoin] memberJoin: ", data);
       updateActiveMembersList(data);
+    }
+    function onMessage(data: Message) {
+      addMessage(data);
+      console.log("[socket message] message: ", data);
     }
 
     socket.on("connect", onConnect);
@@ -91,6 +109,7 @@ const RoomPage = () => {
     socket.on("roomDesc", onRoomDesc);
     socket.on("stateError", onStateError);
     socket.on("connect_error", onConnectError);
+    socket.on("message", onMessage);
 
     return () => {
       socket.off("connect", onConnect);
@@ -99,11 +118,15 @@ const RoomPage = () => {
       socket.off("roomDesc", onRoomDesc);
       socket.off("stateError", onStateError);
       socket.off("connect_error", onConnectError);
+      socket.off("message", onMessage);
     };
   }, []);
+
   function onLeaveRoom() {
     socket.emit("leaveRoom");
     setConnected(false);
+    setRoomData(null);
+    setMessages([]);
     navigate("/home");
   }
   function onGiveLeader(targetMember: string) {
@@ -112,17 +135,18 @@ const RoomPage = () => {
   // mobile videoplayer height 33vh
   // desktop chat width 30vw
   // turn to svh if caused issue on mobile
+  const mobileView = width < 768;
   return (
     <>
       <ConnectionStatus />
-      {width < 768 ? (
+      {mobileView ? (
         <div>
           <div className="h-[5vh]">
             <RoomButtons onLeaveRoom={onLeaveRoom} />
           </div>
           <div className="h-[33vh] bg-red-800">videoplayer</div>
-          <div className="h-[62vh] bg-green-800">
-            <CardsChat />
+          <div className="h-[62vh] ">
+            <Chat socket={socket} screen={"mobile"} />
           </div>
         </div>
       ) : (
@@ -134,8 +158,8 @@ const RoomPage = () => {
             <div className=" h-[5vh]">
               <RoomButtons onLeaveRoom={onLeaveRoom} />
             </div>
-            <div className="h-[95vh] bg-green-800 ">
-              <CardsChat />
+            <div className="h-[95vh]  ">
+              <Chat socket={socket} screen={"desktop"} />
             </div>
           </div>
         </div>

@@ -8,6 +8,7 @@ import cloudinary from "cloudinary";
 import { z } from "zod";
 import { Readable } from "stream";
 import { authUser } from "../middlewares";
+import { ObjectId } from "mongoose";
 const User = mongooseModels.User;
 
 const router = express.Router();
@@ -191,6 +192,10 @@ makeRoute(
   [authUser],
   router,
   async function (req, res) {
+    // if (true) {
+    //   res.status(400).json({ message: "simulated error" });
+    //   return;
+    // }
     if (req.user?._id === req.params.receiverId) {
       return res
         .status(400)
@@ -208,6 +213,19 @@ makeRoute(
       "friend: ",
       friend,
     );
+    if (
+      user.friendReqsReceived.includes(friend._id) &&
+      friend.friendReqsSent.includes(user._id)
+    ) {
+      user.friends.push(friend._id);
+      friend.friends.push(user._id);
+      user.friendReqsReceived.pull(friend._id);
+      friend.friendReqsSent.pull(user._id);
+      await user.save();
+      await friend.save();
+      return res.status(200).send("done, Friend added!");
+    }
+
     if (
       !friend.friends.includes(friend._id) &&
       !user.friendReqsSent.includes(friend._id)
@@ -419,13 +437,11 @@ makeRoute("get", "/user/search", [authUser], router, async function (req, res) {
 // check if user exists
 makeRoute("get", "/user/check", [], router, async function (req, res) {
   const handle = req.query.q as string;
-  const user = await User.findOne({ handle });
+  const userCount = await User.countDocuments({ handle });
   // .cache(2);
   // .cache(60, cacheKeys.USERCHECK + handle);
-  if (!user) {
-    return res.status(200).send("false");
-  }
-  res.status(200).send("true");
+
+  res.status(200).send(userCount === 0 ? "0" : "1");
 });
 
 // login user
@@ -449,5 +465,30 @@ makeRoute("get", "/user/clearCache", [], router, async function (req, res) {
   clearCacheAndLog("/user/clearCache", null);
   res.status(200).send("cleared cache");
 });
+
+// unfriend all users
+makeRoute(
+  "get",
+  "/user/unfriendAll",
+  [authUser],
+  router,
+  async function (req, res) {
+    const userId = req.user?._id;
+    let user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+    for (const friend of user.friends) {
+      let friendUser = await User.findById(friend);
+      if (friendUser) {
+        friendUser.friends.pull(userId);
+        await friendUser.save();
+      }
+    }
+    user.friends.pull(...user.friends);
+    await user.save();
+    res.status(200).send("done, Friends removed!");
+  },
+);
 
 export default router;

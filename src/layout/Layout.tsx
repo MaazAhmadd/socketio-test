@@ -6,7 +6,7 @@ const Layout = () => {
   return (
     <>
       {currentUser && <title>{currentUser?.handle}</title>}
-      <Outlet />;
+      <Outlet />
     </>
   );
 };

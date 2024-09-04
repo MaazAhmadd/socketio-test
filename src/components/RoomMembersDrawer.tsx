@@ -7,6 +7,7 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
+  DrawerOverlay,
 } from "@/components/ui/drawer";
 import {
   DropdownMenu,
@@ -25,7 +26,7 @@ import {
   useSendFriendRequest,
 } from "@/hooks/userHooks";
 import { cn, getHexColorFromString } from "@/lib/utils";
-import { useRoomStore } from "@/state/store";
+import { useGlobalStore, useRoomStore } from "@/state/store";
 import { Cross1Icon, PersonIcon } from "@radix-ui/react-icons";
 import { ScrollArea } from "./ui/scroll-area";
 import { useEffect, useRef, useState } from "react";
@@ -33,57 +34,65 @@ import { CgCrown } from "react-icons/cg";
 import { GoPersonAdd } from "react-icons/go";
 import { FaRegHourglass } from "react-icons/fa";
 import { BsThreeDots } from "react-icons/bs";
-
+import api from "@/api";
+import { toast } from "react-hot-toast";
 export function RoomMembersDrawer() {
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const { activeMembersList } = useRoomStore((s) => ({
     activeMembersList: s.roomData?.activeMembersList,
   }));
+  const { roomMembersDrawer, setRoomMembersDrawer } = useGlobalStore((s) => ({
+    roomMembersDrawer: s.roomMembersDrawer,
+    setRoomMembersDrawer: s.setRoomMembersDrawer,
+  }));
 
-  console.log("[RoomMembersDrawer] currentRoom_members: ", activeMembersList);
+  console.log("[RoomMembersDrawer] activeMembersList: ", activeMembersList);
 
   return (
-    <Drawer direction="right">
-      <DrawerTrigger asChild>
-        <Button variant="outline">
-          <PersonIcon className="h-4 w-4 md:h-6 md:w-6" />
-        </Button>
-      </DrawerTrigger>
-      <DrawerContent className="right-0 ml-24 mr-0 max-w-[80vw] bg-background/80">
-        <div className="flex h-full flex-col items-center justify-between ">
-          <div></div>
-
-          <DrawerClose asChild>
-            {/* <Cross1Icon className="mt-3 h-6 w-6 cursor-pointer md:h-8 md:w-8" /> */}
-            <div className="mx-auto ml-4 mr-4 h-[100px] w-2 rounded-full bg-muted" />
-          </DrawerClose>
-          <div></div>
-        </div>
-        <div className="h-full w-[80vw] max-w-sm pr-1 md:max-w-md">
-          {/* <DrawerHeader>
+    <>
+      <Drawer
+        direction="right"
+        open={roomMembersDrawer}
+        onClose={() => setRoomMembersDrawer(false)}
+      >
+        <DrawerOverlay
+          className="bg-black/0"
+          onClick={() => setRoomMembersDrawer(false)}
+        />
+        <DrawerTrigger asChild>
+          <Button variant="outline" onClick={() => setRoomMembersDrawer(true)}>
+            <PersonIcon className="h-4 w-4 md:h-6 md:w-6" />
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent className="right-0 ml-24 mr-0 max-w-[80vw] bg-background/80">
+          <div className="flex h-full flex-col items-center justify-between ">
+            <div></div>
+            <DrawerClose asChild>
+              {/* <Cross1Icon className="mt-3 h-6 w-6 cursor-pointer md:h-8 md:w-8" /> */}
+              <div
+                onClick={() => setRoomMembersDrawer(false)}
+                className="mx-auto ml-4 mr-4 h-[100px] w-2 rounded-full bg-muted"
+              />
+            </DrawerClose>
+            <div></div>
+          </div>
+          <div className="h-full w-[80vw] max-w-sm pr-1 md:max-w-[27vw]">
+            {/* <DrawerHeader>
             <DrawerTitle className="my-2 pr-4 text-center text-xl md:text-2xl">
               Members
             </DrawerTitle>
           </DrawerHeader> */}
-          <ScrollArea viewportRef={scrollAreaRef} className="">
-            <div className="mt-6 h-[95vh]">
-              {activeMembersList &&
-                [
-                  ...activeMembersList!,
-                  // ...activeMembersList!,
-                  // ...activeMembersList!,
-                  // ...activeMembersList!,
-                  // ...activeMembersList!,
-                  // ...activeMembersList!,
-                  // ...activeMembersList!,
-                ].map((m) => {
-                  return <RoomMember _id={m} />;
+            <ScrollArea viewportRef={scrollAreaRef} className="">
+              <div className="mt-6 h-[95vh]">
+                {activeMembersList?.map((m) => {
+                  return <RoomMember _id={m} key={m} />;
                 })}
-            </div>
-          </ScrollArea>
-        </div>
-      </DrawerContent>
-    </Drawer>
+              </div>
+            </ScrollArea>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 }
 
@@ -110,12 +119,21 @@ const RoomMember = ({ _id }: { _id: string }) => {
             </div>
           </div>
         </div>
-
+        {currentUser._id === m._id && (
+          <Button
+            size={"sm"}
+            variant={"destructive"}
+            onClick={() => {
+              api
+                .get("/user/unfriendAll")
+                .then((res) => toast.success(res.data));
+            }}
+          >
+            rm all frs
+          </Button>
+        )}
         <div>
-          <FriendshipButton
-            _id={m._id}
-            className="mr-6 size-6 cursor-pointer"
-          />
+          <FriendshipButton _id={m._id} />
         </div>
       </div>
     )
@@ -162,6 +180,7 @@ const RoomMembersDrawerPfpIcon = ({
     ))
   );
 };
+
 const FriendshipButton = ({
   _id,
   className,
@@ -169,98 +188,62 @@ const FriendshipButton = ({
   _id: string;
   className?: string;
 }) => {
+  className = cn("mr-6 size-6 cursor-pointer", className);
   const [status, setStatus] = useState<
     "stranger" | "friend" | "reqSend" | "reqRec"
   >("stranger");
-  console.log("[FriendshipButton] status", status);
+  // console.log("[FriendshipButton] status", status);
 
-  // const { data: user } = useGetNormalUser(_id);
   const { data: currentUser, isLoading: currentUserLoading } =
     useGetCurrentUser();
-  console.log("[FriendshipButton] currentUser", currentUser);
+  // console.log("[FriendshipButton] currentUser", currentUser);
 
-  const {
-    mutate: sendReq,
-    data: sendReqData,
-    isPending: sendReqPending,
-  } = useSendFriendRequest();
-  const {
-    mutate: cancelReq,
-    data: cancelReqData,
-    isPending: cancelReqPending,
-  } = useCancelFriendRequest();
-  const {
-    mutate: acceptReq,
-    data: acceptReqData,
-    isPending: acceptReqPending,
-  } = useAcceptFriendRequest();
-  const {
-    mutate: rejectReq,
-    data: rejectReqData,
-    isPending: rejectReqPending,
-  } = useRejectFriendRequest();
+  const { mutate: sendReq, isPending: sendReqPending } = useSendFriendRequest();
+  const { mutate: cancelReq, isPending: cancelReqPending } =
+    useCancelFriendRequest();
+  const { mutate: acceptReq, isPending: acceptReqPending } =
+    useAcceptFriendRequest();
+  const { mutate: rejectReq, isPending: rejectReqPending } =
+    useRejectFriendRequest();
 
   const loading =
-    sendReqPending || cancelReqPending || acceptReqPending || rejectReqPending;
-
-  useEffect(() => {
-    console.log(
-      "[FriendshipButton useeffect] currentUserLoading",
-      currentUserLoading,
-    );
-    if (!currentUser) return;
-    if (currentUser?._id === _id || currentUser?.friends.includes(_id)) {
-      setStatus("friend");
-    } else if (currentUser?.friendReqsSent.includes(_id)) {
-      setStatus("reqSend");
-    } else if (currentUser?.friendReqsReceived.includes(_id)) {
-      setStatus("reqRec");
-    } else {
-      setStatus("stranger");
-    }
-  }, [currentUserLoading]);
-
-  useEffect(() => {
-    console.log(
-      "[FriendshipButton useeffect] ispendings:",
-      sendReqPending,
-      cancelReqPending,
-      acceptReqPending,
-      rejectReqPending,
-    );
-    if (sendReqData && !sendReqData?.startsWith("done")) {
-      setStatus("stranger");
-    }
-    if (cancelReqData && !cancelReqData?.startsWith("done")) {
-      setStatus("reqSend");
-    }
-    if (acceptReqData && !acceptReqData?.startsWith("done")) {
-      setStatus("reqRec");
-    }
-    if (rejectReqData && !rejectReqData?.startsWith("done")) {
-      setStatus("reqRec");
-    }
-  }, [sendReqData, cancelReqData, acceptReqData, rejectReqData]);
+    sendReqPending ||
+    cancelReqPending ||
+    acceptReqPending ||
+    rejectReqPending ||
+    currentUserLoading;
 
   if (loading) {
-    return <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />;
+    return <Icons.spinner className={cn("animate-spin", className)} />;
   }
-  if (status === "friend") {
+
+  if (
+    !currentUser ||
+    currentUser?._id === _id ||
+    currentUser?.friends.includes(_id)
+  ) {
     return <></>;
   }
-  if (status === "reqSend") {
+  if (currentUser?.friendReqsSent.includes(_id)) {
     return (
-      <FaRegHourglass
-        className={cn(className)}
-        title="cancel request"
-        onClick={() => {
-          setStatus("stranger");
-          cancelReq(_id);
-        }}
-      />
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <FaRegHourglass className={cn(className)} title="cancel request" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem
+            onClick={() => {
+              setStatus("stranger");
+              cancelReq(_id);
+            }}
+          >
+            Cancel
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   }
-  if (status === "reqRec") {
+  if (currentUser?.friendReqsReceived.includes(_id)) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger>
@@ -288,23 +271,22 @@ const FriendshipButton = ({
       </DropdownMenu>
     );
   }
-  if (status === "stranger") {
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger>
-          <GoPersonAdd className={cn(className)} title="add friend" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem
-            onClick={() => {
-              setStatus("reqSend");
-              sendReq(_id);
-            }}
-          >
-            Add Friend
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger>
+        <GoPersonAdd className={cn(className)} title="add friend" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuItem
+          onClick={() => {
+            setStatus("reqSend");
+            sendReq(_id);
+          }}
+        >
+          Add Friend
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 };

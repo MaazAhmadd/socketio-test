@@ -26,13 +26,13 @@ const RoomPage = () => {
     connected: s.connected,
   }));
 
-  const { roomData, setRoomData, updateActiveMembersList } = useRoomStore(
-    (s) => ({
+  const { roomData, setRoomData, updateActiveMembersList, setMessages } =
+    useRoomStore((s) => ({
       roomData: s.roomData,
       setRoomData: s.setRoomData,
       updateActiveMembersList: s.updateActiveMembersList,
-    }),
-  );
+      setMessages: s.setMessages,
+    }));
   console.log("[Room] roomData: ", roomData);
 
   useEffect(() => {
@@ -101,8 +101,9 @@ const RoomPage = () => {
     };
   }, []);
   function onLeaveRoom() {
-    socket.emit("leaveRoom");
     setConnected(false);
+    setMessages([]);
+    socket.emit("leaveRoom");
     navigate("/home");
   }
   // mobile videoplayer height 33vh

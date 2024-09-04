@@ -29,9 +29,6 @@ makeRoute(
     // Fetch user
     const user = await User.findById(req.user!._id);
     if (!user) return res.status(404).send("User not found");
-    logger("/room/userrooms", "user: ", user);
-    const allroomstest = await roomRepository.search().return.all();
-    logger("/room/userrooms", "allroomstest ", allroomstest);
 
     const friendIds = user.friends.map((friend) => String(friend._id));
     let publicRoomsPromise;
@@ -105,14 +102,6 @@ makeRoute(
       friendsRoomsPromise,
       invitedRoomsPromise,
     ]);
-    logger("/room/userrooms", "publicRooms: ", publicRooms);
-    logger(
-      "/room/userrooms",
-      "publicRoomsWithFriendsJoined: ",
-      publicRoomsWithFriendsJoined,
-    );
-    logger("/room/userrooms", "friendsRooms: ", friendsRooms);
-    logger("/room/userrooms", "invitedRooms: ", invitedRooms);
 
     publicRooms.length > 0 &&
       publicRooms.forEach((r) => (r.entityId = (r as any)[EntityId]));
@@ -225,13 +214,12 @@ makeRoute(
   [authUser],
   router,
   async function (req, res) {
-    logger("/room/makeRoom", "user: ", req.user?._id);
     const url = req.body.url as string;
     const userId = req.user?._id as string;
+    logger("/room/makeRoom", "user,url: ", userId, url);
     await checkMemberRoomMakingHourlyLimit(userId, res);
-    logger("/room/makeRoom", "before makeRoom: ", url);
     const room = await makeRoom(userId, url);
-    logger("/room/makeRoom", "after makeRoom: ", room);
+    // logger("/room/makeRoom", "after makeRoom: ", room);
     delete room?.membersJoinedList;
     return res.status(200).json(room);
   },
@@ -243,7 +231,6 @@ makeRoute(
   [authUser],
   router,
   async function (req, res) {
-    logger("/room/getRoom/:roomId", "user: ", req.user?._id);
     const roomId = req.params.roomId as string;
     const room = await roomRepository.fetch(roomId);
     if (!room) {

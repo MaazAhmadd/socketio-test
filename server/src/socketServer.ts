@@ -1,33 +1,27 @@
-import { Server, Socket } from "socket.io";
-import {
-  ClientToServerEvents,
-  NormalUser,
-  InterServerEvents,
-  RoomCreationData,
-  ServerToClientEvents,
-  RedisSchemas,
-  RoomJoinData,
-  Member,
-  Room,
-} from "./types";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
-import { ytInfoService } from "./routers/ytRouter";
+import { EntityId } from "redis-om";
+import { Server, Socket } from "socket.io";
 import { logger } from "./config";
 import mongooseModels from "./mongoose/models";
 import redisSchemas from "./redis-om/schemas";
-import { EntityId } from "redis-om";
+import { ytInfoService } from "./routers/ytRouter";
 import { getCountryFromIP } from "./services/geoLocationService";
+import {
+  ClientToServerEvents,
+  InterServerEvents,
+  ServerToClientEvents
+} from "./types";
 
 // const memberRepository = redisSchemas.member;
 const roomRepository = redisSchemas.room;
 const User = mongooseModels.User;
-const YtVideo = mongooseModels.YtVideo;
 
 interface CustomSocket extends Socket {
   user?: { _id: string; country: string };
   roomId?: string;
 }
+let msg_count = 0;
 
 export default function socketServer(
   io: Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents>,
@@ -39,6 +33,7 @@ export default function socketServer(
     try {
       const token = socket.handshake?.query?.token;
       if (typeof token != "string" || !token) {
+        logger("auth-middleware", "no token provided");
         return next(new Error("Authentication error no token provided"));
       }
       let decoded = jwt.verify(token, process.env.JWT_PRIVATE_KEY || "") as {
@@ -46,9 +41,9 @@ export default function socketServer(
       };
       if (decoded) {
         const ipAddress = socket.handshake.address;
-        logger("auth-middleware", "ip: ", ipAddress);
+        // logger("auth-middleware", "ip: ", ipAddress);
         const countryISO = await getCountryFromIP(ipAddress);
-        logger("auth-middleware", "countryISO: ", countryISO);
+        // logger("auth-middleware", "countryISO: ", countryISO);
         if (countryISO) {
           const user = await User.findById(decoded._id);
           if (user) {
@@ -78,15 +73,33 @@ export default function socketServer(
         socket.emit("stateError", "roomId not provided");
         return;
       }
+      socket.roomId = roomId;
       await joinRoom(io, socket, roomId);
     });
     socket.on("giveLeader", async ({ targetMember, roomId }) => {
       socket.roomId = roomId;
       await giveLeader(io, socket, targetMember);
     });
-    socket.on("sendMessage", ({ msg, roomId }) => {
-      let msgData = { msg, sender: socket.user?._id! };
-      io.in(roomId).emit("message", msgData);
+    socket.on("sendMessage", (msg) => {
+      logger(
+        "sendMessage",
+        "msg: ",
+        msg_count,
+        msg,
+        "roomId: ",
+        socket?.roomId,
+      );
+      if (!socket?.roomId) {
+        socket.emit("stateError", "roomId not found on socket");
+        return;
+      }
+      let msgData = {
+        msg,
+        sender: socket.user?._id!,
+        time: Date.now(),
+        id: ++msg_count,
+      };
+      io.in(socket?.roomId).emit("message", msgData);
     });
     socket.on("leaveRoom", async () => {
       await makeMemberLeave(socket, io);
@@ -98,7 +111,7 @@ export default function socketServer(
 }
 
 export async function makeRoom(userId: string, url: string) {
-  logger("makeRoom", "url: ", url);
+  // logger("makeRoom", "url: ", url);
 
   const videoInfo = await ytInfoService(url);
   if (!videoInfo) {
@@ -160,7 +173,7 @@ export async function joinRoom(
   try {
     logger("joinRoom", "roomId: ", roomId);
     const room = await roomRepository.fetch(roomId);
-    logger("joinRoom", "room: ", room);
+    // logger("joinRoom", "room: ", room);
     if (!room.activeMembersList) {
       socket.emit("stateError", "Room not found");
       return;
@@ -178,6 +191,13 @@ export async function joinRoom(
       socket.join(roomId);
       socket.emit("roomDesc", room);
       io.in(roomId).emit("activeMemberListUpdate", room.activeMembersList);
+      io.in(roomId).emit("message", {
+        msg: "has joined",
+        sender: socket.user?._id!,
+        time: Date.now(),
+        id: ++msg_count,
+        system: true,
+      });
       socket.roomId = roomId;
     } else {
       room.membersJoinedList?.push(
@@ -192,6 +212,13 @@ export async function joinRoom(
       socket.join(roomId);
       socket.emit("roomDesc", room);
       io.in(roomId).emit("activeMemberListUpdate", room.activeMembersList);
+      io.in(roomId).emit("message", {
+        msg: "has joined",
+        sender: socket.user?._id!,
+        time: Date.now(),
+        id: ++msg_count,
+        system: true,
+      });
       socket.roomId = roomId;
     }
   } catch (error) {
@@ -297,6 +324,9 @@ export async function makeMemberLeave(
     return;
   }
   const room = await roomRepository.fetch(socket.roomId);
+  if (!room.activeMembersList?.includes(socket.user?._id!)) {
+    return;
+  }
   room.activeMembersList = room.activeMembersList?.filter(
     (member) => member !== socket.user?._id,
   );
@@ -305,6 +335,14 @@ export async function makeMemberLeave(
 
   await roomRepository.save(room);
   io.in(socket.roomId).emit("activeMemberListUpdate", room.activeMembersList);
+  io.in(socket.roomId).emit("message", {
+    msg: "has left",
+    sender: socket.user?._id!,
+    time: Date.now(),
+    id: ++msg_count,
+    system: true,
+  });
+  socket.disconnect();
 }
 
 export async function giveLeader(

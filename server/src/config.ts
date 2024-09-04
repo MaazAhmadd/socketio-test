@@ -38,6 +38,7 @@ const loggingFns = {
   "/user/check": true,
   "/user/login": true,
   "/user/clearCache": true,
+  "/user/unfriendAll": true,
   // ytRouter.ts
   "/ytservice": true,
   "/ytservice/search": true,
@@ -54,6 +55,7 @@ const loggingFns = {
   joinRoom: true,
   makeRoom: true,
   giveLeader: true,
+  sendMessage: true,
   // db.ts
   connectDB: true,
   // index.ts
