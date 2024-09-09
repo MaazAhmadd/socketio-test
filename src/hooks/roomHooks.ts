@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/api";
 import { Room, SupportedPlatforms, VideoInfo } from "server/src/types";
-import { useRoomStore } from "@/state/store";
+import { useRoomStore } from "@/store";
+import { useParams } from "react-router-dom";
 
 export const useGetUserRooms = () => {
   type ReturnObj = {
@@ -59,7 +60,8 @@ export const useMakeRoom = () => {
   return useMutation({ mutationFn: makeRoom });
 };
 
-export const useGetRoom = (roomId: string) => {
+export const useGetRoom = () => {
+  const { id: roomId } = useParams();
   const { setRoomData } = useRoomStore((s) => ({
     setRoomData: s.setRoomData,
   }));

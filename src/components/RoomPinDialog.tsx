@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useGetSearchResults, useMakeRoom } from "@/hooks/roomHooks";
 import { useDebounce } from "@/hooks/utilHooks";
-import { useRoomStore, useGlobalStore } from "@/state/store";
+import { useRoomStore, useGlobalStore } from "@/store";
 import { DrawingPinFilledIcon } from "@radix-ui/react-icons";
 import { useEffect, useState } from "react";
 import { SupportedPlatforms } from "server/src/types";

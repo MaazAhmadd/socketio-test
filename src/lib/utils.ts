@@ -16,3 +16,20 @@ export function getHexColorFromString(text: string): string {
   const paddedHex = validHex.padStart(6, "0");
   return "#" + paddedHex.substring(0, 6);
 }
+
+export function splitMembersAndMicsArray(input: string[]): {
+  mongoIDs: string[];
+  mics: number[];
+} {
+  const result = {
+    mongoIDs: [] as string[],
+    mics: [] as number[],
+  };
+  if (!input) return result;
+  input.map((item) => {
+    const [mongoID, mic] = item.split(",");
+    result.mongoIDs.push(mongoID);
+    result.mics.push(Number(mic));
+  });
+  return result;
+}

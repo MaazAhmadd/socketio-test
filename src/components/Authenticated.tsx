@@ -11,7 +11,7 @@ import {
   useMakeRoom,
 } from "@/hooks/roomHooks";
 import { cn } from "@/lib/utils";
-import { useGlobalStore, useRoomStore } from "@/state/store";
+import { useGlobalStore, useRoomStore } from "@/store";
 import { useEffect, useRef, useState } from "react";
 import { FriendsDrawer } from "./FriendsDrawer";
 import RoomCard from "./RoomCard";

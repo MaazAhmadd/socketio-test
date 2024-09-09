@@ -2,7 +2,6 @@ import { Repository } from "redis-om";
 
 interface ServerToClientEvents {
   roomDesc: (data: Room) => void;
-  memberList: (data: Member[]) => void;
   message: (data: Message) => void;
   stateError: (data: string) => void;
   activeMemberListUpdate: (data: string[]) => void;
@@ -25,6 +24,7 @@ interface ClientToServerEvents {
   // createRoom: (data: { videoUrl: string; roomId: string }) => void;
   joinRoom: (data: { roomId: string }) => void;
   giveLeader: (data: { targetMember: string; roomId: string }) => void;
+  mic: (data: string) => void;
   // sendMessage: (data: { msg: string; roomId: string }) => void;
   sendMessage: (msg: string) => void;
   leaveRoom: () => void;
@@ -109,6 +109,7 @@ type CurrentUser = {
   handle: string;
   pfp: string;
   country: string;
+  socketId: string;
   friends: string[];
   friendReqsSent: string[];
   friendReqsReceived: string[];

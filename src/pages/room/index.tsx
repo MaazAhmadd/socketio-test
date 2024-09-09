@@ -1,27 +1,37 @@
-import { useGlobalStore, useRoomStore } from "@/state/store";
-import ConnectionStatus from "@/components/ConnectionStatus";
-import { useEffect } from "react";
-import { socket } from "@/socket";
-import { Message, Room } from "server/src/types";
-import { Button } from "@/components/ui/button";
-import { useWindowSize } from "@/hooks/utilHooks";
-import toast from "react-hot-toast";
-import { RoomSettingsDrawer } from "@/components/RoomSettingsDrawer";
 import { TextGradient } from "@/components/auth-page";
-import { RoomPinDialog } from "@/components/RoomPinDialog";
+import ConnectionStatus from "@/components/ConnectionStatus";
 import { RoomMembersDrawer } from "@/components/RoomMembersDrawer";
-import { useNavigate, useParams } from "react-router-dom";
+import { RoomPinDialog } from "@/components/RoomPinDialog";
+import { RoomSettingsDrawer } from "@/components/RoomSettingsDrawer";
+import { Button } from "@/components/ui/button";
 import { useGetRoom } from "@/hooks/roomHooks";
-import { CardsChat } from "@/components/chatbox";
+import { useWindowSize } from "@/hooks/utilHooks";
+import { useGlobalStore, useRoomStore } from "@/store";
+import { useEffect } from "react";
+import toast from "react-hot-toast";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
+import {
+  ClientToServerEvents,
+  Message,
+  Room,
+  ServerToClientEvents,
+} from "server/src/types";
 import { Chat } from "./chat";
+import { socket } from "@/socket";
 
 const RoomPage = () => {
-  console.log("[Room] render");
   const navigate = useNavigate();
   const { id } = useParams();
+
+  console.log("[Room] render");
   console.log("[Room] id: ", id);
-  const { data: room, isLoading, refetch: refetchRoom } = useGetRoom(id!);
-  console.log("[Room] room: ", room, isLoading);
+  const {
+    data: room,
+    isLoading: isRoomLoading,
+    error: roomError,
+    refetch: refetchRoom,
+  } = useGetRoom();
+  console.log("[Room] room: ", room, isRoomLoading);
 
   const { width, height } = useWindowSize();
 
@@ -36,32 +46,36 @@ const RoomPage = () => {
     updateActiveMembersList,
     addMessage,
     setMessages,
+    setMutedMembers,
+    setMics,
   } = useRoomStore((s) => ({
     roomData: s.roomData,
     setRoomData: s.setRoomData,
     updateActiveMembersList: s.updateActiveMembersList,
     addMessage: s.addMessage,
     setMessages: s.setMessages,
+    setMutedMembers: s.setMutedMembers,
+    setMics: s.setMics,
   }));
 
   console.log("[Room] roomData: ", roomData);
 
-  useEffect(() => {
-    console.log("[Room] loading effect");
-    async function fetchRoom() {
-      if (roomData) {
-        await refetchRoom();
-      }
-    }
-    fetchRoom();
-  }, [id]);
+  // useEffect(() => {
+  //   console.log("[Room] loading effect");
+  //   refetchRoom();
+  //   async function fetchRoom() {
+  //     if (roomData) {
+  //       await refetchRoom();
+  //     }
+  //   }
+  //   fetchRoom();
+  // }, []);
 
   useEffect(() => {
     console.log("[Room] once effect");
+    socket.io.opts.query = { token: localStorage.getItem("auth_token") };
+
     socket.connect();
-    // socket.io.opts.query = { token: localStorage.getItem("auth_token") };
-    // if (connected) {
-    // }
 
     function onConnect() {
       console.log("[socket connect] connected");
@@ -71,9 +85,19 @@ const RoomPage = () => {
 
     function onDisconnect() {
       console.log("[socket disconnect] disconnected");
-      setRoomData(null);
-      setMessages([]);
+      // setRoomData(null);
+      // setMessages([]);
       setConnected(false);
+      let count = 0;
+      const interval = setInterval(() => {
+        if (count < 6) {
+          socket.connect();
+          count++;
+        }
+      }, 5000);
+      if (count === 5) {
+        clearInterval(interval);
+      }
     }
 
     function onStateError(err: string) {
@@ -95,7 +119,9 @@ const RoomPage = () => {
       // navigate("/home");
     }
     function onActiveMemberListUpdate(data: string[]) {
-      console.log("[socket memberJoin] memberJoin: ", data);
+      console.log("[socket onActiveMemberListUpdate] onActiveMemberListUpdate: ", data);
+      const mics = data.pop();
+      setMics(mics!);
       updateActiveMembersList(data);
     }
     function onMessage(data: Message) {
@@ -122,11 +148,28 @@ const RoomPage = () => {
     };
   }, []);
 
+  if (!id) {
+    return <Navigate to="/home" />;
+  }
+  if (roomError) {
+    toast.error(roomError.message);
+    return <Navigate to="/home" />;
+  }
+
+  if (!roomData) {
+    return <></>;
+  }
+  // if (!connected) {
+  //   socket.connect();
+  // }
+
   function onLeaveRoom() {
     socket.emit("leaveRoom");
     setConnected(false);
     setRoomData(null);
     setMessages([]);
+    setMutedMembers([]);
+    socket.disconnect();
     navigate("/home");
   }
   function onGiveLeader(targetMember: string) {
@@ -145,8 +188,8 @@ const RoomPage = () => {
             <RoomButtons onLeaveRoom={onLeaveRoom} />
           </div>
           <div className="h-[33vh] bg-red-800">videoplayer</div>
-          <div className="h-[62vh] ">
-            <Chat socket={socket} screen={"mobile"} />
+          <div className="h-[62vh]">
+            <Chat screen={"mobile"} />
           </div>
         </div>
       ) : (
@@ -158,8 +201,8 @@ const RoomPage = () => {
             <div className=" h-[5vh]">
               <RoomButtons onLeaveRoom={onLeaveRoom} />
             </div>
-            <div className="h-[95vh]  ">
-              <Chat socket={socket} screen={"desktop"} />
+            <div className="h-[95vh]">
+              <Chat screen={"desktop"} />
             </div>
           </div>
         </div>

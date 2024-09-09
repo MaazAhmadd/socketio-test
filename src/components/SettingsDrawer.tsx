@@ -16,7 +16,7 @@ import {
   useUpdateUserName,
 } from "@/hooks/userHooks";
 import { useWindowSize } from "@/hooks/utilHooks";
-import { useGlobalStore } from "@/state/store";
+import { useGlobalStore } from "@/store";
 import { Cross1Icon, GearIcon, Pencil2Icon } from "@radix-ui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
@@ -40,7 +40,7 @@ export function SettingsDrawer() {
           variant="outline"
           className="fixed left-2 top-2 h-auto p-3 md:left-4 md:top-4 md:p-4 "
         >
-          <GearIcon className="h-4 w-4 md:h-6 md:w-6" />
+          <GearIcon className="size-4 md:size-6" />
         </Button>
       </DrawerTrigger>
       <DrawerContent className="ml-0 mr-24 max-w-[85vw] bg-background/80">

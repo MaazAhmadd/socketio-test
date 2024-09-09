@@ -11,33 +11,23 @@ import {
   ServerToClientEvents,
 } from "server/src/types";
 import { Socket } from "socket.io-client";
-import { useGlobalStore, useRoomStore } from "@/state/store";
+import { useGlobalStore, useRoomStore } from "@/store";
 import { MemberPfpIcon } from "@/components/RoomCard";
 import { useSwipeable } from "react-swipeable";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { socket } from "@/socket";
 
-export function Chat({
-  socket,
-  screen,
-}: {
-  socket: Socket<ServerToClientEvents, ClientToServerEvents>;
-  screen: "mobile" | "desktop";
-}) {
+export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
   const scrollAreaRef = React.useRef<HTMLDivElement | null>(null);
   const { data: user } = useGetCurrentUser();
   const [input, setInput] = React.useState("");
   const { messages } = useRoomStore((s) => ({ messages: s.messages }));
-  const { setRoomMembersDrawer, setRoomSettingsDrawer } = useGlobalStore(
-    (s) => ({
-      setRoomMembersDrawer: s.setRoomMembersDrawer,
-      setRoomSettingsDrawer: s.setRoomSettingsDrawer,
-    }),
-  );
-  const handlers = useSwipeable({
-    onSwipedLeft: () => {
-      setRoomMembersDrawer(true);
-      console.log("User Swiped left");
-    },
-  });
+
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTo({
@@ -85,7 +75,9 @@ export function Chat({
     return (
       <div key={message.id} className={messageClasses}>
         {!isMe && (isSystemMsg || isNewSender) && (
-          <MemberPfpIcon _id={message.sender} />
+          <DropdownMenuWrapperMemberPfpIcon>
+            <MemberPfpIcon _id={message.sender} />
+          </DropdownMenuWrapperMemberPfpIcon>
         )}
         <div className={bubbleClasses}>
           {((!isMe && isNewSender) || isSystemMsg) && (
@@ -97,17 +89,22 @@ export function Chat({
           {isSystemMsg && _message.includes("left") && (
             <span className="text-red-500">{_message}</span>
           )}
+          {isSystemMsg && _message.includes("mic") && (
+            <span className="">{_message}</span>
+          )}
           {!isSystemMsg && _message}
         </div>
         {isMe && (isSystemMsg || isNewSender) && (
-          <MemberPfpIcon _id={message.sender} />
+          <DropdownMenuWrapperMemberPfpIcon>
+            <MemberPfpIcon _id={message.sender} />
+          </DropdownMenuWrapperMemberPfpIcon>
         )}
       </div>
     );
   };
 
   return (
-    <div {...handlers}>
+    <>
       <ScrollArea hideScrollBar viewportRef={scrollAreaRef}>
         <div className={cn(screen === "mobile" ? "h-[56vh]" : "h-[89vh]")}>
           {messages.map(renderMessage)}
@@ -136,7 +133,7 @@ export function Chat({
           </Button>
         </form>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -160,6 +157,25 @@ const Name = ({
       {name}
       {!isSystemMsg && ":"}{" "}
     </span>
+  );
+};
+
+const DropdownMenuWrapperMemberPfpIcon = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger>{children}</DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuItem>Profile Picture</DropdownMenuItem>
+        <DropdownMenuItem>Give Leadership</DropdownMenuItem>
+        <DropdownMenuItem>Disable Mic</DropdownMenuItem>
+        <DropdownMenuItem>Mute</DropdownMenuItem>
+        <DropdownMenuItem>Kick</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

@@ -1,22 +1,24 @@
-import { Button } from "@/components/ui/button";
-import { Icons } from "@/components/icons";
+import api from "@/api";
 import {
   Drawer,
   DrawerClose,
   DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
   DrawerTrigger,
-  DrawerOverlay,
 } from "@/components/ui/drawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTrigger,
+} from "./ui/dialog";
 import {
   useAcceptFriendRequest,
   useCancelFriendRequest,
@@ -25,42 +27,50 @@ import {
   useRejectFriendRequest,
   useSendFriendRequest,
 } from "@/hooks/userHooks";
-import { cn, getHexColorFromString } from "@/lib/utils";
-import { useGlobalStore, useRoomStore } from "@/state/store";
-import { Cross1Icon, PersonIcon } from "@radix-ui/react-icons";
-import { ScrollArea } from "./ui/scroll-area";
-import { useEffect, useRef, useState } from "react";
-import { CgCrown } from "react-icons/cg";
-import { GoPersonAdd } from "react-icons/go";
-import { FaRegHourglass } from "react-icons/fa";
-import { BsThreeDots } from "react-icons/bs";
-import api from "@/api";
+import {
+  cn,
+  getHexColorFromString,
+  splitMembersAndMicsArray,
+} from "@/lib/utils";
+import { useRoomStore } from "@/store";
+import { PersonIcon } from "@radix-ui/react-icons";
+import { useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+import { Icons } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "./ui/scroll-area";
+import { Separator } from "./ui/separator";
+import { PhotoProvider, PhotoView } from "react-photo-view";
+
+import { BsThreeDots } from "react-icons/bs";
+import { CgCrown } from "react-icons/cg";
+import { AiOutlinePicture } from "react-icons/ai";
+import { FaRegHourglass } from "react-icons/fa";
+import { GiBootKick } from "react-icons/gi";
+import { IconType } from "react-icons/lib";
+import {
+  IoMicOffOutline,
+  IoMicOutline,
+  IoVolumeHighOutline,
+  IoVolumeMuteOutline,
+} from "react-icons/io5";
+import { GoPersonAdd } from "react-icons/go";
+import { socket } from "@/socket";
+import { useParams } from "react-router-dom";
+
 export function RoomMembersDrawer() {
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const { activeMembersList } = useRoomStore((s) => ({
     activeMembersList: s.roomData?.activeMembersList,
-  }));
-  const { roomMembersDrawer, setRoomMembersDrawer } = useGlobalStore((s) => ({
-    roomMembersDrawer: s.roomMembersDrawer,
-    setRoomMembersDrawer: s.setRoomMembersDrawer,
   }));
 
   console.log("[RoomMembersDrawer] activeMembersList: ", activeMembersList);
 
   return (
     <>
-      <Drawer
-        direction="right"
-        open={roomMembersDrawer}
-        onClose={() => setRoomMembersDrawer(false)}
-      >
-        <DrawerOverlay
-          className="bg-black/0"
-          onClick={() => setRoomMembersDrawer(false)}
-        />
+      <Drawer direction="right">
         <DrawerTrigger asChild>
-          <Button variant="outline" onClick={() => setRoomMembersDrawer(true)}>
+          <Button variant="outline">
             <PersonIcon className="h-4 w-4 md:h-6 md:w-6" />
           </Button>
         </DrawerTrigger>
@@ -69,10 +79,7 @@ export function RoomMembersDrawer() {
             <div></div>
             <DrawerClose asChild>
               {/* <Cross1Icon className="mt-3 h-6 w-6 cursor-pointer md:h-8 md:w-8" /> */}
-              <div
-                onClick={() => setRoomMembersDrawer(false)}
-                className="mx-auto ml-4 mr-4 h-[100px] w-2 rounded-full bg-muted"
-              />
+              <div className="mx-auto ml-4 mr-4 h-[100px] w-2 rounded-full bg-muted" />
             </DrawerClose>
             <div></div>
           </div>
@@ -99,9 +106,11 @@ export function RoomMembersDrawer() {
 const RoomMember = ({ _id }: { _id: string }) => {
   const { data: currentUser } = useGetCurrentUser();
   const { data: m } = useGetNormalUser(_id);
-  const { activeMembersList } = useRoomStore((s) => ({
+  const { activeMembersList, mics } = useRoomStore((s) => ({
     activeMembersList: s.roomData?.activeMembersList,
+    mics: s.mics,
   }));
+
   return (
     currentUser &&
     m && (
@@ -110,11 +119,20 @@ const RoomMember = ({ _id }: { _id: string }) => {
           <CgCrown className="absolute left-[2px] top-[-18px] size-6 rotate-[-18deg]" />
         )}
         <div className="flex items-center gap-4">
-          <RoomMembersDrawerPfpIcon _id={m._id} />
+          <DialogWrapperPfpIcon _id={m._id}>
+            <RoomMembersDrawerPfpIcon _id={m._id} />
+          </DialogWrapperPfpIcon>
+
           <div className="flex flex-col items-start">
             <div className="text-gray-200">{m.name || "name"}</div>
-            <div className="mb-2">
-              <span>()</span>
+            <div className="mb-2 flex items-center text-gray-400">
+              {activeMembersList?.length &&
+              mics.length &&
+              mics[activeMembersList!.indexOf(_id)] == "1" ? (
+                <IoMicOutline className="size-5" />
+              ) : (
+                <IoMicOffOutline className="size-5" />
+              )}
               <span className="ml-1 text-gray-400">@{m.handle}</span>
             </div>
           </div>
@@ -150,12 +168,14 @@ const RoomMembersDrawerPfpIcon = ({
   const randomColor = getHexColorFromString(_id);
   const { data: user } = useGetNormalUser(_id);
   const { data: currentUser } = useGetCurrentUser();
+
   const isFriend =
     currentUser?._id === _id || currentUser?.friends.includes(_id);
   return (
     user &&
     (user.pfp ? (
       <img
+        key={_id}
         src={user.pfp}
         alt=""
         className={cn(
@@ -288,5 +308,139 @@ const FriendshipButton = ({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+};
+
+const DialogWrapperPfpIcon = ({
+  children,
+  _id,
+}: {
+  children: React.ReactNode;
+  _id: string;
+}) => {
+  const { data: user } = useGetNormalUser(_id);
+  const { data: currentUser } = useGetCurrentUser();
+  const { id } = useParams();
+  const {
+    mutedMembers,
+    mutedMembersPush,
+    mutedMembersPull,
+    mics,
+    activeMembersList,
+  } = useRoomStore((s) => ({
+    mutedMembers: s.mutedMembers,
+    mutedMembersPush: s.mutedMembersPush,
+    mutedMembersPull: s.mutedMembersPull,
+    mics: s.mics,
+    activeMembersList: s.roomData?.activeMembersList,
+  }));
+  const randomColor = getHexColorFromString(_id);
+  return (
+    <Dialog>
+      <DialogTrigger>{children}</DialogTrigger>
+      <DialogContent className="bg-background/40 sm:max-w-[425px]">
+        <DialogHeader className="items-center">
+          {user?.pfp ? (
+            <PhotoProvider>
+              <PhotoView src={user?.pfp}>
+                <img
+                  src={user?.pfp}
+                  className="size-[250px] rounded-sm object-cover"
+                />
+              </PhotoView>
+            </PhotoProvider>
+          ) : (
+            <div
+              key={_id}
+              style={{
+                backgroundImage: `linear-gradient(to bottom, ${randomColor} 0%, ${randomColor} 100%), linear-gradient(to bottom, hsl(var(--muted)) 0%, hsl(var(--muted)) 100%)`,
+              }}
+              className={cn("size-[250px] rounded-sm p-[2px]")}
+            ></div>
+          )}
+        </DialogHeader>
+        <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center gap-1 ">
+            <div className="text-sm text-primary">{user?.name}</div>
+            <div className="text-sm font-semibold text-primary">
+              @{user?.handle}
+            </div>
+          </div>
+          {currentUser?._id != _id && <Separator className="my-4 mb-2" />}
+          {/* <DialogListItem icon={AiOutlinePicture} label="Profile Picture" /> */}
+          {activeMembersList &&
+            currentUser?._id === activeMembersList[0] &&
+            currentUser?._id != _id && (
+              <DialogListItem
+                onClick={() => {
+                  socket.emit("giveLeader", { targetMember: _id, roomId: id! });
+                }}
+                icon={CgCrown}
+                label="Give Leadership"
+              />
+            )}
+          {/* TODO: add this functionality when adding audio chat */}
+          {activeMembersList &&
+            currentUser?._id === activeMembersList[0] &&
+            currentUser?._id != _id &&
+            (mics[activeMembersList!.indexOf(_id)] === "1" ? (
+              <DialogListItem
+                icon={IoMicOffOutline}
+                label="Disable Mic"
+                onClick={() => {
+                  socket.emit("mic", _id + "," + id! + "," + "0");
+                }}
+              />
+            ) : (
+              <DialogListItem
+                icon={IoMicOutline}
+                label="Enable Mic"
+                onClick={() => {
+                  socket.emit("mic", _id + "," + id! + "," + "1");
+                }}
+              />
+            ))}
+          {currentUser?._id != _id &&
+            (mutedMembers.includes(_id) ? (
+              <DialogListItem
+                onClick={() => mutedMembersPull(_id)}
+                icon={IoVolumeHighOutline}
+                label="Unmute"
+              />
+            ) : (
+              <DialogListItem
+                onClick={() => mutedMembersPush(_id)}
+                icon={IoVolumeMuteOutline}
+                label="Mute"
+              />
+            ))}
+          {activeMembersList &&
+            currentUser?._id === activeMembersList[0] &&
+            currentUser?._id != _id && (
+              <DialogListItem icon={GiBootKick} label="Kick" />
+            )}
+        </div>
+        <DialogFooter></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const DialogListItem: React.FC<{
+  icon: IconType;
+  label: string;
+  onClick?: () => void;
+}> = ({ icon: Icon, label, onClick }) => {
+  return (
+    <div
+      onClick={onClick}
+      className="mt-2 flex cursor-pointer items-center gap-4 rounded-md border px-4 py-2 text-sm transition-all hover:border-primary/40"
+    >
+      <div className="flex items-center gap-4">
+        <Icon className="size-5" />
+        <Separator className="h-6" orientation="vertical" />
+      </div>
+      <p className="text-sm">{label}</p>
+    </div>
   );
 };

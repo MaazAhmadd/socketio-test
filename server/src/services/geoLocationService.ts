@@ -1,7 +1,7 @@
 import maxmind, { CountryResponse } from "maxmind";
 
 // Function to get country from IP address
-export const getCountryFromIP = async (ip: string): Promise<string | null> => {
+export const getCountryFromIP = async (ip: string): Promise<string> => {
   if (ip == "::1" || ip.includes("127.0.0.1")) {
     return "PK";
   }
@@ -15,5 +15,5 @@ export const getCountryFromIP = async (ip: string): Promise<string | null> => {
   if (result && result.country) {
     return result.country.iso_code;
   }
-  return null;
+  return "0";
 };

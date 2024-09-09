@@ -1,5 +1,5 @@
 import { Button } from "./ui/button";
-import { useGlobalStore } from "@/state/store";
+import { useGlobalStore } from "@/store";
 
 const ErrorFallback = () => {
   const logout = useGlobalStore((state) => state.logout);

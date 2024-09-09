@@ -3,7 +3,10 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "react-hot-toast";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { RouterProvider } from "react-router-dom";
-import router from "./routing/routes";
+import router from "./routes";
+import 'react-photo-view/dist/react-photo-view.css';
+
+
 export default function App() {
   // glowing background:
   // https://play.tailwindcss.com/ULwT6MTmWI

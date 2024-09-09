@@ -20,25 +20,14 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "./ui/slider";
 import { cn } from "@/lib/utils";
-import { useGlobalStore } from "@/state/store";
+import { useGlobalStore } from "@/store";
 
 export function RoomSettingsDrawer() {
-  const { roomSettingsDrawer, setRoomSettingsDrawer } = useGlobalStore((s) => ({
-    roomSettingsDrawer: s.roomSettingsDrawer,
-    setRoomSettingsDrawer: s.setRoomSettingsDrawer,
-  }));
   return (
-    <Drawer
-      direction="top"
-      open={roomSettingsDrawer}
-      onClose={() => setRoomSettingsDrawer(false)}
-    >
-      <DrawerOverlay
-        className="bg-black/0"
-        onClick={() => setRoomSettingsDrawer(false)}
-      />
+    <Drawer direction="top">
+      
       <DrawerTrigger asChild>
-        <Button variant="outline" onClick={() => setRoomSettingsDrawer(true)}>
+        <Button variant="outline">
           <GearIcon className="h-4 w-4 md:h-6 md:w-6" />
         </Button>
       </DrawerTrigger>

@@ -1,4 +1,4 @@
-import { useGlobalStore, useRoomStore } from "@/state/store";
+import { useGlobalStore, useRoomStore } from "@/store";
 import ConnectionStatus from "./ConnectionStatus";
 import { useEffect } from "react";
 import { socket } from "@/socket";
@@ -16,7 +16,7 @@ import { useGetRoom } from "@/hooks/roomHooks";
 const RoomPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { data: room, isLoading } = useGetRoom(id!);
+  const { data: room, isLoading } = useGetRoom( );
   console.log("[Room] id: ", id);
 
   const { width, height } = useWindowSize();

@@ -11,6 +11,7 @@ interface IUser extends Document {
   pfp: string;
   profilePicId: string;
   country: string;
+  socketId?: string;
   password?: string;
   friends: IMongooseArray<Types.ObjectId>;
   friendReqsSent: IMongooseArray<Types.ObjectId>;
@@ -26,6 +27,7 @@ const UserSchema: Schema = new Schema({
   pfp: { type: String },
   profilePicId: { type: String },
   country: { type: String },
+  socketId: { type: String },
   password: { type: String, required: true },
   friends: [{ type: Types.ObjectId, ref: "User", unique: true }],
   friendReqsSent: [{ type: Types.ObjectId, ref: "User", unique: true }],

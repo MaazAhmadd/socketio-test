@@ -1,12 +1,5 @@
 import { produce } from "immer";
-import {
-  CurrentUser,
-  Member,
-  Message,
-  NormalUser,
-  Room,
-  RoomJoinData,
-} from "server/src/types";
+import { Message, Room } from "server/src/types";
 import { create } from "zustand";
 
 export type Tabs = "public" | "createRoom" | "invited" | "friends";
@@ -25,16 +18,27 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
 
   connected: false,
   setConnected: (connected: boolean) => set({ connected }),
-
-  roomMembersDrawer: false,
-  setRoomMembersDrawer: (open: boolean) => set({ roomMembersDrawer: open }),
-  roomSettingsDrawer: false,
-  setRoomSettingsDrawer: (open: boolean) => set({ roomSettingsDrawer: open }),
 }));
 
 export const useRoomStore = create<RoomStore>((set) => ({
   roomData: null,
   messages: [],
+  mutedMembers: [],
+  mics: [],
+  setMics: (data: string) => set({ mics: data.split("") }),
+  setMutedMembers: (data: string[]) => set({ mutedMembers: data }),
+  mutedMembersPush: (data: string) =>
+    set(
+      produce((state: RoomStore) => {
+        state.mutedMembers.push(data);
+      }),
+    ),
+  mutedMembersPull: (data: string) =>
+    set(
+      produce((state: RoomStore) => {
+        state.mutedMembers = state.mutedMembers.filter((d) => d !== data);
+      }),
+    ),
   addMessage: (data: Message) =>
     set(
       produce((state: RoomStore) => {
@@ -70,14 +74,16 @@ interface GlobalStore {
   setShowRoomTab: (tab: Tabs) => void;
   connected: boolean;
   setConnected: (connected: boolean) => void;
-  roomMembersDrawer: boolean;
-  setRoomMembersDrawer: (open: boolean) => void;
-  roomSettingsDrawer: boolean;
-  setRoomSettingsDrawer: (open: boolean) => void;
 }
 interface RoomStore {
   roomData: Room | null;
   messages: Message[];
+  mutedMembers: string[];
+  mics: string[];
+  setMics: (data: string) => void;
+  setMutedMembers: (data: string[]) => void;
+  mutedMembersPush: (id: string) => void;
+  mutedMembersPull: (id: string) => void;
   setMessages: (data: Message[]) => void;
   addMessage: (data: Message) => void;
   setRoomData: (data: Room | null) => void;

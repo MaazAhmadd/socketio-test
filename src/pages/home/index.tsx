@@ -11,7 +11,7 @@ import {
   useMakeRoom,
 } from "@/hooks/roomHooks";
 import { cn } from "@/lib/utils";
-import { useGlobalStore, useRoomStore } from "@/state/store";
+import { useGlobalStore, useRoomStore } from "@/store";
 import { useEffect, useRef, useState } from "react";
 import { FriendsDrawer } from "@/components/FriendsDrawer";
 import RoomCard from "@/components/RoomCard";
@@ -202,7 +202,7 @@ const RoomList = ({
                   key={room.entityId}
                   room={room}
                   onClick={() => {
-                    setRoomData(room);
+                    // setRoomData(room);
                     navigate("/room/" + room.entityId);
                   }}
                   className="mx-2  mr-4 mt-2 cursor-pointer overflow-hidden rounded-xl border border-background bg-background hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground"

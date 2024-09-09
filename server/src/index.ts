@@ -14,7 +14,7 @@ import { connectDB } from "./db";
 import roomRouter from "./routers/roomRouter";
 import userRouter from "./routers/userRouter";
 import ytRouter from "./routers/ytRouter";
-import socketServer, { deleteInactiveRooms } from "./socketServer";
+import socketServer from "./socketServer";
 import cors from "cors";
 import { disableGlobalLogging, logger } from "./config";
 import redisSchemas from "./redis-om/schemas";

@@ -187,7 +187,7 @@ makeRoute(
     //       countryScore += 1;
     //     }
     //   }
-    //   // TODO only send room with one or more active members, dont send empty rooms
+    //   // TODO: only send room with one or more active members, dont send empty rooms
 
     //   roomScores.push({ room, friendScore, countryScore });
     // }

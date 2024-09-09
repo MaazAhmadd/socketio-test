@@ -1,8 +1,8 @@
 import { createClient } from "redis";
-import { logger } from "../config";
-
+import { logger, redis_url } from "../config";
+  
 const redis = createClient({
-  url: process.env.REDIS_URL,
+  url: redis_url,
   socket: {
     reconnectStrategy: (retries) => {
       return Math.min(retries * 100, 3000);
@@ -10,7 +10,7 @@ const redis = createClient({
   },
 });
 redis.on("connect", () => {
-  logger("connectDB", "Redis Connected...");
+  logger("connectDB", "Redis Connected...",redis_url.includes("localhost") ? "local" : "remote");
 });
 
 redis.on("reconnecting", () => {

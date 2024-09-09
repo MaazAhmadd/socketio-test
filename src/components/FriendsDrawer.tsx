@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { FriendlistAccordian } from "./friendlistAccordian";
 import api from "@/api";
 import toast from "react-hot-toast";
+import { DialogDemo } from "./demo-dialog";
 
 export function FriendsDrawer() {
   return (
@@ -59,7 +60,7 @@ export function FriendsDrawer() {
             </DrawerTitle>
             {/* <DrawerDescription>Set your daily activity goal.</DrawerDescription> */}
             <div className="mb-4">
-              {/* // TODO add search functionality */}
+              {/* // TODO: add search functionality */}
               <Label className="sr-only" htmlFor="searchPeople">
                 Search Friends And Other People
               </Label>
@@ -82,6 +83,9 @@ export function FriendsDrawer() {
             {/* <p className="text-md  text-center text-lg font-bold leading-none tracking-tight md:text-lg">
               Layout Settings
             </p> */}
+          </div>
+          <div>
+            <DialogDemo/>
           </div>
           {/* <DrawerFooter className="items-center">
             <DrawerClose asChild>
