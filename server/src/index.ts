@@ -98,7 +98,7 @@ declare module "mongoose" {
   export interface Query<
     ResultType,
     DocType extends Document<any, any, any>,
-    THelpers = {},
+    THelpers,
     RawDocType = DocType,
     QueryOp = "find"
   > {

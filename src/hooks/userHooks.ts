@@ -38,7 +38,7 @@ export const useCheckUser = (
     const response = await api.get<string>("/user/check", {
       params: { q: handle },
     });
-    return Boolean(parseInt(response.data));
+    return Boolean(Number.parseInt(response.data));
   };
   return useQuery<boolean, Error>({
     queryKey: ["checkuser", debouncedValue],
