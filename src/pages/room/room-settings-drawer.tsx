@@ -1,12 +1,9 @@
-import { GearIcon, Cross1Icon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import {
 	Drawer,
-	DrawerClose,
 	DrawerContent,
 	DrawerDescription,
 	DrawerHeader,
-	DrawerOverlay,
 	DrawerTitle,
 	DrawerTrigger,
 } from "@/components/ui/drawer";
@@ -20,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
-import { useGlobalStore } from "@/store";
+import { GearIcon } from "@radix-ui/react-icons";
 
 export function RoomSettingsDrawer() {
 	return (
@@ -30,7 +27,7 @@ export function RoomSettingsDrawer() {
 					<GearIcon className="h-4 w-4 md:h-6 md:w-6" />
 				</Button>
 			</DrawerTrigger>
-			<DrawerContent className="right-0 mb-24 mt-0 flex h-min max-h-[50vh] w-[100vw] flex-col bg-background/80 md:w-[30vw]">
+			<DrawerContent className="right-0 mt-0 mb-24 flex h-min max-h-[50vh] w-[100vw] flex-col bg-background/80 md:w-[30vw]">
 				{/* horizontal */}
 				{/* <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted " /> */}
 				{/* vertical */}
@@ -75,7 +72,7 @@ export function RoomSettingsDrawer() {
 				</div>
 				<div className="flex w-full items-center justify-between ">
 					<div></div>
-					<div className="mx-auto mb-2 mt-4 h-2 w-[100px] rounded-full bg-muted" />
+					<div className="mx-auto mt-4 mb-2 h-2 w-[100px] rounded-full bg-muted" />
 				</div>
 			</DrawerContent>
 		</Drawer>

@@ -1,4 +1,4 @@
-import { SettingsDrawer } from "@/pages/home/SettingsDrawer";
+import { SettingsDrawer } from "@/pages/home/settings-drawer";
 import { TextGradient } from "@/components/common/text-gradient";
 import { Icons } from "@/components/common/icons";
 import { Button } from "@/components/ui/button";

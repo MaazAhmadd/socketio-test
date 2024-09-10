@@ -34,7 +34,7 @@ import { SupportedPlatforms, VideoInfo } from "server/src/types";
 import { TextGradient } from "@/components/common/text-gradient";
 import { FriendsDrawer } from "./friends-drawer";
 import RoomCard from "./room-card";
-import { SettingsDrawer } from "./SettingsDrawer";
+import { SettingsDrawer } from "./settings-drawer";
 export type Tabs = "public" | "invited" | "friends" | "createRoom";
 
 const HomePage = () => {
@@ -48,7 +48,7 @@ const HomePage = () => {
 		<>
 			<SettingsDrawer />
 			<FriendsDrawer />
-			<div className="h-[100vh] md:container  md:py-12">
+			<div className="h-[100vh] md:container md:py-12">
 				<div className="flex h-[100vh] flex-col justify-between md:flex-row">
 					<LeftText />
 					<div className=" max-w-[700px] pt-2 md:w-[700px] md:px-4 md:pt-0">
@@ -65,7 +65,7 @@ const HomePage = () => {
 								autoComplete="off"
 							/>
 						</div>
-						<div className="flex justify-between  md:gap-24">
+						<div className="flex justify-between md:gap-24">
 							<div className="flex gap-1">
 								<TabButton
 									setBg={showRoomTab == "public" && "bg-muted"}
@@ -116,7 +116,7 @@ const TabButton = ({ className, setBg, ...props }: any) => {
 	return (
 		<button
 			className={cn(
-				"text-md scroll-m-20 rounded-t-lg border-2 border-muted bg-primary-foreground px-2 py-1 font-extrabold tracking-tight text-muted-foreground md:px-4 lg:text-xl ",
+				"scroll-m-20 rounded-t-lg border-2 border-muted bg-primary-foreground px-2 py-1 font-extrabold text-md text-muted-foreground tracking-tight md:px-4 lg:text-xl ",
 				setBg,
 				className,
 			)}
@@ -131,7 +131,7 @@ const LeftText = () => {
 			<TextGradient className="text-2xl xs:text-3xl md:text-6xl">
 				Gather Groove{" "}
 			</TextGradient>{" "}
-			<h2 className="mx-4 scroll-m-20 pb-2 text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-3xl">
+			<h2 className="mx-4 scroll-m-20 pb-2 font-semibold text-lg text-primary xs:text-xl tracking-tight transition-colors first:mt-0 md:mt-1 md:text-pretty md:text-3xl">
 				Join a room and start watching together
 			</h2>
 		</div>
@@ -166,7 +166,7 @@ const RoomList = ({
 		return (
 			<ScrollArea
 				viewportRef={scrollAreaRef}
-				className="border-2  border-muted bg-primary-foreground  "
+				className="border-2 border-muted bg-primary-foreground "
 			>
 				<div className="h-[75vh]">
 					<Spinner />
@@ -178,18 +178,18 @@ const RoomList = ({
 	return (
 		<ScrollArea
 			viewportRef={scrollAreaRef}
-			className="border-2 border-muted bg-primary-foreground  "
+			className="border-2 border-muted bg-primary-foreground "
 		>
 			{/* <div className="bg-muted space-y-4 rounded-b-lg "> */}
 			<div className="h-[75vh]">
 				<ul>
 					{!rooms && (
-						<p className="mx-4 scroll-m-20 p-4 pb-2 text-center text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-2xl">
+						<p className="mx-4 scroll-m-20 p-4 pb-2 text-center font-semibold text-lg text-primary xs:text-xl tracking-tight transition-colors first:mt-0 md:mt-1 md:text-pretty md:text-2xl">
 							No {roomType} rooms
 						</p>
 					)}
 					{rooms && rooms.length < 1 && (
-						<p className="mx-4 scroll-m-20 p-4 pb-2 text-center text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-2xl">
+						<p className="mx-4 scroll-m-20 p-4 pb-2 text-center font-semibold text-lg text-primary xs:text-xl tracking-tight transition-colors first:mt-0 md:mt-1 md:text-pretty md:text-2xl">
 							No {roomType} rooms
 						</p>
 					)}
@@ -205,7 +205,7 @@ const RoomList = ({
 										// setRoomData(room);
 										navigate("/room/" + room.entityId);
 									}}
-									className="mx-2  mr-4 mt-2 cursor-pointer overflow-hidden rounded-xl border border-background bg-background hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground"
+									className="mx-2 mt-2 mr-4 cursor-pointer overflow-hidden rounded-xl border border-background bg-background hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground"
 									// primary muted-foreground
 								/>
 							);
@@ -258,7 +258,7 @@ const CreateRoom = () => {
 
 	return (
 		<div className="h-[75vh] border-2 border-muted bg-primary-foreground">
-			<p className="mx-4 scroll-m-20 p-4 pb-2 text-center text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-2xl">
+			<p className="mx-4 scroll-m-20 p-4 pb-2 text-center font-semibold text-lg text-primary xs:text-xl tracking-tight transition-colors first:mt-0 md:mt-1 md:text-pretty md:text-2xl">
 				Create Room
 			</p>
 			<form
@@ -311,7 +311,7 @@ const CreateRoom = () => {
 			</div>
 			<div className="mx-4 mt-4 flex flex-wrap justify-center gap-4 overflow-y-hidden md:mx-10">
 				{!isFetchingSearchResults && !searchResults && (
-					<p className="text-pretty px-20 pb-20 pt-5 font-bold capitalize">
+					<p className="text-pretty px-20 pt-5 pb-20 font-bold capitalize">
 						start typing to search from {selectedPlatform} or select another
 						platform to search from...
 					</p>
@@ -353,11 +353,11 @@ export const ResultCard = ({ result }: { result: VideoInfo }) => {
 		>
 			<div className="flex h-full flex-col justify-between">
 				<div className="flex flex-col items-end ">
-					<span className="rounded-sm bg-muted/70 p-1 text-sm font-bold leading-tight text-white">
+					<span className="rounded-sm bg-muted/70 p-1 font-bold text-sm text-white leading-tight">
 						{result.duration}
 					</span>
 				</div>
-				<p className="rounded-t-sm bg-muted/70 px-2 text-sm font-bold leading-tight text-white">
+				<p className="rounded-t-sm bg-muted/70 px-2 font-bold text-sm text-white leading-tight">
 					{trimString(result.title)}
 				</p>
 			</div>
@@ -470,7 +470,7 @@ export const Spinner = ({ className }: { className?: string }) => {
 	return (
 		<div className={cn("flex h-[20vh] items-center justify-center", className)}>
 			<div
-				className="text-surface inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
+				className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-current border-e-transparent border-solid align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
 				role="status"
 			>
 				<span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">

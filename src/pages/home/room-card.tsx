@@ -45,7 +45,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
 					<div className="w-full min-w-[100px] max-w-[150px] bg-slate-400" />
 				)}
 				<div className="flex w-full flex-col justify-between py-2 pr-2">
-					<div className="text-sm font-bold leading-tight md:text-base">
+					<div className="font-bold text-sm leading-tight md:text-base">
 						{trimString(room.v_title)}
 					</div>
 					<div className="flex">

@@ -21,7 +21,6 @@ import { Cross1Icon, GearIcon, Pencil2Icon } from "@radix-ui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { ChangeEvent, useEffect, useState } from "react";
-import { MemberPfpIcon } from "./room-card";
 import { Icons } from "../../components/common/icons";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -38,12 +37,12 @@ export function SettingsDrawer() {
 			<DrawerTrigger asChild>
 				<Button
 					variant="outline"
-					className="fixed left-2 top-2 h-auto p-3 md:left-4 md:top-4 md:p-4 "
+					className="fixed top-2 left-2 h-auto p-3 md:top-4 md:left-4 md:p-4 "
 				>
 					<GearIcon className="size-4 md:size-6" />
 				</Button>
 			</DrawerTrigger>
-			<DrawerContent className="ml-0 mr-24 max-w-[85vw] bg-background/80">
+			<DrawerContent className="mr-24 ml-0 max-w-[85vw] bg-background/80">
 				{/* horizontal */}
 				{/* <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted " /> */}
 				{/* vertical */}
@@ -66,7 +65,7 @@ export function SettingsDrawer() {
 									className="mb-2 h-24 w-24"
 								/>
 								<p className=" text-primary">{currentUser?.name || "Name"}</p>
-								<p className="text-sm  text-muted-foreground">
+								<p className="text-muted-foreground text-sm">
 									{" "}
 									@{currentUser?.handle || "Handle"}
 								</p>
@@ -91,7 +90,7 @@ export function SettingsDrawer() {
 							</div>
 						)}
 						<div className="flex h-[100px] w-full flex-col items-center justify-center rounded-md bg-primary-foreground/80 px-8 py-4">
-							<p className="text-md  text-center text-lg font-bold leading-none tracking-tight md:text-lg">
+							<p className="text-center font-bold text-lg text-md leading-none tracking-tight md:text-lg">
 								Layout Settings
 							</p>
 						</div>
@@ -106,9 +105,9 @@ export function SettingsDrawer() {
 				</div>
 				<div className="flex h-full flex-col items-center justify-between ">
 					<DrawerClose asChild>
-						<Cross1Icon className="mr-5 mt-5 h-6 w-6 cursor-pointer   md:h-8 md:w-8" />
+						<Cross1Icon className="mt-5 mr-5 h-6 w-6 cursor-pointer md:h-8 md:w-8" />
 					</DrawerClose>
-					<div className="mx-auto ml-4 mr-4 h-[100px] w-2 rounded-full bg-muted" />
+					<div className="mx-auto mr-4 ml-4 h-[100px] w-2 rounded-full bg-muted" />
 					<div></div>
 				</div>
 			</DrawerContent>
@@ -140,13 +139,13 @@ const UpdateHandle = () => {
 				Update Handle:
 			</Label>
 			{updateUserHandleError ? (
-				<p className="text-sm text-red-400">
+				<p className="text-red-400 text-sm">
 					{(updateUserHandleError as AxiosError).response?.data as string}
 				</p>
 			) : (
 				""
 			)}
-			{isSuccess && <p className="text-sm text-green-400">Handle Updated</p>}
+			{isSuccess && <p className="text-green-400 text-sm">Handle Updated</p>}
 			<div className="flex gap-4">
 				<Input
 					type="text"
@@ -189,7 +188,7 @@ const UpdateName = () => {
 			<Label htmlFor="userName" className="text-sm">
 				Update Name:
 			</Label>
-			{isSuccess && <p className="text-sm text-green-400">Name Updated</p>}
+			{isSuccess && <p className="text-green-400 text-sm">Name Updated</p>}
 
 			<div className="flex gap-4">
 				<Input
@@ -349,9 +348,9 @@ const UpdateProfilePic: React.FC = () => {
 						)}
 					</div>
 				</div>
-				{errorState && <p className="text-sm text-red-400">{errorState}</p>}
+				{errorState && <p className="text-red-400 text-sm">{errorState}</p>}
 				{successState && (
-					<p className="text-sm text-green-400">{successState}</p>
+					<p className="text-green-400 text-sm">{successState}</p>
 				)}
 				<div className="flex gap-4">
 					<Input
@@ -388,7 +387,7 @@ export const ProfilePicPreview = ({
 			src={pfp}
 			alt=""
 			className={cn(
-				"size-[42px] rounded-full border   border-primary object-cover p-[2px]",
+				"size-[42px] rounded-full border border-primary object-cover p-[2px]",
 				className,
 			)}
 		/>

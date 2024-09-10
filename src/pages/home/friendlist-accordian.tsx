@@ -49,8 +49,8 @@ export function FriendlistAccordian() {
 					>
 						{(!currentUser?.friends || currentUser?.friends.length < 1) &&
 							"Friend List..."}
-						{currentUser?.friends?.map((f, i) => (
-							<Friend _id={f} key={f} currentUser={currentUser} />
+						{currentUser?.friends?.map((f) => (
+							<Friend _id={f} key={f} />
 						))}
 					</AccordionContent>
 				)}
@@ -71,8 +71,8 @@ export function FriendlistAccordian() {
 						{(!currentUser?.friendReqsReceived ||
 							currentUser?.friendReqsReceived.length < 1) &&
 							"Friend Requests..."}
-						{currentUser?.friendReqsReceived.map((f, i) => (
-							<FriendRequest _id={f} key={f} currentUser={currentUser} />
+						{currentUser?.friendReqsReceived.map((f) => (
+							<FriendRequest _id={f} key={f} />
 						))}
 					</AccordionContent>
 				)}
@@ -81,7 +81,7 @@ export function FriendlistAccordian() {
 				<AccordionTrigger>Recents</AccordionTrigger>
 				{/* <AccordionContent>Recents coming soon...</AccordionContent> */}
 				<AccordionContent className="grid grid-cols-2 justify-center justify-items-center gap-2 md:grid-cols-3">
-					{recents.map((r, i) => {
+					{recents.map((r) => {
 						if (r === currentUser?._id) {
 							return;
 						}
@@ -99,10 +99,8 @@ export function FriendlistAccordian() {
 
 const Friend = ({
 	_id,
-	currentUser,
 }: {
 	_id: string;
-	currentUser: CurrentUser;
 }) => {
 	const { data: targetUser } = useGetNormalUser(_id);
 	const { mutate: removeFriend, isPending } = useRemoveFriend();
@@ -158,10 +156,8 @@ const Friend = ({
 
 const FriendRequest = ({
 	_id,
-	currentUser,
 }: {
 	_id: string;
-	currentUser: CurrentUser;
 }) => {
 	const { data: targetUser } = useGetNormalUser(_id);
 	const { mutate: acceptFriendRequest, isPending: isPendingAccept } =

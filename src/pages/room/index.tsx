@@ -8,10 +8,7 @@ import { useGlobalStore, useRoomStore } from "@/store";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import {
-  Message,
-  Room
-} from "server/src/types";
+import { Message, Room } from "server/src/types";
 import { Chat } from "./chat";
 import { RoomMembersDrawer } from "./room-members-drawer";
 import { RoomPinDialog } from "./room-pin-dialog";
@@ -27,15 +24,13 @@ const RoomPage = () => {
 		data: room,
 		isLoading: isRoomLoading,
 		error: roomError,
-		refetch: refetchRoom,
 	} = useGetRoom();
 	console.log("[Room] room: ", room, isRoomLoading);
 
-	const { width, height } = useWindowSize();
+	const { width } = useWindowSize();
 
-	const { setConnected, connected } = useGlobalStore((s) => ({
+	const { setConnected } = useGlobalStore((s) => ({
 		setConnected: s.setConnected,
-		connected: s.connected,
 	}));
 
 	const {
@@ -173,9 +168,7 @@ const RoomPage = () => {
 		socket.disconnect();
 		navigate("/home");
 	}
-	function onGiveLeader(targetMember: string) {
-		socket.emit("giveLeader", { targetMember, roomId: id! });
-	}
+
 	// mobile videoplayer height 33vh
 	// desktop chat width 30vw
 	// turn to svh if caused issue on mobile

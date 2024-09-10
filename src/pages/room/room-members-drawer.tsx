@@ -69,12 +69,12 @@ export function RoomMembersDrawer() {
 						<PersonIcon className="h-4 w-4 md:h-6 md:w-6" />
 					</Button>
 				</DrawerTrigger>
-				<DrawerContent className="right-0 ml-24 mr-0 max-w-[80vw] bg-background/80">
+				<DrawerContent className="right-0 mr-0 ml-24 max-w-[80vw] bg-background/80">
 					<div className="flex h-full flex-col items-center justify-between ">
 						<div></div>
 						<DrawerClose asChild>
 							{/* <Cross1Icon className="mt-3 h-6 w-6 cursor-pointer md:h-8 md:w-8" /> */}
-							<div className="mx-auto ml-4 mr-4 h-[100px] w-2 rounded-full bg-muted" />
+							<div className="mx-auto mr-4 ml-4 h-[100px] w-2 rounded-full bg-muted" />
 						</DrawerClose>
 						<div></div>
 					</div>
@@ -111,7 +111,7 @@ const RoomMember = ({ _id }: { _id: string }) => {
 		m && (
 			<div className="relative mb-6 flex items-center justify-between gap-4">
 				{activeMembersList && activeMembersList[0] === _id && (
-					<CgCrown className="absolute left-[2px] top-[-18px] size-6 rotate-[-18deg]" />
+					<CgCrown className="absolute top-[-18px] left-[2px] size-6 rotate-[-18deg]" />
 				)}
 				<div className="flex items-center gap-4">
 					<DialogWrapperPfpIcon _id={m._id}>
@@ -204,9 +204,9 @@ const FriendshipButton = ({
 	className?: string;
 }) => {
 	className = cn("mr-6 size-6 cursor-pointer", className);
-	const [status, setStatus] = useState<
-		"stranger" | "friend" | "reqSend" | "reqRec"
-	>("stranger");
+	// const [status, setStatus] = useState<
+	// 	"stranger" | "friend" | "reqSend" | "reqRec"
+	// >("stranger");
 	// console.log("[FriendshipButton] status", status);
 
 	const { data: currentUser, isLoading: currentUserLoading } =
@@ -246,12 +246,7 @@ const FriendshipButton = ({
 					<FaRegHourglass className={cn(className)} title="cancel request" />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent>
-					<DropdownMenuItem
-						onClick={() => {
-							setStatus("stranger");
-							cancelReq(_id);
-						}}
-					>
+					<DropdownMenuItem onClick={() => cancelReq(_id)}>
 						Cancel
 					</DropdownMenuItem>
 				</DropdownMenuContent>
@@ -265,21 +260,11 @@ const FriendshipButton = ({
 					<BsThreeDots className={cn(className)} title="accept request" />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent>
-					<DropdownMenuItem
-						onClick={() => {
-							setStatus("friend");
-							acceptReq(_id);
-						}}
-					>
+					<DropdownMenuItem onClick={() => acceptReq(_id)}>
 						Accept
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
-					<DropdownMenuItem
-						onClick={() => {
-							setStatus("stranger");
-							rejectReq(_id);
-						}}
-					>
+					<DropdownMenuItem onClick={() => rejectReq(_id)}>
 						Reject
 					</DropdownMenuItem>
 				</DropdownMenuContent>
@@ -293,12 +278,7 @@ const FriendshipButton = ({
 				<GoPersonAdd className={cn(className)} title="add friend" />
 			</DropdownMenuTrigger>
 			<DropdownMenuContent>
-				<DropdownMenuItem
-					onClick={() => {
-						setStatus("reqSend");
-						sendReq(_id);
-					}}
-				>
+				<DropdownMenuItem onClick={() => sendReq(_id)}>
 					Add Friend
 				</DropdownMenuItem>
 			</DropdownMenuContent>
@@ -357,8 +337,8 @@ const DialogWrapperPfpIcon = ({
 				</DialogHeader>
 				<div className="flex flex-col items-center">
 					<div className="flex flex-col items-center gap-1 ">
-						<div className="text-sm text-primary">{user?.name}</div>
-						<div className="text-sm font-semibold text-primary">
+						<div className="text-primary text-sm">{user?.name}</div>
+						<div className="font-semibold text-primary text-sm">
 							@{user?.handle}
 						</div>
 					</div>

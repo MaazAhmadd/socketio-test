@@ -1,26 +1,20 @@
-import React, { useEffect } from "react";
-import { PaperPlaneIcon } from "@radix-ui/react-icons";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { useGetCurrentUser, useGetNormalUser } from "@/hooks/user-hooks";
-import {
-	ClientToServerEvents,
-	Message,
-	ServerToClientEvents,
-} from "server/src/types";
-import { Socket } from "socket.io-client";
-import { useGlobalStore, useRoomStore } from "@/store";
-import { MemberPfpIcon } from "@/pages/home/room-card";
-import { useSwipeable } from "react-swipeable";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useGetCurrentUser, useGetNormalUser } from "@/hooks/user-hooks";
+import { cn } from "@/lib/utils";
+import { MemberPfpIcon } from "@/pages/home/room-card";
 import { socket } from "@/socket";
+import { useRoomStore } from "@/store";
+import { PaperPlaneIcon } from "@radix-ui/react-icons";
+import React, { useEffect } from "react";
+import { Message } from "server/src/types";
 
 export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 	const scrollAreaRef = React.useRef<HTMLDivElement | null>(null);

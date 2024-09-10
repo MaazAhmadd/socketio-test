@@ -23,17 +23,17 @@ export function FriendsDrawer() {
 			<DrawerTrigger asChild>
 				<Button
 					variant="outline"
-					className="fixed right-2 top-2 h-auto p-3 md:right-4 md:top-4 md:p-4 "
+					className="fixed top-2 right-2 h-auto p-3 md:top-4 md:right-4 md:p-4 "
 				>
 					<PersonIcon className="h-4 w-4 md:h-6 md:w-6" />
 				</Button>
 			</DrawerTrigger>
-			<DrawerContent className="right-0 ml-24 mr-0 max-w-[80vw] bg-background/80">
+			<DrawerContent className="right-0 mr-0 ml-24 max-w-[80vw] bg-background/80">
 				<div className="flex h-full flex-col items-center justify-between ">
 					<DrawerClose asChild>
-						<Cross1Icon className="ml-5 mt-5 h-6 w-6 cursor-pointer   md:h-8 md:w-8" />
+						<Cross1Icon className="mt-5 ml-5 h-6 w-6 cursor-pointer md:h-8 md:w-8" />
 					</DrawerClose>
-					<div className="mx-auto ml-4 mr-6 h-[100px] w-2 rounded-full bg-muted" />
+					<div className="mx-auto mr-6 ml-4 h-[100px] w-2 rounded-full bg-muted" />
 					{process.env.NODE_ENV === "development" && (
 						<div
 							onClick={() => {

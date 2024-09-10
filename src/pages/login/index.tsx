@@ -4,7 +4,11 @@ import { ModeToggle } from "@/components/common/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCheckUser, useLoginUser, useRegisterUser } from "@/hooks/user-hooks";
+import {
+	useCheckUser,
+	useLoginUser,
+	useRegisterUser,
+} from "@/hooks/user-hooks";
 import { useDebounce } from "@/hooks/util-hooks";
 import { cn } from "@/lib/utils";
 import * as React from "react";
@@ -71,18 +75,18 @@ export default function LoginPage() {
 
 	return (
 		<>
-			<div className="container relative  grid h-[100vh] flex-col items-center justify-center gap-4 md:gap-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
-				<div className="relative  flex h-full flex-col bg-muted text-white dark:border-r max-sm:py-4 md:p-10">
+			<div className="container relative grid h-[100vh] flex-col items-center justify-center gap-4 md:gap-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
+				<div className="relative flex h-full flex-col bg-muted text-white max-sm:py-4 md:p-10 dark:border-r">
 					<div className="full-bleed absolute inset-0 bg-zinc-900" />
-					<div className="relative z-20 flex items-center  font-medium">
+					<div className="relative z-20 flex items-center font-medium">
 						<TextGradient className="mb-2 text-2xl md:text-4xl">
 							Gather Groove
 						</TextGradient>{" "}
 					</div>
-					<ModeToggle className="fixed right-4 top-4" />
+					<ModeToggle className="fixed top-4 right-4" />
 					{/* <br /> */}
 					<div className="relative z-20 my-auto flex flex-col items-center font-medium md:pr-40">
-						<p className="text-md hidden  md:block md:text-2xl">
+						<p className="hidden text-md md:block md:text-2xl">
 							Welcome to{" "}
 							<TextGradient className="text-lg md:text-3xl" inline={true}>
 								{" "}
@@ -102,7 +106,7 @@ export default function LoginPage() {
 							Netflix, Prime, Drive, and more, all in perfect sync.
 						</p>
 
-						<p className="text-md hidden md:block md:text-2xl">
+						<p className="hidden text-md md:block md:text-2xl">
 							Meet new friends, chat, and enjoy videos together. With{" "}
 							<TextGradient className="text-lg md:text-3xl" inline={true}>
 								{" "}
@@ -125,10 +129,10 @@ export default function LoginPage() {
 				<div className="lg:p-8">
 					<div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
 						<div className="flex flex-col space-y-2 text-center">
-							<h1 className="text-2xl font-semibold tracking-tight">
+							<h1 className="font-semibold text-2xl tracking-tight">
 								Create an account or Login
 							</h1>
-							<p className="text-sm text-muted-foreground">
+							<p className="text-muted-foreground text-sm">
 								Enter unique handle to Login or Register
 							</p>
 						</div>
@@ -171,7 +175,7 @@ export default function LoginPage() {
 											disabled={isLoadingLogin || isLoadingRegister}
 										/>
 										{registerStateError.length > 0 && (
-											<p className="text-sm text-red-500">
+											<p className="text-red-500 text-sm">
 												{registerStateError}
 											</p>
 										)}
@@ -202,18 +206,18 @@ export default function LoginPage() {
 											disabled={isLoadingLogin || isLoadingRegister}
 										/>
 										{passwordStateError.length > 0 && (
-											<p className="text-sm text-red-500">
+											<p className="text-red-500 text-sm">
 												{passwordStateError}
 											</p>
 										)}
 										{errorLogin && (
-											<p className="text-sm text-red-500">
+											<p className="text-red-500 text-sm">
 												InValid Password
 												{/* {(errorLogin as any)?.response?.data?.error} */}
 											</p>
 										)}
 										{errorRegister && (
-											<p className="text-sm text-red-500">Error Registering</p>
+											<p className="text-red-500 text-sm">Error Registering</p>
 										)}
 									</div>
 									<Button
@@ -242,7 +246,7 @@ export default function LoginPage() {
 									</span>
 								</div>
 							</div>
-							<p className="text-sm text-muted-foreground">coming soon...</p>
+							<p className="text-muted-foreground text-sm">coming soon...</p>
 							<Button
 								variant="outline"
 								type="button"
@@ -252,7 +256,7 @@ export default function LoginPage() {
 								<Icons.google className="mr-2 h-4 w-4" /> Google
 							</Button>
 						</div>
-						<p className="px-8 text-center text-sm text-muted-foreground">
+						<p className="px-8 text-center text-muted-foreground text-sm">
 							By clicking continue, you agree to our{" "}
 							<a
 								href="/#"

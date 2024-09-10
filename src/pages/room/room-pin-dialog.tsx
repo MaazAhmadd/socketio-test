@@ -11,9 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useGetSearchResults, useMakeRoom } from "@/hooks/room-hooks";
+import { useGetSearchResults } from "@/hooks/room-hooks";
 import { useDebounce } from "@/hooks/util-hooks";
-import { useRoomStore, useGlobalStore } from "@/store";
 import { DrawingPinFilledIcon } from "@radix-ui/react-icons";
 import { useEffect, useState } from "react";
 import { SupportedPlatforms } from "server/src/types";
@@ -23,7 +22,6 @@ import {
 	ResultCard,
 	SelectSearchPlatform,
 } from "../home";
-import { useNavigate } from "react-router-dom";
 export type Tabs = "public" | "invited" | "friends" | "createRoom";
 
 export function RoomPinDialog() {
