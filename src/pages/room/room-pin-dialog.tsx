@@ -1,4 +1,4 @@
-import { Icons } from "@/components/icons";
+import { Icons } from "@/components/common/icons";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useGetSearchResults, useMakeRoom } from "@/hooks/roomHooks";
-import { useDebounce } from "@/hooks/utilHooks";
+import { useGetSearchResults, useMakeRoom } from "@/hooks/room-hooks";
+import { useDebounce } from "@/hooks/util-hooks";
 import { useRoomStore, useGlobalStore } from "@/store";
 import { DrawingPinFilledIcon } from "@radix-ui/react-icons";
 import { useEffect, useState } from "react";
@@ -22,7 +22,7 @@ import {
 	RecentVideosDialog,
 	ResultCard,
 	SelectSearchPlatform,
-} from "./Authenticated";
+} from "../home";
 import { useNavigate } from "react-router-dom";
 export type Tabs = "public" | "invited" | "friends" | "createRoom";
 
@@ -70,7 +70,7 @@ export function RoomPinDialog() {
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-[425px]">
 				<div className="h-[75vh] border-2 border-muted bg-primary-foreground">
-					<p className="mx-4 scroll-m-20 p-4 pb-2 text-center text-lg font-semibold tracking-tight text-primary  transition-colors first:mt-0 xs:text-xl md:mt-1 md:text-pretty md:text-2xl">
+					<p className="mx-4 scroll-m-20 p-4 pb-2 text-center font-semibold text-lg text-primary xs:text-xl tracking-tight transition-colors first:mt-0 md:mt-1 md:text-pretty md:text-2xl">
 						Pin in Queue
 					</p>
 					<form
@@ -123,7 +123,7 @@ export function RoomPinDialog() {
 					</div>
 					<div className="mx-4 mt-4 flex flex-wrap justify-center gap-4 overflow-y-hidden md:mx-10">
 						{!isFetchingSearchResults && !searchResults && (
-							<p className="text-pretty px-20 pb-20 pt-5 font-bold capitalize">
+							<p className="text-pretty px-20 pt-5 pb-20 font-bold capitalize">
 								start typing to search from {selectedPlatform} or select another
 								platform to search from...
 							</p>
@@ -131,7 +131,7 @@ export function RoomPinDialog() {
 						{isFetchingSearchResults && (
 							<div className="flex h-[20vh] items-center justify-center">
 								<div
-									className="text-surface inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
+									className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-current border-e-transparent border-solid align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
 									role="status"
 								>
 									<span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">

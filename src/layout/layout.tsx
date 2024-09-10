@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { useGetCurrentUser } from "@/hooks/userHooks";
+import { useGetCurrentUser } from "@/hooks/user-hooks";
 
 const Layout = () => {
   const { data: currentUser } = useGetCurrentUser();

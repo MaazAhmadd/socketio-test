@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { useGetCurrentUser, useGetNormalUser } from "@/hooks/userHooks";
+import { useGetCurrentUser, useGetNormalUser } from "@/hooks/user-hooks";
 import {
 	ClientToServerEvents,
 	Message,
@@ -12,7 +12,7 @@ import {
 } from "server/src/types";
 import { Socket } from "socket.io-client";
 import { useGlobalStore, useRoomStore } from "@/store";
-import { MemberPfpIcon } from "@/components/RoomCard";
+import { MemberPfpIcon } from "@/pages/home/room-card";
 import { useSwipeable } from "react-swipeable";
 import {
 	DropdownMenu,

@@ -2,7 +2,7 @@ import { cn, getHexColorFromString } from "@/lib/utils";
 import { Room } from "server/src/types";
 import React from "react";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
-import { useGetCurrentUser, useGetNormalUser } from "@/hooks/userHooks";
+import { useGetCurrentUser, useGetNormalUser } from "@/hooks/user-hooks";
 import { trimString } from "@/pages/home";
 interface RoomCardProps {
 	room: Room;

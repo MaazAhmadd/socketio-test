@@ -1,17 +1,17 @@
 import { useGlobalStore, useRoomStore } from "@/store";
-import ConnectionStatus from "./ConnectionStatus";
+import ConnectionStatus from "../common/connection-status";
 import { useEffect } from "react";
 import { socket } from "@/socket";
 import { Member, Room } from "server/src/types";
-import { Button } from "./ui/button";
-import { useWindowSize } from "@/hooks/utilHooks";
+import { Button } from "../ui/button";
+import { useWindowSize } from "@/hooks/util-hooks";
 import toast from "react-hot-toast";
 import { RoomSettingsDrawer } from "./RoomSettingsDrawer";
 import { TextGradient } from "./auth-page";
 import { RoomPinDialog } from "./RoomPinDialog";
 import { RoomMembersDrawer } from "./RoomMembersDrawer";
 import { useNavigate, useParams } from "react-router-dom";
-import { useGetRoom } from "@/hooks/roomHooks";
+import { useGetRoom } from "@/hooks/room-hooks";
 
 const RoomPage = () => {
   const navigate = useNavigate();

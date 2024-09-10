@@ -12,11 +12,11 @@ import {
 	useRejectFriendRequest,
 	useRemoveFriend,
 	useSendFriendRequest,
-} from "@/hooks/userHooks";
-import { Icons } from "@/components/icons";
-import { MemberPfpIcon } from "./RoomCard";
-import { Button } from "./ui/button";
-import { Spinner } from "./Authenticated";
+} from "@/hooks/user-hooks";
+import { Icons } from "@/components/common/icons";
+import { MemberPfpIcon } from "./room-card";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/common/spinner";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { CurrentUser } from "server/src/types";

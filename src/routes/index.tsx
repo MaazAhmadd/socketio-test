@@ -1,8 +1,8 @@
-import Layout from "@/layout/Layout";
+import Layout from "@/layout/layout";
 import HomePage from "@/pages/home";
 import LoginPage from "@/pages/login";
 import RoomPage from "@/pages/room";
-import PrivateRoute from "@/routes/PrivateRoute";
+import PrivateRoute from "@/routes/private-route";
 import { createBrowserRouter } from "react-router-dom";
 
 const router = createBrowserRouter([

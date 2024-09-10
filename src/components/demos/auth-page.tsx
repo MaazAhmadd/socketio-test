@@ -1,17 +1,21 @@
 import { Icons } from "@/components/common/icons";
-import { TextGradient } from "@/components/common/text-gradient";
-import { ModeToggle } from "@/components/common/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCheckUser, useLoginUser, useRegisterUser } from "@/hooks/user-hooks";
+import {
+	useCheckUser,
+	useLoginUser,
+	useRegisterUser,
+} from "@/hooks/user-hooks";
 import { useDebounce } from "@/hooks/util-hooks";
 import { cn } from "@/lib/utils";
+// import {useGlobalStore} from "@/state/store";
 import * as React from "react";
 import toast from "react-hot-toast";
 import { Navigate } from "react-router-dom";
+import { ModeToggle } from "../common/theme-toggle";
 
-export default function LoginPage() {
+export default function AuthenticationPage() {
 	const token = localStorage.getItem("auth_token");
 
 	if (token) {
@@ -41,10 +45,15 @@ export default function LoginPage() {
 	const { data: checkUser } = useCheckUser(
 		registerState,
 		debouncedRegisterState,
-		passwordStateError.length > 0 ||
-			registerStateError.length > 0 ||
-			registerState.length < 1,
+		passwordStateError.length > 0 || registerStateError.length > 0,
 	);
+
+	// React.useEffect(() => {
+	//   setAuthToken(dataLogin || dataRegister || null);
+	//   if (dataLogin || dataRegister) {
+	//     setRoute("homePage");
+	//   }
+	// }, [dataLogin, dataRegister]);
 
 	const onSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -62,7 +71,7 @@ export default function LoginPage() {
 			toast.error("error check console");
 			return;
 		}
-		if (checkUser) {
+		if (String(checkUser) === "true") {
 			login(formData);
 		} else {
 			register(formData);
@@ -291,3 +300,41 @@ function validateInputs(value: string) {
 	}
 	return true;
 }
+
+export const TextGradient = ({
+	children,
+	className,
+	inline = false,
+	...props
+}: {
+	children?: React.ReactNode;
+	className?: string;
+	inline?: boolean;
+}) => {
+	if (inline) {
+		return (
+			<span
+				className={cn(
+					"gradient-text animate-gradient font-Scripto text-4xl font-medium text-transparent",
+					// "font-Scripto bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-lime-500",
+					className,
+				)}
+				{...props}
+			>
+				{children}
+			</span>
+		);
+	}
+	return (
+		<p
+			className={cn(
+				"gradient-text animate-gradient font-Scripto text-4xl font-medium text-transparent",
+				// "font-Scripto bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-lime-500",
+				className,
+			)}
+			{...props}
+		>
+			{children}
+		</p>
+	);
+};

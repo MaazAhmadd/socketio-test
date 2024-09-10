@@ -1,4 +1,4 @@
-import QueryClientProvider from "@/components/QueryClientProvider";
+import QueryClientProvider from "@/components/query-client-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "react-hot-toast";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";

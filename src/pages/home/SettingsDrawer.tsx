@@ -14,17 +14,17 @@ import {
 	useGetCurrentUser,
 	useUpdateUserHandle,
 	useUpdateUserName,
-} from "@/hooks/userHooks";
-import { useWindowSize } from "@/hooks/utilHooks";
+} from "@/hooks/user-hooks";
+import { useWindowSize } from "@/hooks/util-hooks";
 import { useGlobalStore } from "@/store";
 import { Cross1Icon, GearIcon, Pencil2Icon } from "@radix-ui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { ChangeEvent, useEffect, useState } from "react";
-import { MemberPfpIcon } from "./RoomCard";
-import { Icons } from "./icons";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
+import { MemberPfpIcon } from "./room-card";
+import { Icons } from "../../components/common/icons";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
 import { cn, getHexColorFromString } from "@/lib/utils";
 
 export function SettingsDrawer() {

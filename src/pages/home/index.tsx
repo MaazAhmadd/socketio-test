@@ -1,31 +1,5 @@
-import { SettingsDrawer } from "@/components/SettingsDrawer";
-import { TextGradient } from "@/components/auth-page";
-import { Icons } from "@/components/icons";
+import { Icons } from "@/components/common/icons";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-	useGetUserRooms,
-	useGetSearchResults,
-	useMakeRoom,
-} from "@/hooks/roomHooks";
-import { cn } from "@/lib/utils";
-import { useGlobalStore, useRoomStore } from "@/store";
-import { useEffect, useRef, useState } from "react";
-import { FriendsDrawer } from "@/components/FriendsDrawer";
-import RoomCard from "@/components/RoomCard";
-import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import { useDebounce } from "@/hooks/utilHooks";
-import { Room, SupportedPlatforms, VideoInfo } from "server/src/types";
-export type Tabs = "public" | "invited" | "friends" | "createRoom";
 import {
 	Dialog,
 	DialogContent,
@@ -35,7 +9,33 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import {
+	useGetSearchResults,
+	useGetUserRooms,
+	useMakeRoom,
+} from "@/hooks/room-hooks";
+import { useDebounce } from "@/hooks/util-hooks";
+import { cn } from "@/lib/utils";
+import { useGlobalStore, useRoomStore } from "@/store";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { SupportedPlatforms, VideoInfo } from "server/src/types";
+import { TextGradient } from "@/components/common/text-gradient";
+import { FriendsDrawer } from "./friends-drawer";
+import RoomCard from "./room-card";
+import { SettingsDrawer } from "./SettingsDrawer";
+export type Tabs = "public" | "invited" | "friends" | "createRoom";
 
 const HomePage = () => {
 	const { showRoomTab, setShowRoomTab } = useGlobalStore((state) => ({

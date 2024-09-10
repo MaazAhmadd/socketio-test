@@ -1,6 +1,6 @@
-import { SettingsDrawer } from "@/components/SettingsDrawer";
-import { TextGradient } from "@/components/auth-page";
-import { Icons } from "@/components/icons";
+import { SettingsDrawer } from "@/pages/home/SettingsDrawer";
+import { TextGradient } from "@/components/common/text-gradient";
+import { Icons } from "@/components/common/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,12 +9,12 @@ import {
   useGetUserRooms,
   useGetSearchResults,
   useMakeRoom,
-} from "@/hooks/roomHooks";
+} from "@/hooks/room-hooks";
 import { cn } from "@/lib/utils";
 import { useGlobalStore, useRoomStore } from "@/store";
 import { useEffect, useRef, useState } from "react";
-import { FriendsDrawer } from "./FriendsDrawer";
-import RoomCard from "./RoomCard";
+import { FriendsDrawer } from "../../pages/home/friends-drawer";
+import RoomCard from "../../pages/home/room-card";
 import {
   Select,
   SelectContent,
@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useDebounce } from "@/hooks/utilHooks";
+import { useDebounce } from "@/hooks/util-hooks";
 import { SupportedPlatforms, VideoInfo } from "server/src/types";
 export type Tabs = "public" | "invited" | "friends" | "createRoom";
 import {
@@ -42,7 +42,7 @@ const Authenticated = () => {
     showRoomTab: state.showRoomTab,
     setShowRoomTab: state.setShowRoomTab,
   }));
-  let { refetch: getPublicRooms } = useGetUserRooms();
+  const { refetch: getPublicRooms } = useGetUserRooms();
 
   return (
     <>
@@ -146,7 +146,7 @@ const Public = () => {
   //   41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
   // ]);
   const navigate = useNavigate();
-  let { data: publicRooms, isFetching } = useGetUserRooms();
+  const { data: publicRooms, isFetching } = useGetUserRooms();
   const { setRoomData } = useRoomStore((s) => ({
     setRoomData: s.setRoomData,
   }));

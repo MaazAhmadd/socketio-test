@@ -11,7 +11,6 @@ import {
 	InterServerEvents,
 	ServerToClientEvents,
 } from "./types";
-import { isNullOrUndefined } from "node:util";
 
 // const memberRepository = redisSchemas.member;
 const roomRepository = redisSchemas.room;
@@ -206,6 +205,7 @@ export async function joinRoom(
 				splitMembersAndMicsArray(room.membersJoinedList!).mics.join(""),
 			); // last item mics permission string
 			io.in(roomId).emit("activeMemberListUpdate", room.activeMembersList);
+			socket.join(roomId);
 			io.in(roomId).emit("message", {
 				msg: "has joined",
 				sender: socket.user?._id!,
@@ -213,7 +213,6 @@ export async function joinRoom(
 				id: ++msg_count,
 				system: true,
 			});
-			socket.join(roomId);
 			room.membersJoinedList = [];
 			socket.emit("roomDesc", room);
 			socket.roomId = roomId;
@@ -228,9 +227,9 @@ export async function joinRoom(
 			await roomRepository.save(room);
 			room.activeMembersList.push(
 				splitMembersAndMicsArray(room.membersJoinedList!).mics.join(""),
-			);
-
+			); // last item mics permission string
 			io.in(roomId).emit("activeMemberListUpdate", room.activeMembersList);
+			socket.join(roomId);
 			io.in(roomId).emit("message", {
 				msg: "has joined",
 				sender: socket.user?._id!,
@@ -239,7 +238,6 @@ export async function joinRoom(
 				system: true,
 			});
 			room.membersJoinedList = [];
-			socket.join(roomId);
 			socket.emit("roomDesc", room);
 			socket.roomId = roomId;
 		}

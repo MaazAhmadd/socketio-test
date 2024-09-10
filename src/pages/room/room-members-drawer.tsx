@@ -1,4 +1,13 @@
 import api from "@/api";
+import { Icons } from "@/components/common/icons";
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTrigger,
+} from "@/components/ui/dialog";
 import {
 	Drawer,
 	DrawerClose,
@@ -12,13 +21,8 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-	Dialog,
-	DialogContent,
-	DialogFooter,
-	DialogHeader,
-	DialogTrigger,
-} from "./ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
 	useAcceptFriendRequest,
 	useCancelFriendRequest,
@@ -26,36 +30,27 @@ import {
 	useGetNormalUser,
 	useRejectFriendRequest,
 	useSendFriendRequest,
-} from "@/hooks/userHooks";
-import {
-	cn,
-	getHexColorFromString,
-	splitMembersAndMicsArray,
-} from "@/lib/utils";
+} from "@/hooks/user-hooks";
+import { cn, getHexColorFromString } from "@/lib/utils";
 import { useRoomStore } from "@/store";
 import { PersonIcon } from "@radix-ui/react-icons";
 import { useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import { Icons } from "@/components/icons";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "./ui/scroll-area";
-import { Separator } from "./ui/separator";
 import { PhotoProvider, PhotoView } from "react-photo-view";
 
+import { socket } from "@/socket";
 import { BsThreeDots } from "react-icons/bs";
 import { CgCrown } from "react-icons/cg";
-import { AiOutlinePicture } from "react-icons/ai";
 import { FaRegHourglass } from "react-icons/fa";
 import { GiBootKick } from "react-icons/gi";
-import { IconType } from "react-icons/lib";
+import { GoPersonAdd } from "react-icons/go";
 import {
 	IoMicOffOutline,
 	IoMicOutline,
 	IoVolumeHighOutline,
 	IoVolumeMuteOutline,
 } from "react-icons/io5";
-import { GoPersonAdd } from "react-icons/go";
-import { socket } from "@/socket";
+import { IconType } from "react-icons/lib";
 import { useParams } from "react-router-dom";
 
 export function RoomMembersDrawer() {
