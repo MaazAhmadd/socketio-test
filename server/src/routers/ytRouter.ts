@@ -7,7 +7,7 @@ import { authUser } from "../middlewares";
 const YtVideo = mongooseModels.YtVideo;
 const router = express.Router();
 
-makeRoute("get", "/ytservice", [authUser], router, async function (req, res) {
+router.get("/ytservice", authUser, async function (req, res) {
 	const videoInfo = await ytInfoService(req.query?.url as string);
 	if (videoInfo) {
 		return res.send(videoInfo);
@@ -15,26 +15,20 @@ makeRoute("get", "/ytservice", [authUser], router, async function (req, res) {
 	res.status(404).send("video not found");
 });
 
-makeRoute(
-	"get",
-	"/ytservice/search",
-	[authUser],
-	router,
-	async function (req, res) {
-		try {
-			const response = await searchVideos(req.query?.q as string);
-			if (response) {
-				return res.send(response);
-			}
-			return res.status(404).send("videos not found");
-		} catch (error: any) {
-			res.status(500).json({
-				errorMessage: "An error occurred on the server. [post - /ytservice]",
-				error: error.message,
-			});
+router.get("/ytservice/search", authUser, async function (req, res) {
+	try {
+		const response = await searchVideos(req.query?.q as string);
+		if (response) {
+			return res.send(response);
 		}
-	},
-);
+		return res.status(404).send("videos not found");
+	} catch (error: any) {
+		res.status(500).json({
+			errorMessage: "An error occurred on the server. [post - /ytservice]",
+			error: error.message,
+		});
+	}
+});
 
 // makeRoute(
 //   "get",

@@ -96,7 +96,6 @@ interface Room {
 }
 
 type Message = {
-  id: number;
   msg: string;
   sender: string;
   time: number;

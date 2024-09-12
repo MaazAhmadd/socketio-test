@@ -33,3 +33,8 @@ export function splitMembersAndMicsArray(input: string[]): {
   });
   return result;
 }
+
+export function isValidJwt(jwt: string) {
+  const parts = jwt.split(".");
+  return parts.length === 3;
+}

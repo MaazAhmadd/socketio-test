@@ -20,12 +20,12 @@ const RoomPage = () => {
 
 	console.log("[Room] render");
 	console.log("[Room] id: ", id);
-	const {
-		data: room,
-		isLoading: isRoomLoading,
-		error: roomError,
-	} = useGetRoom();
-	console.log("[Room] room: ", room, isRoomLoading);
+	// const {
+	// 	data: room,
+	// 	isLoading: isRoomLoading,
+	// 	error: roomError,
+	// } = useGetRoom();
+	// console.log("[Room] room: ", room, isRoomLoading);
 
 	const { width } = useWindowSize();
 
@@ -81,16 +81,6 @@ const RoomPage = () => {
 			// setRoomData(null);
 			// setMessages([]);
 			setConnected(false);
-			let count = 0;
-			const interval = setInterval(() => {
-				if (count < 6) {
-					socket.connect();
-					count++;
-				}
-			}, 5000);
-			if (count === 5) {
-				clearInterval(interval);
-			}
 		}
 
 		function onStateError(err: string) {
@@ -101,7 +91,15 @@ const RoomPage = () => {
 		}
 
 		function onRoomDesc(data: Room) {
-			console.log("[socket roomDesc] roomDesc: ", data);
+			console.log("[socket roomDesc] roomDesc before pop: ", data);
+			const mics = data.activeMembersList?.pop();
+			console.log(
+				"[socket roomDesc] roomDesc after pop: ",
+				data,
+				"mics: ",
+				mics,
+			);
+			setMics(mics!);
 			setRoomData(data);
 		}
 
@@ -147,10 +145,10 @@ const RoomPage = () => {
 	if (!id) {
 		return <Navigate to="/home" />;
 	}
-	if (roomError) {
-		toast.error(roomError.message);
-		return <Navigate to="/home" />;
-	}
+	// if (roomError) {
+	// 	toast.error(roomError.message);
+	// 	return <Navigate to="/home" />;
+	// }
 
 	if (!roomData) {
 		return <></>;

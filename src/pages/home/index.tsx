@@ -222,16 +222,17 @@ const CreateRoom = () => {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedPlatform, setSelectedPlatform] =
 		useState<SupportedPlatforms>("youtube");
-	const navigate = useNavigate();
+	// const navigate = useNavigate();
 	const {
 		data: room,
 		mutate: makeRoom,
 		isPending: creatingRoom,
 	} = useMakeRoom();
 
-	const { setRoomData } = useRoomStore((s) => ({
-		setRoomData: s.setRoomData,
-	}));
+	// const { setRoomData, setMics } = useRoomStore((s) => ({
+	// 	setRoomData: s.setRoomData,
+	// 	setMics: s.setMics,
+	// }));
 	const debouncedSearchQuery = useDebounce(searchQuery, 1000);
 
 	const { data: searchResults, isFetching: isFetchingSearchResults } =
@@ -247,12 +248,14 @@ const CreateRoom = () => {
 			makeRoom(videoUrl);
 		}
 	};
-	useEffect(() => {
-		if (room) {
-			setRoomData(room);
-			navigate("/room/" + room?.entityId!);
-		}
-	}, [creatingRoom]);
+	// useEffect(() => {
+	// 	if (room && !creatingRoom) {
+	// 		const mics = room.activeMembersList?.pop();
+	// 		setMics(mics!);
+	// 		setRoomData(room);
+	// 		navigate("/room/" + room?.entityId!);
+	// 	}
+	// }, [creatingRoom]);
 
 	console.log("[createRoom] searchResults: ", searchResults);
 

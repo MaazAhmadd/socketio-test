@@ -9,6 +9,7 @@ import { getCountryFromIP } from "./services/geoLocationService";
 import {
 	ClientToServerEvents,
 	InterServerEvents,
+	Room,
 	ServerToClientEvents,
 } from "./types";
 
@@ -25,7 +26,6 @@ type CustomIO = Server<
 	ServerToClientEvents,
 	InterServerEvents
 >;
-let msg_count = 0;
 
 export default function socketServer(io: CustomIO) {
 	// disconnect all members and sockets
@@ -84,14 +84,6 @@ export default function socketServer(io: CustomIO) {
 			await giveLeader(io, socket, targetMember);
 		});
 		socket.on("sendMessage", (msg) => {
-			logger(
-				"sendMessage",
-				"msg: ",
-				msg_count,
-				msg,
-				"roomId: ",
-				socket?.roomId,
-			);
 			if (!socket?.roomId) {
 				socket.emit("stateError", "roomId not found on socket");
 				return;
@@ -100,7 +92,6 @@ export default function socketServer(io: CustomIO) {
 				msg,
 				sender: socket.user?._id as string,
 				time: Date.now(),
-				id: ++msg_count,
 				system: false,
 			};
 			io.in(socket?.roomId).emit("message", msgData);
@@ -131,13 +122,14 @@ export async function makeRoom(userId: string, url: string) {
 	if (!videoInfo) {
 		return null;
 	}
-	const userIDandMic = String(userId) + ("," + "1");
+	const userIDandMic = userId + ",1";
 	const room = await roomRepository.save({
 		privacy: 0, // public(0), private(1), friends(2)
 		playback: 0, // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
 		roomMic: false,
 		membersJoinedList: [userIDandMic],
-		activeMembersList: [],
+		activeMembersList: [userId],
+		activeMembersCount: 1,
 		countries: [],
 		kicked: [],
 		createdByMongoId: [String(userId)],
@@ -151,31 +143,7 @@ export async function makeRoom(userId: string, url: string) {
 		v_playedTill: 0,
 	});
 	room.entityId = (room as any)[EntityId];
-
-	// await memberRepository.save({
-	//   handle: user.handle,
-	//   pfp: user.pfp,
-	//   name: user.name,
-	//   isConnected: true,
-	//   isLeader: true,
-	//   mic: false,
-	//   leaderPC: 0,
-	//   mongoId: String(user._id),
-	//   roomId: room.entityId,
-	//   country: user.country,
-	// });
-	// // entityId and EntityKeyName
-
-	// const members = await memberRepository
-	//   .search()
-	//   .where("roomId")
-	//   .equals(room?.entityId!)
-	//   .return.all();
-
-	// // Attach members to the room object
-	// room.members = members;
-
-	// Return the full room details including members and video player info
+	room.activeMembersList!.push("1");
 	return room;
 }
 
@@ -194,23 +162,21 @@ export async function joinRoom(
 		}
 		room.countries.push(socket.user?.country!);
 		room.countries = [...new Set(room.countries)];
-		const membersAndMics = splitMembersAndMicsArray(room.membersJoinedList!);
-		if (membersAndMics.mongoIDs.includes(socket.user?._id!)) {
+		const { membersJoinedMongoIds } = splitMembersAndMicsArray(room);
+		if (membersJoinedMongoIds.includes(socket.user?._id!)) {
 			room.activeMembersList?.push(socket.user?._id!);
 			room.activeMembersList = [...new Set(room.activeMembersList)];
 			room.activeMembersCount = room.activeMembersList?.length;
 			sortActiveMembers(room.membersJoinedList!, room?.activeMembersList);
 			await roomRepository.save(room);
-			room.activeMembersList.push(
-				splitMembersAndMicsArray(room.membersJoinedList!).mics.join(""),
-			); // last item mics permission string
+			const { activeMembersMics } = splitMembersAndMicsArray(room);
+			room.activeMembersList.push(activeMembersMics.join("")); // last item mics permission string
 			io.in(roomId).emit("activeMemberListUpdate", room.activeMembersList);
 			socket.join(roomId);
 			io.in(roomId).emit("message", {
 				msg: "has joined",
 				sender: socket.user?._id!,
 				time: Date.now(),
-				id: ++msg_count,
 				system: true,
 			});
 			room.membersJoinedList = [];
@@ -225,16 +191,14 @@ export async function joinRoom(
 			room.activeMembersCount = room.activeMembersList?.length;
 			sortActiveMembers(room?.membersJoinedList!, room?.activeMembersList!);
 			await roomRepository.save(room);
-			room.activeMembersList.push(
-				splitMembersAndMicsArray(room.membersJoinedList!).mics.join(""),
-			); // last item mics permission string
+			const { activeMembersMics } = splitMembersAndMicsArray(room);
+			room.activeMembersList.push(activeMembersMics.join("")); // last item mics permission string
 			io.in(roomId).emit("activeMemberListUpdate", room.activeMembersList);
 			socket.join(roomId);
 			io.in(roomId).emit("message", {
 				msg: "has joined",
 				sender: socket.user?._id!,
 				time: Date.now(),
-				id: ++msg_count,
 				system: true,
 			});
 			room.membersJoinedList = [];
@@ -275,8 +239,9 @@ export async function makeMemberLeave(
 		}
 	});
 	await roomRepository.save(room);
+
 	room.activeMembersList.push(
-		splitMembersAndMicsArray(room.membersJoinedList!).mics.join(""),
+		splitMembersAndMicsArray(room).activeMembersMics.join(""),
 	);
 
 	io.in(socket.roomId).emit("activeMemberListUpdate", room.activeMembersList);
@@ -284,7 +249,6 @@ export async function makeMemberLeave(
 		msg: "has left",
 		sender: socket.user?._id!,
 		time: Date.now(),
-		id: ++msg_count,
 		system: true,
 	});
 	socket.disconnect();
@@ -325,11 +289,15 @@ export async function giveLeader(
 	);
 
 	sortActiveMembers(room.membersJoinedList!, room.activeMembersList!);
-
+	room.membersJoinedList?.forEach((member, index) => {
+		if (member.startsWith(room.activeMembersList![0])) {
+			room.membersJoinedList![index] = member.split(",")[0] + ",1";
+		}
+	});
 	await roomRepository.save(room);
 	// Notify all clients in the room about the updated room description
 	room.activeMembersList?.push(
-		splitMembersAndMicsArray(room.membersJoinedList!).mics.join(""),
+		splitMembersAndMicsArray(room).activeMembersMics.join(""),
 	);
 	room.membersJoinedList = [];
 	io.in(socket.roomId).emit("roomDesc", room);
@@ -366,7 +334,7 @@ export async function kickMember(
 	sortActiveMembers(room.membersJoinedList!, room.activeMembersList!);
 	await roomRepository.save(room);
 	room.activeMembersList?.push(
-		splitMembersAndMicsArray(room.membersJoinedList!).mics.join(""),
+		splitMembersAndMicsArray(room).activeMembersMics.join(""),
 	);
 
 	io.in(socket.roomId).emit("activeMemberListUpdate", room.activeMembersList!);
@@ -414,8 +382,9 @@ export async function enableDisableMic(
 	const targetUser = await User.findById(targetMember);
 
 	await roomRepository.save(room);
-	const { mics } = splitMembersAndMicsArray(room.membersJoinedList!);
-	room.activeMembersList.push(mics.join(""));
+	room.activeMembersList.push(
+		splitMembersAndMicsArray(room).activeMembersMics.join(""),
+	);
 
 	io.in(socket.roomId).emit("activeMemberListUpdate", room.activeMembersList);
 	if (targetUser?.socketId) {
@@ -423,7 +392,6 @@ export async function enableDisableMic(
 			msg: reqtype == "0" ? "your mic disabled" : "your mic enabled",
 			sender: targetMember,
 			time: Date.now(),
-			id: ++msg_count,
 			system: true,
 		});
 	}
@@ -500,21 +468,59 @@ export function convertMembersArrayToObjects(
 	});
 }
 
-export function splitMembersAndMicsArray(input: string[]): {
-	mongoIDs: string[];
-	mics: string[];
-} {
-	const result = {
-		mongoIDs: [] as string[],
-		mics: [] as string[],
-	};
-	if (!input) return result;
-	input.map((item) => {
-		const [mongoID, mic] = item.split(",");
-		result.mongoIDs.push(mongoID);
-		result.mics.push(mic);
+// export function splitMembersAndMicsArray(input: string[]): {
+// 	mongoIDs: string[];
+// 	mics: string[];
+// } {
+// 	const result = {
+// 		mongoIDs: [] as string[],
+// 		mics: [] as string[],
+// 	};
+// 	if (!input) return result;
+// 	input.map((item) => {
+// 		const [mongoID, mic] = item.split(",");
+// 		result.mongoIDs.push(mongoID);
+// 		result.mics.push(mic);
+// 	});
+// 	return result;
+// }
+
+export function splitMembersAndMicsArray(input: Room) {
+	const { membersJoinedList, activeMembersList } = input;
+
+	const membersJoinedMongoIds: string[] = [];
+	const membersJoinedMics: string[] = [];
+
+	if (!membersJoinedList) {
+		return {
+			membersJoinedMongoIds: [],
+			membersJoinedMics: [],
+			activeMembersMics: [],
+		};
+	}
+	membersJoinedList.forEach((member) => {
+		const [mongoId, micStatus] = member.split(",");
+		membersJoinedMongoIds.push(mongoId);
+		membersJoinedMics.push(micStatus);
 	});
-	return result;
+	if (!activeMembersList) {
+		return {
+			membersJoinedMongoIds,
+			membersJoinedMics,
+			activeMembersMics: [],
+		};
+	}
+
+	const activeMembersMics = activeMembersList.map((activeMember) => {
+		const index = membersJoinedMongoIds.indexOf(activeMember);
+		return membersJoinedMics[index];
+	});
+
+	return {
+		membersJoinedMongoIds,
+		membersJoinedMics,
+		activeMembersMics,
+	};
 }
 
 function transferLeadership(

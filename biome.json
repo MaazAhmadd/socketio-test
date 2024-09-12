@@ -24,7 +24,8 @@
 				"useImportType": "off",
 				"useTemplate": "off",
 				"noNonNullAssertion": "off",
-				"useSelfClosingElements": "off"
+				"useSelfClosingElements": "off",
+				"noVar": "warn"
 			},
 			"correctness": {
 				"useExhaustiveDependencies": "warn"

@@ -67,7 +67,7 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 		);
 
 		return (
-			<div key={message.id} className={messageClasses}>
+			<div key={message.time} className={messageClasses}>
 				{!isMe && (isSystemMsg || isNewSender) && (
 					<DropdownMenuWrapperMemberPfpIcon>
 						<MemberPfpIcon _id={message.sender} />

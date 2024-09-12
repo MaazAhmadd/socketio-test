@@ -52,7 +52,6 @@ const RoomCard: React.FC<RoomCardProps> = ({
 						<div className="no-scrollbar flex gap-2 overflow-x-scroll">
 							{/* <div className="flex gap-2 overflow-x-scroll"> */}
 							{activeMembersList?.map((m) => {
-								console.log("[roomCard] member:", m);
 								return (
 									<MemberPfpIcon key={m} _id={m} className="size-[42px]" />
 								);

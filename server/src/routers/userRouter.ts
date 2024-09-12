@@ -1,14 +1,13 @@
-import express, { NextFunction, Request, Response } from "express";
-import mongoose from "mongoose";
-import { CurrentUser, NormalUser } from "../types";
-import { clearCacheAndLog, logger, makeRoute } from "../config";
-import mongooseModels from "../mongoose/models";
-import multer from "multer";
 import cloudinary from "cloudinary";
-import { z } from "zod";
+import express from "express";
+import mongoose from "mongoose";
+import multer from "multer";
 import { Readable } from "node:stream";
+import { z } from "zod";
+import { clearCacheAndLog, logger } from "../config";
 import { authUser } from "../middlewares";
-import { ObjectId } from "mongoose";
+import mongooseModels from "../mongoose/models";
+import { NormalUser } from "../types";
 const User = mongooseModels.User;
 
 const router = express.Router();
@@ -29,16 +28,11 @@ const cacheKeys = {
 };
 
 // Create user
-makeRoute("post", "/user/register", [], router, async function (req, res) {
-	logger("/user/register", "register router req.body: ", req.body);
+router.post("/user/register", async function (req, res) {
 	const { name, handle, pfp, password } = req.body as NormalUser & {
 		password: string;
 	};
 	let user = await User.findOne({ handle });
-	// .cache(
-	//   60,
-	//   cacheKeys.USER + handle,
-	// );
 
 	if (user) {
 		return res.status(200).send(user.generateAuthToken());
@@ -50,97 +44,80 @@ makeRoute("post", "/user/register", [], router, async function (req, res) {
 });
 
 // Update user name
-makeRoute(
-	"put",
-	"/user/updateusername",
-	[authUser],
-	router,
-	async function (req, res) {
-		const updateBodySchema = z.object({
-			name: z.string().max(4096, "name is too long"),
-		});
-		const { error } = updateBodySchema.safeParse(req.body);
-		if (error) {
-			return res.status(400).send(error.issues[0].message);
-		}
-		const userId = req.user?._id;
-		const user = await User.findById(userId);
-		if (!user) {
-			return res.status(404).send("User not found");
-		}
-		user.name = req.body.name;
-		await user.save();
-		// clearCacheAndLog("/user/updateusername", [cacheKeys.USER + userId]);
-		res.status(200).send(user);
-	},
-);
-// Update user handle
-makeRoute(
-	"put",
-	"/user/updateuserhandle",
-	[authUser],
-	router,
-	async function (req, res) {
-		const updateBodySchema = z.object({
-			handle: z
-				.string()
-				.min(6, "handle is too short")
-				.max(4096, "handle is too long"),
-		});
-		const { error } = updateBodySchema.safeParse(req.body);
-		if (error) {
-			return res.status(400).send(error.issues[0].message);
-		}
-		const alreadyExistingUser = await User.findOne({ handle: req.body.handle });
-		if (alreadyExistingUser) {
-			return res.status(400).send("handle taken");
-		}
-		const userId = req.user?._id;
-		const user = await User.findById(userId);
-		if (!user) {
-			return res.status(404).send("User not found");
-		}
-		user.handle = req.body.handle;
-		await user.save();
-		// clearCacheAndLog("/user/updateuserhandle", [cacheKeys.USER + userId]);
-		res.status(200).send(user);
-	},
-);
-// Update user password
-makeRoute(
-	"put",
-	"/user/updateuserpassword",
-	[authUser],
-	router,
-	async function (req, res) {
-		const updateBodySchema = z.object({
-			password: z
-				.string()
-				.min(6, "password is too short")
-				.max(4096, "password is too long"),
-		});
-		const { error } = updateBodySchema.safeParse(req.body);
-		if (error) {
-			return res.status(400).send(error.issues[0].message);
-		}
+router.put("/user/updateusername", authUser, async function (req, res) {
+	const updateBodySchema = z.object({
+		name: z.string().max(4096, "name is too long"),
+	});
+	const { error } = updateBodySchema.safeParse(req.body);
+	if (error) {
+		return res.status(400).send(error.issues[0].message);
+	}
+	const userId = req.user?._id;
+	const user = await User.findById(userId);
+	if (!user) {
+		return res.status(404).send("User not found");
+	}
+	user.name = req.body.name;
+	await user.save();
+	// clearCacheAndLog("/user/updateusername", [cacheKeys.USER + userId]);
+	res.status(200).send(user);
+});
 
-		const userId = req.user?._id;
-		const user = await User.findById(userId);
-		if (!user) {
-			return res.status(404).send("User not found");
-		}
-		user.password = req.body.password;
-		await user.save();
-		// clearCacheAndLog("/user/updateuserpassword", [cacheKeys.USER + userId]);
-		res.status(200).send(user);
-	},
-);
+// Update user handle
+router.put("/user/updateuserhandle", authUser, async function (req, res) {
+	const updateBodySchema = z.object({
+		handle: z
+			.string()
+			.min(6, "handle is too short")
+			.max(4096, "handle is too long"),
+	});
+	const { error } = updateBodySchema.safeParse(req.body);
+	if (error) {
+		return res.status(400).send(error.issues[0].message);
+	}
+	const alreadyExistingUser = await User.findOne({ handle: req.body.handle });
+	if (alreadyExistingUser) {
+		return res.status(400).send("handle taken");
+	}
+	const userId = req.user?._id;
+	const user = await User.findById(userId);
+	if (!user) {
+		return res.status(404).send("User not found");
+	}
+	user.handle = req.body.handle;
+	await user.save();
+	res.status(200).send(user);
+});
+
+// Update user password
+router.put("/user/updateuserpassword", authUser, async function (req, res) {
+	const updateBodySchema = z.object({
+		password: z
+			.string()
+			.min(6, "password is too short")
+			.max(4096, "password is too long"),
+	});
+	const { error } = updateBodySchema.safeParse(req.body);
+	if (error) {
+		return res.status(400).send(error.issues[0].message);
+	}
+
+	const userId = req.user?._id;
+	const user = await User.findById(userId);
+	if (!user) {
+		return res.status(404).send("User not found");
+	}
+	user.password = req.body.password;
+	await user.save();
+	// clearCacheAndLog("/user/updateuserpassword", [cacheKeys.USER + userId]);
+	res.status(200).send(user);
+});
+
 // Update user pfp
-makeRoute(
-	"put",
+router.put(
 	"/user/updateuserpfp",
-	[authUser, upload.single("image")],
-	router,
+	authUser,
+	upload.single("image"),
 	async function (req, res) {
 		const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
 		if (!allowedTypes.includes(req.file?.mimetype!)) {
@@ -186,16 +163,10 @@ makeRoute(
 );
 
 // Send Friend Request
-makeRoute(
-	"post",
+router.post(
 	"/user/sendFriendRequest/:receiverId",
-	[authUser],
-	router,
+	authUser,
 	async function (req, res) {
-		// if (true) {
-		//   res.status(400).json({ message: "simulated error" });
-		//   return;
-		// }
 		if (req.user?._id === req.params.receiverId) {
 			return res
 				.status(400)
@@ -234,10 +205,7 @@ makeRoute(
 			user.friendReqsSent.push(friend._id);
 			await user.save();
 			await friend.save();
-			// clearCacheAndLog("/user/sendFriendRequest/:receiverId", [
-			//   cacheKeys.USER + friend._id,
-			//   cacheKeys.USER + user._id,
-			// ]);
+
 			res.status(200).send("done, Friend request sent!");
 		} else {
 			res.status(400).json({ message: "Friend request already sent." });
@@ -246,11 +214,9 @@ makeRoute(
 );
 
 // Cancel Sent Friend Request
-makeRoute(
-	"post",
+router.post(
 	"/user/cancelFriendRequest/:receiverId",
-	[authUser],
-	router,
+	authUser,
 	async function (req, res) {
 		const user = await User.findById(req.user?._id);
 		const friend = await User.findById(req.params.receiverId);
@@ -275,11 +241,9 @@ makeRoute(
 );
 
 // Accept Friend Request
-makeRoute(
-	"post",
+router.post(
 	"/user/acceptFriendRequest/:senderId",
-	[authUser],
-	router,
+	authUser,
 	async function (req, res) {
 		const user = await User.findById(req.user?._id);
 		const friend = await User.findById(req.params.senderId);
@@ -308,11 +272,9 @@ makeRoute(
 );
 
 // Reject Received Friend Request
-makeRoute(
-	"post",
+router.post(
 	"/user/rejectFriendRequest/:senderId",
-	[authUser],
-	router,
+	authUser,
 	async function (req, res) {
 		const user = await User.findById(req.user?._id);
 		const friend = await User.findById(req.params.senderId);
@@ -336,11 +298,9 @@ makeRoute(
 );
 
 // Remove Friend
-makeRoute(
-	"post",
+router.post(
 	"/user/removeFriend/:friendId",
-	[authUser],
-	router,
+	authUser,
 	async function (req, res) {
 		const user = await User.findById(req.user?._id);
 		const friend = await User.findById(req.params.friendId);
@@ -365,62 +325,50 @@ makeRoute(
 );
 
 // Get a single user by ID or handle
-makeRoute(
-	"get",
-	"/user/getuser/:id",
-	[authUser],
-	router,
-	async function (req, res) {
-		// setTimeout(async () => {
-		const id = req.params.id;
-		if (mongoose.Types.ObjectId.isValid(id)) {
-			const user = await User.findById(id).select(
-				"-password -friends -friendReqsSent -friendReqsReceived",
-			);
-			// .cache(2);
-			// .cache(60, cacheKeys.USER + id);
+router.get("/user/getuser/:id", authUser, async function (req, res) {
+	// setTimeout(async () => {
+	const id = req.params.id;
+	if (mongoose.Types.ObjectId.isValid(id)) {
+		const user = await User.findById(id).select(
+			"-password -friends -friendReqsSent -friendReqsReceived",
+		);
+		// .cache(2);
+		// .cache(60, cacheKeys.USER + id);
 
-			if (!user) {
-				return res.status(404).send("User not found");
-			}
-			res.send(user);
-		} else {
-			const handle = id;
-			const user = await User.findOne({ handle }).select(
-				"-password -friends -friendReqsSent -friendReqsReceived",
-			);
-			// .cache(2);
-			// .cache(60, cacheKeys.USERCHECK + handle);
-
-			if (!user) {
-				return res.status(404).send("User not found");
-			}
-			res.send(user);
+		if (!user) {
+			return res.status(404).send("User not found");
 		}
-		// }, 100);
-	},
-);
+		res.send(user);
+	} else {
+		const handle = id;
+		const user = await User.findOne({ handle }).select(
+			"-password -friends -friendReqsSent -friendReqsReceived",
+		);
+		// .cache(2);
+		// .cache(60, cacheKeys.USERCHECK + handle);
+
+		if (!user) {
+			return res.status(404).send("User not found");
+		}
+		res.send(user);
+	}
+	// }, 100);
+});
 
 // Get current user
-makeRoute(
-	"get",
-	"/user/getCurrentUser",
-	[authUser],
-	router,
-	async function (req, res) {
-		// let userToSend: CurrentUser;
-		const user = await User.findById(req.user?._id);
-		// .cache(2);
-		// .cache(60, cacheKeys.USER + req.user?._id);
-		if (!user) return res.status(404).send("User not found");
-		logger("/user/getCurrentUser", "current user", user);
-		user.password = "";
-		res.send(user);
-	},
-);
+router.get("/user/getCurrentUser", authUser, async function (req, res) {
+	// let userToSend: CurrentUser;
+	const user = await User.findById(req.user?._id);
+	// .cache(2);
+	// .cache(60, cacheKeys.USER + req.user?._id);
+	if (!user) return res.status(404).send("User not found");
+	logger("/user/getCurrentUser", "current user", user);
+	user.password = "";
+	res.send(user);
+});
 
 // Search users by name or handle
-makeRoute("get", "/user/search", [authUser], router, async function (req, res) {
+router.get("/user/search", authUser, async function (req, res) {
 	const query = req.query.q as string;
 	const users = await User.find({
 		$or: [
@@ -435,7 +383,7 @@ makeRoute("get", "/user/search", [authUser], router, async function (req, res) {
 });
 
 // check if user exists
-makeRoute("get", "/user/check", [], router, async function (req, res) {
+router.get("/user/check", async function (req, res) {
 	const handle = req.query.q as string;
 	const userCount = await User.countDocuments({ handle });
 	// .cache(2);
@@ -445,7 +393,7 @@ makeRoute("get", "/user/check", [], router, async function (req, res) {
 });
 
 // login user
-makeRoute("post", "/user/login", [], router, async function (req, res) {
+router.post("/user/login", async function (req, res) {
 	const { handle, password } = req.body;
 	const user = await User.findOne({ handle });
 	// .cache(2);
@@ -460,35 +408,29 @@ makeRoute("post", "/user/login", [], router, async function (req, res) {
 	res.send(user.generateAuthToken());
 });
 
-// login user
-makeRoute("get", "/user/clearCache", [], router, async function (req, res) {
+// clearCache user
+router.get("/user/clearCache", async function (req, res) {
 	clearCacheAndLog("/user/clearCache", null);
 	res.status(200).send("cleared cache");
 });
 
 // unfriend all users
-makeRoute(
-	"get",
-	"/user/unfriendAll",
-	[authUser],
-	router,
-	async function (req, res) {
-		const userId = req.user?._id;
-		const user = await User.findById(userId);
-		if (!user) {
-			return res.status(404).send("User not found");
+router.get("/user/unfriendAll", authUser, async function (req, res) {
+	const userId = req.user?._id;
+	const user = await User.findById(userId);
+	if (!user) {
+		return res.status(404).send("User not found");
+	}
+	for (const friend of user.friends) {
+		const friendUser = await User.findById(friend);
+		if (friendUser) {
+			friendUser.friends.pull(userId);
+			await friendUser.save();
 		}
-		for (const friend of user.friends) {
-			const friendUser = await User.findById(friend);
-			if (friendUser) {
-				friendUser.friends.pull(userId);
-				await friendUser.save();
-			}
-		}
-		user.friends.pull(...user.friends);
-		await user.save();
-		res.status(200).send("done, Friends removed!");
-	},
-);
+	}
+	user.friends.pull(...user.friends);
+	await user.save();
+	res.status(200).send("done, Friends removed!");
+});
 
 export default router;
