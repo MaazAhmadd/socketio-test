@@ -5,7 +5,7 @@ import { useGetRoom } from "@/hooks/room-hooks";
 import { useWindowSize } from "@/hooks/util-hooks";
 import { socket } from "@/socket";
 import { useGlobalStore, useRoomStore } from "@/store";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Message, Room } from "server/src/types";
@@ -13,10 +13,18 @@ import { Chat } from "./chat";
 import { RoomMembersDrawer } from "./room-members-drawer";
 import { RoomPinDialog } from "./room-pin-dialog";
 import { RoomSettingsDrawer } from "./room-settings-drawer";
+import {
+	Dialog,
+	DialogContent,
+	DialogOverlay,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 const RoomPage = () => {
 	const navigate = useNavigate();
 	const { id } = useParams();
+	const kickDialogRef = useRef<HTMLButtonElement | null>(null);
 
 	console.log("[Room] render");
 	console.log("[Room] id: ", id);
@@ -72,7 +80,7 @@ const RoomPage = () => {
 
 		function onConnect() {
 			console.log("[socket connect] connected");
-			socket.emit("joinRoom", { roomId: id! });
+			socket.emit("joinRoom", id!);
 			setConnected(true);
 		}
 
@@ -122,6 +130,9 @@ const RoomPage = () => {
 			addMessage(data);
 			console.log("[socket message] message: ", data);
 		}
+		function onGotKicked(data: string) {
+			kickDialogRef.current?.click();
+		}
 
 		socket.on("connect", onConnect);
 		socket.on("disconnect", onDisconnect);
@@ -130,6 +141,7 @@ const RoomPage = () => {
 		socket.on("stateError", onStateError);
 		socket.on("connect_error", onConnectError);
 		socket.on("message", onMessage);
+		socket.on("onKicked", onGotKicked);
 
 		return () => {
 			socket.off("connect", onConnect);
@@ -139,6 +151,7 @@ const RoomPage = () => {
 			socket.off("stateError", onStateError);
 			socket.off("connect_error", onConnectError);
 			socket.off("message", onMessage);
+			socket.off("onKicked", onGotKicked);
 		};
 	}, []);
 
@@ -177,7 +190,10 @@ const RoomPage = () => {
 			{mobileView ? (
 				<div>
 					<div className="h-[5vh]">
-						<RoomButtons onLeaveRoom={onLeaveRoom} />
+						<RoomButtons
+							kickDialogRef={kickDialogRef}
+							onLeaveRoom={onLeaveRoom}
+						/>
 					</div>
 					<div className="h-[33vh] bg-red-800">videoplayer</div>
 					<div className="h-[62vh]">
@@ -191,7 +207,10 @@ const RoomPage = () => {
 					</div>
 					<div className="w-[30vw]">
 						<div className=" h-[5vh]">
-							<RoomButtons onLeaveRoom={onLeaveRoom} />
+							<RoomButtons
+								kickDialogRef={kickDialogRef}
+								onLeaveRoom={onLeaveRoom}
+							/>
 						</div>
 						<div className="h-[95vh]">
 							<Chat screen={"desktop"} />
@@ -202,17 +221,72 @@ const RoomPage = () => {
 		</>
 	);
 };
-const RoomButtons = ({ onLeaveRoom }: { onLeaveRoom: () => void }) => {
+const RoomButtons = ({
+	onLeaveRoom,
+	kickDialogRef,
+}: {
+	onLeaveRoom: () => void;
+	kickDialogRef: React.MutableRefObject<HTMLButtonElement | null>;
+}) => {
 	return (
-		<div className="flex h-[5vh] items-center justify-between px-2">
-			<Button variant={"destructive"} onClick={() => onLeaveRoom()}>
-				Leave
-			</Button>
-			<RoomSettingsDrawer />
-			<TextGradient className="text-2xl md:text-xl">Gather Groove</TextGradient>
-			<RoomPinDialog />
-			<RoomMembersDrawer />
-		</div>
+		<>
+			<KickDialogBox kickDialogRef={kickDialogRef} />
+			<div className="flex h-[5vh] items-center justify-between px-2">
+				<Button variant={"destructive"} onClick={() => onLeaveRoom()}>
+					Leave
+				</Button>
+				<RoomSettingsDrawer />
+				<TextGradient className="text-2xl md:text-xl">
+					Gather Groove
+				</TextGradient>
+				<RoomPinDialog />
+				<RoomMembersDrawer />
+			</div>
+		</>
 	);
 };
 export default RoomPage;
+
+const KickDialogBox = ({
+	kickDialogRef,
+}: {
+	kickDialogRef: React.MutableRefObject<HTMLButtonElement | null>;
+}) => {
+	const navigate = useNavigate();
+	const { setConnected } = useGlobalStore((s) => ({
+		setConnected: s.setConnected,
+	}));
+
+	const { setRoomData, setMessages, setMutedMembers } = useRoomStore((s) => ({
+		setRoomData: s.setRoomData,
+		setMessages: s.setMessages,
+		setMutedMembers: s.setMutedMembers,
+	}));
+	return (
+		<Dialog
+			onOpenChange={(open) => {
+				if (!open) {
+					setConnected(false);
+					setRoomData(null);
+					setMessages([]);
+					setMutedMembers([]);
+					socket.disconnect();
+					navigate("/home");
+				}
+			}}
+		>
+			<DialogTrigger asChild>
+				<Button
+					ref={kickDialogRef}
+					variant="outline"
+					className="hidden"
+				></Button>
+			</DialogTrigger>
+			<DialogContent className="sm:max-w-[425px]">
+				<Label className="font-semibold text-lg">
+					You have been kicked out of the room
+				</Label>
+			</DialogContent>
+		</Dialog>
+	);
+};

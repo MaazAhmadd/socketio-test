@@ -1,9 +1,13 @@
+import { Icons } from "@/components/common/icons";
+import MemberIcon from "@/components/common/member-icon";
+import { Spinner } from "@/components/common/spinner";
 import {
 	Accordion,
 	AccordionContent,
 	AccordionItem,
 	AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import {
 	useAcceptFriendRequest,
 	useCancelFriendRequest,
@@ -13,10 +17,6 @@ import {
 	useRemoveFriend,
 	useSendFriendRequest,
 } from "@/hooks/user-hooks";
-import { Icons } from "@/components/common/icons";
-import { MemberPfpIcon } from "./room-card";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/common/spinner";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { CurrentUser } from "server/src/types";
@@ -111,22 +111,12 @@ const Friend = ({
 	if (!targetUser) return;
 	return (
 		<div className=" relative flex w-[120px] flex-col justify-center gap-1 rounded border border-muted bg-muted/50 p-2 text-center transition-all duration-150 hover:border-muted-foreground/40">
-			<MemberPfpIcon
-				// isFriend={currentUser?.friends.includes(targetUser._id)}
-				_id={targetUser._id}
-				// pfp={targetUser.pfp}
-				className="mx-auto size-[60px] md:size-[75px]"
-			/>
-			<p
-				className="text-primary"
-				style={{
-					overflowWrap: "break-word",
-				}}
-			>
+			<MemberIcon _id={targetUser._id} size={65} className="mx-auto" />
+			<p className="text-primary" style={{ overflowWrap: "break-word" }}>
 				{targetUser.name || "name"}
 			</p>
 			<p
-				className="text-sm text-muted-foreground"
+				className="text-muted-foreground text-sm"
 				style={{
 					overflowWrap: "break-word",
 				}}
@@ -169,22 +159,12 @@ const FriendRequest = ({
 	if (!targetUser) return;
 	return (
 		<div className="group/friend relative flex w-[120px] flex-col justify-center gap-1 rounded border border-muted bg-muted/50 p-2 text-center transition-all duration-150 hover:border-muted-foreground/40">
-			<MemberPfpIcon
-				// isFriend={currentUser?.friends.includes(targetUser._id)}
-				_id={targetUser._id}
-				// pfp={targetUser.pfp}
-				className="mx-auto size-[60px] md:size-[75px]"
-			/>
-			<p
-				className="text-primary"
-				style={{
-					overflowWrap: "break-word",
-				}}
-			>
+			<MemberIcon _id={targetUser._id} size={65} className="mx-auto" />
+			<p className="text-primary" style={{ overflowWrap: "break-word" }}>
 				{targetUser?.name || "name"}
 			</p>
 			<p
-				className="text-sm text-muted-foreground"
+				className="text-muted-foreground text-sm"
 				style={{
 					overflowWrap: "break-word",
 				}}
@@ -248,23 +228,13 @@ const Recent = ({
 	return (
 		<div className=" relative flex w-[120px] flex-col justify-center gap-1 rounded border border-muted bg-muted/50 p-2 text-center transition-all duration-150 hover:border-muted-foreground/40">
 			{targetUser && (
-				<MemberPfpIcon
-					// isFriend={currentUser?.friends.includes(targetUser._id) || false}
-					_id={targetUser._id}
-					// pfp={targetUser.pfp}
-					className="mx-auto size-[60px] md:size-[75px]"
-				/>
+				<MemberIcon _id={targetUser._id} size={65} className="mx-auto" />
 			)}
-			<p
-				className="text-primary"
-				style={{
-					overflowWrap: "break-word",
-				}}
-			>
+			<p className="text-primary" style={{ overflowWrap: "break-word" }}>
 				{targetUser.name || "name"}
 			</p>
 			<p
-				className="text-sm text-muted-foreground"
+				className="text-muted-foreground text-sm"
 				style={{
 					overflowWrap: "break-word",
 				}}

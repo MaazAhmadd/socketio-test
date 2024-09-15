@@ -1,9 +1,10 @@
-import { cn, getHexColorFromString } from "@/lib/utils";
-import { Room } from "server/src/types";
-import React from "react";
-import { ChevronRightIcon } from "@radix-ui/react-icons";
-import { useGetCurrentUser, useGetNormalUser } from "@/hooks/user-hooks";
+import MemberIcon from "@/components/common/member-icon";
+import { useGetCurrentUser } from "@/hooks/user-hooks";
+import { cn } from "@/lib/utils";
 import { trimString } from "@/pages/home";
+import { ChevronRightIcon } from "@radix-ui/react-icons";
+import React from "react";
+import { Room } from "server/src/types";
 interface RoomCardProps {
 	room: Room;
 	className?: string;
@@ -52,9 +53,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
 						<div className="no-scrollbar flex gap-2 overflow-x-scroll">
 							{/* <div className="flex gap-2 overflow-x-scroll"> */}
 							{activeMembersList?.map((m) => {
-								return (
-									<MemberPfpIcon key={m} _id={m} className="size-[42px]" />
-								);
+								return <MemberIcon key={m} _id={m} />;
 							})}
 						</div>
 						{activeMembersList.length > 4 && (
@@ -69,44 +68,4 @@ const RoomCard: React.FC<RoomCardProps> = ({
 	);
 };
 
-export const MemberPfpIcon = ({
-	_id,
-	className,
-}: {
-	_id: string;
-	className?: string;
-}) => {
-	const randomColor = getHexColorFromString(_id);
-	const { data: user } = useGetNormalUser(_id);
-	const { data: currentUser } = useGetCurrentUser();
-	const isFriend =
-		currentUser?._id === _id || currentUser?.friends.includes(_id);
-	return (
-		user &&
-		(user.pfp ? (
-			<img
-				src={user.pfp}
-				alt=""
-				className={cn(
-					"size-[42px] rounded-full border border-muted object-cover p-[2px]",
-					isFriend ? "border-primary" : "", // if friend
-					className,
-				)}
-			/>
-		) : (
-			<div
-				key={_id}
-				style={{
-					backgroundImage: `linear-gradient(to bottom, ${randomColor} 0%, ${randomColor} 100%), linear-gradient(to bottom, hsl(var(--muted)) 0%, hsl(var(--muted)) 100%)`,
-					backgroundClip: "content-box, padding-box",
-				}}
-				className={cn(
-					"size-[42px] rounded-full border border-muted p-[2px]",
-					isFriend ? "border-primary" : "", // if friend
-					className,
-				)}
-			></div>
-		))
-	);
-};
 export default RoomCard;

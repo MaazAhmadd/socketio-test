@@ -1,41 +1,50 @@
 import axios from "axios";
 import express from "express";
-import { logger, makeRoute } from "../config";
 import mongooseModels, { YtVideoType } from "../mongoose/models";
 import { authUser } from "../middlewares";
+import { asyncWrapper } from "./asyncWrapper";
+import { logger } from "../logger";
 
 const YtVideo = mongooseModels.YtVideo;
 const router = express.Router();
 
-router.get("/ytservice", authUser, async function (req, res) {
-	const videoInfo = await ytInfoService(req.query?.url as string);
-	if (videoInfo) {
-		return res.send(videoInfo);
-	}
-	res.status(404).send("video not found");
-});
-
-router.get("/ytservice/search", authUser, async function (req, res) {
-	try {
-		const response = await searchVideos(req.query?.q as string);
-		if (response) {
-			return res.send(response);
+router.get(
+	"/ytservice",
+	authUser,
+	asyncWrapper(async function (req, res) {
+		const videoInfo = await ytInfoService(req.query?.url as string);
+		if (videoInfo) {
+			return res.send(videoInfo);
 		}
-		return res.status(404).send("videos not found");
-	} catch (error: any) {
-		res.status(500).json({
-			errorMessage: "An error occurred on the server. [post - /ytservice]",
-			error: error.message,
-		});
-	}
-});
+		res.status(404).send("video not found");
+	}),
+);
+
+router.get(
+	"/ytservice/search",
+	authUser,
+	asyncWrapper(async function (req, res) {
+		try {
+			const response = await searchVideos(req.query?.q as string);
+			if (response) {
+				return res.send(response);
+			}
+			return res.status(404).send("videos not found");
+		} catch (error: any) {
+			res.status(500).send({
+				errorMessage: "An error occurred on the server. [post - /ytservice]",
+				error: error.message,
+			});
+		}
+	}),
+);
 
 // makeRoute(
 //   "get",
 //   "/ytservice/test",
 //   [],
 //   router,
-//   async function (req, res) {
+//   asyncWrapper(async function (req, res) {
 //     const randomytid = Array.from({ length: 10 }).map((m) =>
 //       Math.random().toString(36).slice(2),
 //     );
@@ -56,9 +65,9 @@ router.get("/ytservice/search", authUser, async function (req, res) {
 
 //       res
 //         .status(201)
-//         .json({ message: "10 items added", ids: itemtoadd.map((m) => m.ytId) });
+//         .send({ message: "10 items added", ids: itemtoadd.map((m) => m.ytId) });
 //     } catch (error: any) {
-//       res.status(500).json({
+//       res.status(500).send({
 //         errorMessage: "An error occurred on the server. [post - /ytservice]",
 //         error: error.message,
 //       });
@@ -156,10 +165,8 @@ async function getVideoInfo(videoId: string): Promise<YtVideoType | null> {
 			updatedAt: new Date(),
 		};
 	} catch (error: any) {
-		logger(
-			"getVideoInfo",
-			"youtube data api info fetching error: ",
-			error.data,
+		logger.info(
+			`getVideoInfo youtube data api, info fetching error: ${error.data}`,
 		);
 
 		return null;

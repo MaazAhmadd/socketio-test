@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { EntityId } from "redis-om";
 import { Server, Socket } from "socket.io";
-import { logger } from "./config";
+
 import mongooseModels from "./mongoose/models";
 import redisSchemas from "./redis-om/schemas";
 import { ytInfoService } from "./routers/ytRouter";
@@ -9,9 +9,11 @@ import { getCountryFromIP } from "./services/geoLocationService";
 import {
 	ClientToServerEvents,
 	InterServerEvents,
+	Message,
 	Room,
 	ServerToClientEvents,
 } from "./types";
+import { logger } from "./logger";
 
 // const memberRepository = redisSchemas.member;
 const roomRepository = redisSchemas.room;
@@ -34,8 +36,10 @@ export default function socketServer(io: CustomIO) {
 	io.use(async (socket: CustomSocket, next) => {
 		try {
 			const token = socket.handshake?.query?.token;
+			logger.info(`socket-middleware, token: ${token}`);
+
 			if (typeof token !== "string" || !token) {
-				logger("auth-middleware", "no token provided");
+				logger.info("socket-middleware, no token provided");
 				return next(new Error("Authentication error no token provided"));
 			}
 			const decoded = jwt.verify(token, process.env.JWT_PRIVATE_KEY || "") as {
@@ -43,9 +47,9 @@ export default function socketServer(io: CustomIO) {
 			};
 			if (decoded) {
 				const ipAddress = socket.handshake.address;
-				// logger("auth-middleware", "ip: ", ipAddress);
+				// logger.info("socket-middleware", "ip: ", ipAddress);
 				const countryISO = await getCountryFromIP(ipAddress);
-				// logger("auth-middleware", "countryISO: ", countryISO);
+				// logger.info("socket-middleware", "countryISO: ", countryISO);
 
 				const user = await User.findById(decoded._id);
 				if (user) {
@@ -60,27 +64,30 @@ export default function socketServer(io: CustomIO) {
 
 				next();
 			} else {
-				logger("auth-middleware", "invalid token...");
+				logger.info("socket-middleware, invalid token...");
 				next(new Error("Authentication error invalid token"));
 			}
 		} catch (error) {
-			logger("auth-middleware", "error: ", error);
+			logger.info(`socket-middleware, error: ${error}`);
 			next(new Error("Authentication error in middleware: " + error));
 		}
 	});
 
 	io.on("connection", (socket: CustomSocket) => {
-		socket.on("joinRoom", async ({ roomId }) => {
+		socket.on("joinRoom", async (roomId) => {
 			if (!roomId) {
-				logger("joinRoom", "roomId not provided");
+				logger.info("joinRoom, roomId not provided");
 				socket.emit("stateError", "roomId not provided");
 				return;
 			}
 			socket.roomId = roomId;
 			await joinRoom(io, socket, roomId);
 		});
-		socket.on("giveLeader", async ({ targetMember, roomId }) => {
-			socket.roomId = roomId;
+		socket.on("giveLeader", async (targetMember) => {
+			if (!socket?.roomId) {
+				socket.emit("stateError", "roomId not found on socket");
+				return;
+			}
 			await giveLeader(io, socket, targetMember);
 		});
 		socket.on("sendMessage", (msg) => {
@@ -97,13 +104,19 @@ export default function socketServer(io: CustomIO) {
 			io.in(socket?.roomId).emit("message", msgData);
 		});
 		socket.on("mic", async (micstr) => {
-			// micstr = "targetmember,roomid,reqtype"
-			const [targetMember, roomId, reqtype] = micstr.split(",");
-			socket.roomId = roomId;
+			if (!socket?.roomId) {
+				socket.emit("stateError", "roomId not found on socket");
+				return;
+			}
+			// micstr = "targetmember,reqtype"
+			const [targetMember, reqtype] = micstr.split(",");
 			await enableDisableMic(io, socket, targetMember, reqtype);
 		});
-		socket.on("kickMember", async ({ targetMember, roomId }) => {
-			socket.roomId = roomId;
+		socket.on("kickMember", async (targetMember) => {
+			if (!socket?.roomId) {
+				socket.emit("stateError", "roomId not found on socket");
+				return;
+			}
 			await kickMember(io, socket, targetMember);
 		});
 		socket.on("leaveRoom", async () => {
@@ -116,7 +129,7 @@ export default function socketServer(io: CustomIO) {
 }
 
 export async function makeRoom(userId: string, url: string) {
-	// logger("makeRoom", "url: ", url);
+	// logger.info("makeRoom", "url: ", url);
 
 	const videoInfo = await ytInfoService(url);
 	if (!videoInfo) {
@@ -153,11 +166,15 @@ export async function joinRoom(
 	roomId: string,
 ): Promise<void> {
 	try {
-		logger("joinRoom", "roomId: ", roomId);
+		logger.info(`joinRoom roomId: ${roomId}`);
 		const room = await roomRepository.fetch(roomId);
-		// logger("joinRoom", "room: ", room);
-		if (!room.activeMembersList) {
+		// logger.info("joinRoom", "room: ", room);
+		if (!room || !room.activeMembersList) {
 			socket.emit("stateError", "Room not found");
+			return;
+		}
+		if (room.kicked.includes(socket.user?._id!)) {
+			socket.emit("stateError", "You have been kicked from this room");
 			return;
 		}
 		room.countries.push(socket.user?.country!);
@@ -169,9 +186,7 @@ export async function joinRoom(
 			room.activeMembersCount = room.activeMembersList?.length;
 			sortActiveMembers(room.membersJoinedList!, room?.activeMembersList);
 			await roomRepository.save(room);
-			const { activeMembersMics } = splitMembersAndMicsArray(room);
-			room.activeMembersList.push(activeMembersMics.join("")); // last item mics permission string
-			io.in(roomId).emit("activeMemberListUpdate", room.activeMembersList);
+			sendActiveMemberListUpdate(io, room, roomId);
 			socket.join(roomId);
 			io.in(roomId).emit("message", {
 				msg: "has joined",
@@ -181,7 +196,6 @@ export async function joinRoom(
 			});
 			room.membersJoinedList = [];
 			socket.emit("roomDesc", room);
-			socket.roomId = roomId;
 		} else {
 			room.membersJoinedList?.push(
 				socket.user!._id + (room.roomMic ? ",1" : ",0"),
@@ -191,9 +205,7 @@ export async function joinRoom(
 			room.activeMembersCount = room.activeMembersList?.length;
 			sortActiveMembers(room?.membersJoinedList!, room?.activeMembersList!);
 			await roomRepository.save(room);
-			const { activeMembersMics } = splitMembersAndMicsArray(room);
-			room.activeMembersList.push(activeMembersMics.join("")); // last item mics permission string
-			io.in(roomId).emit("activeMemberListUpdate", room.activeMembersList);
+			sendActiveMemberListUpdate(io, room, roomId);
 			socket.join(roomId);
 			io.in(roomId).emit("message", {
 				msg: "has joined",
@@ -203,10 +215,9 @@ export async function joinRoom(
 			});
 			room.membersJoinedList = [];
 			socket.emit("roomDesc", room);
-			socket.roomId = roomId;
 		}
 	} catch (error) {
-		logger("joinRoom", "error while joining room", error);
+		logger.info(`joinRoom error while joining room ${error}`);
 		socket.emit("stateError", "couldn't join room");
 	}
 }
@@ -239,12 +250,7 @@ export async function makeMemberLeave(
 		}
 	});
 	await roomRepository.save(room);
-
-	room.activeMembersList.push(
-		splitMembersAndMicsArray(room).activeMembersMics.join(""),
-	);
-
-	io.in(socket.roomId).emit("activeMemberListUpdate", room.activeMembersList);
+	sendActiveMemberListUpdate(io, room, socket.roomId);
 	io.in(socket.roomId).emit("message", {
 		msg: "has left",
 		sender: socket.user?._id!,
@@ -309,7 +315,7 @@ export async function kickMember(
 	targetMemberMongoId: string,
 ) {
 	if (!socket.roomId) {
-		return socket.emit("stateError", "No roomId found");
+		return socket.emit("stateError", "roomId not found on socket");
 	}
 	const room = await roomRepository.fetch(socket.roomId);
 	if (!room) {
@@ -326,18 +332,22 @@ export async function kickMember(
 	if (currentLeader !== socket.user?._id) {
 		return socket.emit("stateError", "You are not the leader");
 	}
-	executeKickMember(
-		room.membersJoinedList!,
-		currentLeader,
-		targetMemberMongoId,
-	);
+	if (room.kicked.includes(targetMemberMongoId)) {
+		return socket.emit("stateError", "Member already kicked");
+	}
+	executeKickMember(room, targetMemberMongoId);
 	sortActiveMembers(room.membersJoinedList!, room.activeMembersList!);
 	await roomRepository.save(room);
-	room.activeMembersList?.push(
-		splitMembersAndMicsArray(room).activeMembersMics.join(""),
-	);
-
-	io.in(socket.roomId).emit("activeMemberListUpdate", room.activeMembersList!);
+	const targetUser = await User.findById(targetMemberMongoId);
+	io.to(targetUser?.socketId!).emit("onKicked", "You have been kicked");
+	sendActiveMemberListUpdate(io, room, socket.roomId);
+	const message: Message = {
+		msg: `${targetUser?.name || ""} (@${targetUser?.handle}) has been kicked 🦶`,
+		sender: "", // socket.user?._id!,
+		time: Date.now(),
+		system: true,
+	};
+	io.in(socket.roomId).emit("message", message);
 }
 
 export async function enableDisableMic(
@@ -382,11 +392,7 @@ export async function enableDisableMic(
 	const targetUser = await User.findById(targetMember);
 
 	await roomRepository.save(room);
-	room.activeMembersList.push(
-		splitMembersAndMicsArray(room).activeMembersMics.join(""),
-	);
-
-	io.in(socket.roomId).emit("activeMemberListUpdate", room.activeMembersList);
+	sendActiveMemberListUpdate(io, room, socket.roomId);
 	if (targetUser?.socketId) {
 		io.to(targetUser.socketId).emit("message", {
 			msg: reqtype == "0" ? "your mic disabled" : "your mic enabled",
@@ -428,10 +434,10 @@ export async function enableDisableMic(
 //       },
 //     },
 //   });
-//   logger("deleteInactiveRooms", "found inactive rooms: ", rooms.length);
+//   logger.info("deleteInactiveRooms", "found inactive rooms: ", rooms.length);
 
 //   for (const room of rooms) {
-//     logger("deleteInactiveRooms", "deleting inactive room: ", room.id);
+//     logger.info("deleteInactiveRooms", "deleting inactive room: ", room.id);
 //     await prisma.room.delete({
 //       where: {
 //         id: room.id,
@@ -441,7 +447,7 @@ export async function enableDisableMic(
 // };
 
 const initializeSocketServer = async (io: CustomIO) => {
-	logger("initializeSocketServer", "initializing socket server...");
+	logger.info("initializeSocketServer, initializing socket server...");
 	io.disconnectSockets();
 };
 
@@ -467,23 +473,6 @@ export function convertMembersArrayToObjects(
 		};
 	});
 }
-
-// export function splitMembersAndMicsArray(input: string[]): {
-// 	mongoIDs: string[];
-// 	mics: string[];
-// } {
-// 	const result = {
-// 		mongoIDs: [] as string[],
-// 		mics: [] as string[],
-// 	};
-// 	if (!input) return result;
-// 	input.map((item) => {
-// 		const [mongoID, mic] = item.split(",");
-// 		result.mongoIDs.push(mongoID);
-// 		result.mics.push(mic);
-// 	});
-// 	return result;
-// }
 
 export function splitMembersAndMicsArray(input: Room) {
 	const { membersJoinedList, activeMembersList } = input;
@@ -523,6 +512,13 @@ export function splitMembersAndMicsArray(input: Room) {
 	};
 }
 
+function sendActiveMemberListUpdate(io: CustomIO, room: Room, roomId: string) {
+	room.activeMembersList?.push(
+		splitMembersAndMicsArray(room).activeMembersMics.join(""),
+	);
+	io.in(roomId).emit("activeMemberListUpdate", room.activeMembersList!);
+}
+
 function transferLeadership(
 	membersJoinedList: string[],
 	leaderId: string,
@@ -559,38 +555,17 @@ function transferLeadership(
 	return membersJoinedList;
 }
 
-function executeKickMember(
-	membersJoinedList: string[],
-	leaderId: string,
-	targetMemberId: string,
-): string[] {
-	// Helper function to split the string into ID and mic status
-	function parseMember(member: string) {
-		const [id, micStatus] = member.split(",");
-		return { id, micStatus };
-	}
-
-	// Find the leader and targetMember's full data (ID + micStatus)
-	const leaderIndex = membersJoinedList.findIndex(
-		(member) => parseMember(member).id === leaderId,
+function executeKickMember(room: Room, targetMemberId: string) {
+	room.kicked.push(targetMemberId);
+	room.membersJoinedList = room.membersJoinedList?.filter(
+		(member) => member.split(",")[0] !== targetMemberId,
 	);
-	const targetIndex = membersJoinedList.findIndex(
-		(member) => parseMember(member).id === targetMemberId,
+	room.activeMembersList = room.activeMembersList?.filter(
+		(member) => member !== targetMemberId,
 	);
-
-	// Ensure the leader is at a lower index than the targetMember
-	if (leaderIndex < 0 || targetIndex < 0 || leaderIndex >= targetIndex) {
-		throw new Error("Invalid indices or items");
-	}
-
-	// Get the target member's details (ID and mic status)
-	const targetMember = membersJoinedList[targetIndex];
-
-	// Remove the targetMember from the higher index
-	membersJoinedList.splice(targetIndex, 1);
-
-	// Insert the targetMember at the position of the leader
-	membersJoinedList.splice(leaderIndex, 0, targetMember);
-
-	return membersJoinedList;
+	room.invitedMembersList = room.invitedMembersList?.filter(
+		(member) => member !== targetMemberId,
+	);
+	room.activeMembersCount = room.activeMembersList?.length || 0;
+	return room;
 }

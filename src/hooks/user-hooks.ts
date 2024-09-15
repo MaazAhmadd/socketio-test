@@ -124,6 +124,7 @@ export const useGetNormalUser = (idOrHandle: string) => {
 	return useQuery<NormalUser>({
 		queryKey: ["user", idOrHandle],
 		queryFn: getUser,
+		staleTime: 1000 * 60 * 60, // 1 hour
 	});
 };
 export const useGetCurrentUser = () => {
@@ -134,8 +135,8 @@ export const useGetCurrentUser = () => {
 	return useQuery<CurrentUser>({
 		queryKey: ["currentUser"],
 		queryFn: getCurrentUser,
-		gcTime: 0,
-		staleTime: 0,
+		staleTime: 1000 * 60 * 60, // 1 hour
+		// gcTime: 0,
 	});
 };
 

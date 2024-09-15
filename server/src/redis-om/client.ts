@@ -1,28 +1,33 @@
 import { createClient } from "redis";
-import { logger, redis_url } from "../config";
-  
+import { redis_url } from "../config";
+import { logger } from "../logger";
+
 const redis = createClient({
-  url: redis_url,
-  socket: {
-    reconnectStrategy: (retries) => {
-      return Math.min(retries * 100, 3000);
-    },
-  },
+	url: redis_url,
+	socket: {
+		reconnectStrategy: (retries) => {
+			return Math.min(retries * 100, 3000);
+		},
+	},
 });
 redis.on("connect", () => {
-  logger("connectDB", "Redis Connected...",redis_url.includes("localhost") ? "local" : "remote");
+	logger.info(
+		"Redis Connected... " + redis_url.includes("localhost")
+			? "local"
+			: "remote",
+	);
 });
 
 redis.on("reconnecting", () => {
-  logger("connectDB", "Reconnecting to Redis...");
+	logger.info("Reconnecting to Redis...");
 });
 
 redis.on("error", (err) => {
-  logger("connectDB", "Redis connection error:", err);
+	logger.info("Redis connection error:", err);
 });
 
 redis.on("end", () => {
-  logger("connectDB", "Disconnected from Redis");
+	logger.info("Redis Disconnected");
 });
 
 export default redis;

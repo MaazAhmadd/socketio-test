@@ -1,3 +1,4 @@
+import MemberIcon from "@/components/common/member-icon";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -9,18 +10,21 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useGetCurrentUser, useGetNormalUser } from "@/hooks/user-hooks";
 import { cn } from "@/lib/utils";
-import { MemberPfpIcon } from "@/pages/home/room-card";
 import { socket } from "@/socket";
 import { useRoomStore } from "@/store";
 import { PaperPlaneIcon } from "@radix-ui/react-icons";
 import React, { useEffect } from "react";
 import { Message } from "server/src/types";
+import DialogWrapperPfpIcon from "./dialog-wrapper-pfp-icon";
 
 export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 	const scrollAreaRef = React.useRef<HTMLDivElement | null>(null);
 	const { data: user } = useGetCurrentUser();
 	const [input, setInput] = React.useState("");
-	const { messages } = useRoomStore((s) => ({ messages: s.messages }));
+	const { messages, activeMembersList } = useRoomStore((s) => ({
+		messages: s.messages,
+		activeMembersList: s.roomData?.activeMembersList,
+	}));
 
 	useEffect(() => {
 		if (scrollAreaRef.current) {
@@ -39,7 +43,7 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 
 	const renderMessage = (message: Message, index: number) => {
 		const isSystemMsg = Boolean(message.system);
-		const _message = splitLongWords(message.msg);
+		const _message = (message.msg && splitLongWords(message.msg)) || "";
 		const isMe = message.sender === user?._id;
 		const isNewSender =
 			!messages[index - 1] || messages[index - 1].sender !== message.sender;
@@ -69,9 +73,9 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 		return (
 			<div key={message.time} className={messageClasses}>
 				{!isMe && (isSystemMsg || isNewSender) && (
-					<DropdownMenuWrapperMemberPfpIcon>
-						<MemberPfpIcon _id={message.sender} />
-					</DropdownMenuWrapperMemberPfpIcon>
+					<DialogWrapperPfpIcon _id={message.sender}>
+						<MemberIcon _id={message.sender} />
+					</DialogWrapperPfpIcon>
 				)}
 				<div className={bubbleClasses}>
 					{((!isMe && isNewSender) || isSystemMsg) && (
@@ -86,12 +90,15 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 					{isSystemMsg && _message.includes("mic") && (
 						<span className="">{_message}</span>
 					)}
+					{isSystemMsg && _message.includes("kick") && (
+						<span className="">{_message}</span>
+					)}
 					{!isSystemMsg && _message}
 				</div>
 				{isMe && (isSystemMsg || isNewSender) && (
-					<DropdownMenuWrapperMemberPfpIcon>
-						<MemberPfpIcon _id={message.sender} />
-					</DropdownMenuWrapperMemberPfpIcon>
+					<DialogWrapperPfpIcon _id={message.sender}>
+						<MemberIcon _id={message.sender} />
+					</DialogWrapperPfpIcon>
 				)}
 			</div>
 		);
