@@ -178,11 +178,13 @@ export async function joinRoom(
 			return;
 		}
 		room.countries.push(socket.user?.country!);
-		room.countries = [...new Set(room.countries)];
+		// room.countries = [...new Set(room.countries)];
+		room.countries = Array.from(new Set(room.countries));
 		const { membersJoinedMongoIds } = splitMembersAndMicsArray(room);
 		if (membersJoinedMongoIds.includes(socket.user?._id!)) {
 			room.activeMembersList?.push(socket.user?._id!);
-			room.activeMembersList = [...new Set(room.activeMembersList)];
+			// room.activeMembersList = [...new Set(room.activeMembersList)];
+			room.activeMembersList = Array.from(new Set(room.activeMembersList));
 			room.activeMembersCount = room.activeMembersList?.length;
 			sortActiveMembers(room.membersJoinedList!, room?.activeMembersList);
 			await roomRepository.save(room);
@@ -201,7 +203,8 @@ export async function joinRoom(
 				socket.user!._id + (room.roomMic ? ",1" : ",0"),
 			);
 			room.activeMembersList?.push(socket.user!._id);
-			room.activeMembersList = [...new Set(room.activeMembersList)];
+			// room.activeMembersList = [...new Set(room.activeMembersList)];
+			room.activeMembersList = Array.from(new Set(room.activeMembersList));
 			room.activeMembersCount = room.activeMembersList?.length;
 			sortActiveMembers(room?.membersJoinedList!, room?.activeMembersList!);
 			await roomRepository.save(room);
@@ -242,7 +245,8 @@ export async function makeMemberLeave(
 	room.activeMembersList = room.activeMembersList?.filter(
 		(member) => member !== socket.user?._id,
 	);
-	room.activeMembersList = [...new Set(room.activeMembersList)];
+	// room.activeMembersList = [...new Set(room.activeMembersList)];
+	room.activeMembersList = Array.from(new Set(room.activeMembersList));
 	room.activeMembersCount = room.activeMembersList?.length;
 	room.membersJoinedList?.forEach((member, index) => {
 		if (member.startsWith(room.activeMembersList![0])) {

@@ -1,7 +1,6 @@
 import winston from "winston";
 import chalk from "chalk";
 import { format } from "date-fns";
-import { NextFunction, Request, Response } from "express";
 
 const customFormat = winston.format.printf(
 	({ timestamp, level, message, meta = {} }) => {
