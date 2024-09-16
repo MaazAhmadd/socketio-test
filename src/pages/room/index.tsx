@@ -2,7 +2,7 @@ import ConnectionStatus from "@/components/common/connection-status";
 import { TextGradient } from "@/components/common/text-gradient";
 import { Button } from "@/components/ui/button";
 import { useGetRoom } from "@/hooks/room-hooks";
-import { useWindowSize } from "@/hooks/util-hooks";
+import useFullscreen, { useWindowSize } from "@/hooks/util-hooks";
 import { socket } from "@/socket";
 import { useGlobalStore, useRoomStore } from "@/store";
 import { useEffect, useRef } from "react";
@@ -228,6 +228,7 @@ const RoomButtons = ({
 	onLeaveRoom: () => void;
 	kickDialogRef: React.MutableRefObject<HTMLButtonElement | null>;
 }) => {
+	const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen();
 	return (
 		<>
 			<KickDialogBox kickDialogRef={kickDialogRef} />
@@ -236,7 +237,10 @@ const RoomButtons = ({
 					Leave
 				</Button>
 				<RoomSettingsDrawer />
-				<TextGradient className="text-2xl md:text-xl">
+				<TextGradient
+					onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+					className="cursor-pointer text-2xl md:text-xl"
+				>
 					Gather Groove
 				</TextGradient>
 				<RoomPinDialog />
