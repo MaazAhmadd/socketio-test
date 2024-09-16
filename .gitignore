@@ -31,3 +31,4 @@ server/uploads
 # Keep environment variables out of version control
 server/.env
 server/.vercel
+.vercel
