@@ -23,6 +23,8 @@ import {
 } from "react-icons/io5";
 import { IconType } from "react-icons/lib";
 import { useParams } from "react-router-dom";
+import { FriendshipButton } from "./room-members-drawer";
+import { Button } from "@/components/ui/button";
 
 const DialogWrapperPfpIcon = ({
 	children,
@@ -51,7 +53,7 @@ const DialogWrapperPfpIcon = ({
 	return (
 		<Dialog>
 			<DialogTrigger>{children}</DialogTrigger>
-			<DialogContent className="max-w-[350px] bg-background/40 md:max-w-[425px]">
+			<DialogContent className="max-w-[350px] rounded-sm bg-background/60 md:max-w-[425px]">
 				<DialogHeader className="items-center">
 					{user?.pfp ? (
 						<PhotoProvider>
@@ -74,10 +76,16 @@ const DialogWrapperPfpIcon = ({
 					)}
 				</DialogHeader>
 				<div className="flex flex-col items-center">
-					<div className="flex flex-col items-center gap-1 ">
-						<div className="text-primary text-sm">{user?.name}</div>
-						<div className="font-semibold text-primary text-sm">
-							@{user?.handle}
+					<div className="flex items-center gap-6">
+						<div className="w-14"></div>
+						<div className="flex flex-col items-center gap-1 hover:bg-background/50">
+							<div className="text-primary text-sm">{user?.name}</div>
+							<div className="font-semibold text-primary text-sm">
+								@{user?.handle}
+							</div>
+						</div>
+						<div>
+							<FriendshipButton className="mr-0" _id={_id} />
 						</div>
 					</div>
 					{currentUser?._id != _id && <Separator className="my-4 mb-2" />}
@@ -156,7 +164,7 @@ const DialogListItem: React.FC<{
 	return (
 		<div
 			onClick={onClick}
-			className="mt-2 flex cursor-pointer items-center gap-4 rounded-md border px-4 py-2 text-sm transition-all hover:border-primary/40"
+			className="mt-2 flex cursor-pointer items-center gap-4 rounded-md border px-4 py-2 text-sm transition-all hover:border-primary/40 hover:bg-background/50"
 		>
 			<div className="flex items-center gap-4">
 				<Icon className="size-5" />

@@ -380,6 +380,7 @@ export const ProfilePicPreview = ({
 	pfp?: string;
 	className?: string;
 }) => {
+	if (!pfp) return <></>;
 	const randomColor = getHexColorFromString(_id);
 
 	return pfp ? (

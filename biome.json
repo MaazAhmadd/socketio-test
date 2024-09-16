@@ -12,7 +12,8 @@
 				"noDebugger": "off",
 				"noConsoleLog": "off",
 				"noExplicitAny": "off",
-				"noDoubleEquals": "off"
+				"noDoubleEquals": "off",
+				"noArrayIndexKey": "off"
 			},
 			"complexity": {
 				"noForEach": "off",

@@ -14,10 +14,11 @@ const customFormat = winston.format.printf(
 export const logger = winston.createLogger({
 	level: "info",
 	format: customFormat,
+	// silent: process.env.NODE_ENV === "production",
 	transports: [
 		new winston.transports.Console(),
 		// Uncomment these if you want to log to files
 		// new winston.transports.File({ filename: 'error.log', level: 'error' }),
 		// new winston.transports.File({ filename: 'combined.log' }),
 	],
-}); 
+});

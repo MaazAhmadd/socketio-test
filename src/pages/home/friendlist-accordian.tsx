@@ -111,7 +111,7 @@ const Friend = ({
 	if (!targetUser) return;
 	return (
 		<div className=" relative flex w-[120px] flex-col justify-center gap-1 rounded border border-muted bg-muted/50 p-2 text-center transition-all duration-150 hover:border-muted-foreground/40">
-			<MemberIcon _id={targetUser._id} size={65} className="mx-auto" />
+			<MemberIcon _id={targetUser._id} _size="lg" className="mx-auto" />
 			<p className="text-primary" style={{ overflowWrap: "break-word" }}>
 				{targetUser.name || "name"}
 			</p>
@@ -159,7 +159,7 @@ const FriendRequest = ({
 	if (!targetUser) return;
 	return (
 		<div className="group/friend relative flex w-[120px] flex-col justify-center gap-1 rounded border border-muted bg-muted/50 p-2 text-center transition-all duration-150 hover:border-muted-foreground/40">
-			<MemberIcon _id={targetUser._id} size={65} className="mx-auto" />
+			<MemberIcon _id={targetUser._id} _size="lg" className="mx-auto" />
 			<p className="text-primary" style={{ overflowWrap: "break-word" }}>
 				{targetUser?.name || "name"}
 			</p>
@@ -228,7 +228,7 @@ const Recent = ({
 	return (
 		<div className=" relative flex w-[120px] flex-col justify-center gap-1 rounded border border-muted bg-muted/50 p-2 text-center transition-all duration-150 hover:border-muted-foreground/40">
 			{targetUser && (
-				<MemberIcon _id={targetUser._id} size={65} className="mx-auto" />
+				<MemberIcon _id={targetUser._id} _size="lg" className="mx-auto" />
 			)}
 			<p className="text-primary" style={{ overflowWrap: "break-word" }}>
 				{targetUser.name || "name"}

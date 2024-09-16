@@ -7,7 +7,6 @@ export const getCountryFromIP = async (ip: string): Promise<string> => {
 	}
 	const lookup = await maxmind.open<CountryResponse>(
 		"./geo-database/GeoLite2-Country.mmdb",
-		// "./src/services/geo-database/GeoLite2-Country.mmdb",
 	);
 
 	const result = lookup.get(ip);

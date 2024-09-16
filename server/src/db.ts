@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { mongodb_url } from "./config";
-import cachegoose from "recachegoose";
+// import cachegoose from "recachegoose";
 import redis from "./redis-om/client";
 import redisSchemas from "./redis-om/schemas";
 import { logger } from "./logger";
@@ -10,9 +10,9 @@ const roomRepository = redisSchemas.room;
 
 export const connectDB = async () => {
 	try {
-		cachegoose(mongoose, {
-			engine: "memory",
-		});
+		// cachegoose(mongoose, {
+		// 	engine: "memory",
+		// });
 		await mongoose.connect(mongodb_url);
 		logger.info(
 			`MongoDB Connected... ${mongodb_url.includes("localhost") ? "local" : "remote"}`,

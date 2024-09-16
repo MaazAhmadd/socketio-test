@@ -12,9 +12,9 @@ const redis = createClient({
 });
 redis.on("connect", () => {
 	logger.info(
-		"Redis Connected... " + redis_url.includes("localhost")
-			? "local"
-			: "remote",
+		`Redis Connected... ${
+			redis_url.includes("localhost") ? "local" : "remote"
+		}`,
 	);
 });
 

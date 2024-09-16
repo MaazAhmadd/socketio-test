@@ -49,7 +49,7 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 			!messages[index - 1] || messages[index - 1].sender !== message.sender;
 
 		const messageClasses = cn(
-			"flex w-max items-start gap-1 px-1 py-0 text-sm",
+			"flex w-max items-start gap-1 px-1 py-0 text-sm mt-2",
 			isMe ? "ml-auto" : "",
 			isSystemMsg
 				? "py-1"

@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import multer from "multer";
 import { Readable } from "node:stream";
 import { z } from "zod";
-import { clearCacheAndLog } from "../config";
+// import { clearCacheAndLog } from "../config";
 import { authUser } from "../middlewares";
 import mongooseModels from "../mongoose/models";
 import { NormalUser } from "../types";
@@ -438,13 +438,13 @@ router.post(
 );
 
 // clearCache user
-router.get(
-	"/user/clearCache",
-	asyncWrapper(async function (req, res) {
-		clearCacheAndLog("/user/clearCache", null);
-		res.status(200).send("cleared cache");
-	}),
-);
+// router.get(
+// 	"/user/clearCache",
+// 	asyncWrapper(async function (req, res) {
+// 		clearCacheAndLog("/user/clearCache", null);
+// 		res.status(200).send("cleared cache");
+// 	}),
+// );
 
 // unfriend all users
 router.get(

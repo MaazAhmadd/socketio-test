@@ -36,6 +36,12 @@ import { GoPersonAdd } from "react-icons/go";
 import { IoMicOffOutline, IoMicOutline } from "react-icons/io5";
 import DialogWrapperPfpIcon from "./dialog-wrapper-pfp-icon";
 import MemberIcon from "@/components/common/member-icon";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function RoomMembersDrawer() {
 	const scrollAreaRef = useRef<HTMLDivElement | null>(null);
@@ -84,7 +90,7 @@ export function RoomMembersDrawer() {
 
 const RoomMember = ({ _id }: { _id: string }) => {
 	const { data: currentUser } = useGetCurrentUser();
-	const { data: m } = useGetNormalUser(_id);
+	const { data: user } = useGetNormalUser(_id);
 	const { activeMembersList, mics } = useRoomStore((s) => ({
 		activeMembersList: s.roomData?.activeMembersList,
 		mics: s.mics,
@@ -92,18 +98,15 @@ const RoomMember = ({ _id }: { _id: string }) => {
 
 	return (
 		currentUser &&
-		m && (
-			<div className="relative mb-6 flex items-center justify-between gap-4">
-				{activeMembersList && activeMembersList[0] === _id && (
-					<CgCrown className="absolute top-[-18px] left-[2px] size-6 rotate-[-18deg]" />
-				)}
+		user && (
+			<div className="mb-6 flex items-center justify-between gap-4">
 				<div className="flex items-center gap-4">
-					<DialogWrapperPfpIcon _id={m._id}>
-						<MemberIcon _id={m._id} size={52} sizeDiff={4} />
+					<DialogWrapperPfpIcon _id={_id}>
+						<MemberIcon _id={_id} _size="md" />
 					</DialogWrapperPfpIcon>
 
 					<div className="flex flex-col items-start">
-						<div className="text-gray-200">{m.name || "name"}</div>
+						<div className="text-gray-200">{user.name || "name"}</div>
 						<div className="mb-2 flex items-center text-gray-400">
 							{activeMembersList?.length &&
 							mics.length &&
@@ -112,11 +115,11 @@ const RoomMember = ({ _id }: { _id: string }) => {
 							) : (
 								<IoMicOffOutline className="size-5" />
 							)}
-							<span className="ml-1 text-gray-400">@{m.handle}</span>
+							<span className="ml-1 text-gray-400">@{user.handle}</span>
 						</div>
 					</div>
 				</div>
-				{currentUser._id === m._id && (
+				{currentUser._id === user._id && (
 					<Button
 						size={"sm"}
 						variant={"destructive"}
@@ -130,36 +133,30 @@ const RoomMember = ({ _id }: { _id: string }) => {
 					</Button>
 				)}
 				<div>
-					<FriendshipButton _id={m._id} />
+					<FriendshipButton _id={user._id} />
 				</div>
 			</div>
 		)
 	);
 };
 
-const FriendshipButton = ({
+export const FriendshipButton = ({
 	_id,
 	className,
 }: {
 	_id: string;
 	className?: string;
 }) => {
-	className = cn("mr-6 size-6 cursor-pointer", className);
-	// const [status, setStatus] = useState<
-	// 	"stranger" | "friend" | "reqSend" | "reqRec"
-	// >("stranger");
-	// console.log("[FriendshipButton] status", status);
-
 	const { data: currentUser, isLoading: currentUserLoading } =
 		useGetCurrentUser();
-	// console.log("[FriendshipButton] currentUser", currentUser);
 
-	const { mutate: sendReq, isPending: sendReqPending } = useSendFriendRequest();
-	const { mutate: cancelReq, isPending: cancelReqPending } =
+	const { mutate: _sendReq, isPending: sendReqPending } =
+		useSendFriendRequest();
+	const { mutate: _cancelReq, isPending: cancelReqPending } =
 		useCancelFriendRequest();
-	const { mutate: acceptReq, isPending: acceptReqPending } =
+	const { mutate: _acceptReq, isPending: acceptReqPending } =
 		useAcceptFriendRequest();
-	const { mutate: rejectReq, isPending: rejectReqPending } =
+	const { mutate: _rejectReq, isPending: rejectReqPending } =
 		useRejectFriendRequest();
 
 	const loading =
@@ -180,49 +177,98 @@ const FriendshipButton = ({
 	) {
 		return <></>;
 	}
+	const commandMap = {
+		cancelReq: { onClick: () => _cancelReq(_id), lable: "Cancel" },
+		sendReq: { onClick: () => _sendReq(_id), lable: "Send" },
+		acceptReq: { onClick: () => _acceptReq(_id), lable: "Accept" },
+		rejectReq: { onClick: () => _rejectReq(_id), lable: "Reject" },
+	};
 	if (currentUser?.friendReqsSent.includes(_id)) {
 		return (
-			<DropdownMenu>
-				<DropdownMenuTrigger>
-					<FaRegHourglass className={cn(className)} title="cancel request" />
-				</DropdownMenuTrigger>
-				<DropdownMenuContent>
-					<DropdownMenuItem onClick={() => cancelReq(_id)}>
-						Cancel
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
+			<FriendshipDropdownWrapper
+				tooltipLabel="cancel the sent friend request?"
+				renderData={[commandMap.cancelReq]}
+				className={cn(className)}
+			>
+				<FaRegHourglass className="size-6 cursor-pointer" />
+			</FriendshipDropdownWrapper>
 		);
 	}
+
 	if (currentUser?.friendReqsReceived.includes(_id)) {
 		return (
-			<DropdownMenu>
-				<DropdownMenuTrigger>
-					<BsThreeDots className={cn(className)} title="accept request" />
-				</DropdownMenuTrigger>
-				<DropdownMenuContent>
-					<DropdownMenuItem onClick={() => acceptReq(_id)}>
-						Accept
-					</DropdownMenuItem>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem onClick={() => rejectReq(_id)}>
-						Reject
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
+			<FriendshipDropdownWrapper
+				tooltipLabel="accept or reject the received friend request?"
+				renderData={[commandMap.acceptReq, commandMap.rejectReq]}
+				className={cn(className)}
+			>
+				<BsThreeDots className="size-6 cursor-pointer" />
+			</FriendshipDropdownWrapper>
 		);
 	}
 
 	return (
+		<FriendshipDropdownWrapper
+			tooltipLabel="send a friend request?"
+			renderData={[commandMap.sendReq]}
+			className={cn(className)}
+		>
+			<GoPersonAdd className="ml-1 size-6 cursor-pointer" />
+		</FriendshipDropdownWrapper>
+	);
+};
+
+const FriendshipDropdownWrapper = ({
+	children,
+	tooltipLabel,
+	renderData,
+	className,
+}: {
+	children: React.ReactNode;
+	tooltipLabel: string;
+	renderData: {
+		onClick: () => void;
+		lable: string;
+	}[];
+	className?: string;
+}) => {
+	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger>
-				<GoPersonAdd className={cn(className)} title="add friend" />
+				<TooktipWrapper label={tooltipLabel}>
+					<Button className={cn("mr-6", className)} variant={"secondary"}>
+						{children}
+					</Button>
+				</TooktipWrapper>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent>
-				<DropdownMenuItem onClick={() => sendReq(_id)}>
-					Add Friend
-				</DropdownMenuItem>
+				{renderData.map((r, i) => (
+					<>
+						<DropdownMenuItem key={i} onClick={r.onClick}>
+							{r.lable}
+						</DropdownMenuItem>
+						{renderData.length - 1 !== i && <DropdownMenuSeparator />}
+					</>
+				))}
 			</DropdownMenuContent>
 		</DropdownMenu>
+	);
+};
+
+const TooktipWrapper = ({
+	children,
+	label,
+}: { children: React.ReactNode; label: string }) => {
+	return (
+		<TooltipProvider>
+			<Tooltip delayDuration={50}>
+				<TooltipTrigger>{children}</TooltipTrigger>
+				<TooltipContent
+					className={cn("border border-muted bg-background text-primary")}
+				>
+					<p>{label}</p>
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
 	);
 };

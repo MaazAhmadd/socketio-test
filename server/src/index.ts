@@ -1,9 +1,13 @@
 import cors from "cors";
 import * as dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import { connectDB } from "./db";
+import { logger } from "./logger";
+import { allRequestLoggerMiddlerware, errorHandler } from "./middlewares";
+import mongooseModels from "./mongoose/models";
 import roomRouter from "./routers/roomRouter";
 import userRouter from "./routers/userRouter";
 import ytRouter from "./routers/ytRouter";
@@ -14,12 +18,6 @@ import {
 	RedisSchemas,
 	ServerToClientEvents,
 } from "./types";
-dotenv.config();
-// import { disableGlobalLogging, logger } from "./config";
-import expressWinston from "express-winston";
-import { logger } from "./logger";
-import { allRequestLoggerMiddlerware, errorHandler } from "./middlewares";
-import mongooseModels from "./mongoose/models";
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -57,7 +55,9 @@ connectDB().then(() => {
 	// }, 10_000);
 	// }, 86_400_000);
 
+	// if (process.env.NODE_ENV !== "production") {
 	app.use(allRequestLoggerMiddlerware);
+	// }
 
 	app.get("/api/test", (req, res) => res.send("Express Ready"));
 	app.use("/api", userRouter);
@@ -66,14 +66,9 @@ connectDB().then(() => {
 
 	app.use(errorHandler);
 
-	server.listen(port, () => {
-		logger.info(`server running at http://localhost:${port}`);
-		// if (disableGlobalLogging) {
-		// 	console.log("[production] server running at http://localhost:" + port);
-		// 	console.log("logging disabled");
-		// }
-		// logger("server", "server running at http://localhost:" + port);
-	});
+	server.listen(port, () =>
+		logger.info(`server running at http://localhost:${port}`),
+	);
 });
 
 module.exports = app;
@@ -98,9 +93,3 @@ declare module "mongoose" {
 		cache(ttl?: number, customKey?: string): this;
 	}
 }
-
-// declare module "mongoose" {
-//   export interface Query<T, DocType extends Document, THelpers = {}> {
-//     cache(ttl?: number, customKey?: string): this;
-//   }
-// }
