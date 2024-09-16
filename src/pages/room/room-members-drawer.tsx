@@ -119,7 +119,7 @@ const RoomMember = ({ _id }: { _id: string }) => {
 						</div>
 					</div>
 				</div>
-				{currentUser._id === user._id && (
+				{/* {currentUser._id === user._id && (
 					<Button
 						size={"sm"}
 						variant={"destructive"}
@@ -131,7 +131,7 @@ const RoomMember = ({ _id }: { _id: string }) => {
 					>
 						rm all frs
 					</Button>
-				)}
+				)} */}
 				<div>
 					<FriendshipButton _id={user._id} />
 				</div>
