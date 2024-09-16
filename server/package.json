@@ -5,7 +5,7 @@
 	"main": "dist/src/index.js",
 	"scripts": {
 		"dev": "npm run build:live",
-		"start": "node lib/index.js",
+		"start": "node $PWD/lib/index.js",
 		"build": "tsc -p .",
 		"build:live": "nodemon --watch './src/**/*.ts' --exec \"ts-node\" src/index.ts",
 		"prod": "npm run build && npm start"
