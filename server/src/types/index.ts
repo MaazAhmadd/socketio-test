@@ -1,5 +1,3 @@
-import { Repository } from "redis-om";
-
 interface ServerToClientEvents {
 	roomDesc: (data: Room) => void;
 	message: (data: Message) => void;
@@ -136,10 +134,6 @@ type VideoInfo = {
 
 type SupportedPlatforms = "youtube" | "netflix" | "prime";
 
-type RedisSchemas = {
-	member: Repository<Member>;
-	room: Repository<Room>;
-};
 export type {
 	ServerToClientEvents,
 	ClientToServerEvents,
@@ -155,5 +149,4 @@ export type {
 	VideoInfo,
 	SupportedPlatforms,
 	CurrentUser,
-	RedisSchemas,
 };

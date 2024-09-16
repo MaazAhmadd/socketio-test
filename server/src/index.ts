@@ -15,9 +15,10 @@ import socketServer from "./socketServer";
 import {
 	ClientToServerEvents,
 	InterServerEvents,
-	RedisSchemas,
+	
 	ServerToClientEvents,
 } from "./types";
+import { RedisSchemas } from "./redis-om/schemas";
 
 const port = process.env.PORT || 3000;
 const app = express();
