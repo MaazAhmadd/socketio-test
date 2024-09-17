@@ -5,7 +5,7 @@ const instance = axios.create({
 	baseURL:
 		process.env.NODE_ENV == "development"
 			? "http://localhost:3000/api/"
-			: "http://20.80.92.71/api/"
+			: "https://codingwebninja.site/api/"
 			// : "https://socketiotest.adaptable.app/api/",
 	// baseURL: "https://socketio-test-rzgz.onrender.com/api/",
 });
