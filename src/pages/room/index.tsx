@@ -75,7 +75,9 @@ const RoomPage = () => {
 
 	useEffect(() => {
 		console.log("[Room] once effect");
-		socket.io.opts.query = { token: localStorage.getItem("auth_token") };
+		const token = localStorage.getItem("auth_token");
+		console.log("[Room] token: ", token);
+		socket.io.opts.query = { token };
 
 		socket.connect();
 

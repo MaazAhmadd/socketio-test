@@ -46,10 +46,12 @@ export default function socketServer(io: CustomIO) {
 				_id: string;
 			};
 			if (decoded) {
-				const ipAddress = socket.handshake.address;
-				// logger.info("socket-middleware", "ip: ", ipAddress);
+				const forwarded = socket.handshake.headers["x-forwarded-for"] as string;
+				const ipAddress = forwarded
+					? forwarded.split(",")[0]
+					: socket.handshake.address;
+
 				const countryISO = await getCountryFromIP(ipAddress);
-				// logger.info("socket-middleware", "countryISO: ", countryISO);
 
 				const user = await User.findById(decoded._id);
 				if (user) {
