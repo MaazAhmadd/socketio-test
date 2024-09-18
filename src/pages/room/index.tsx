@@ -36,6 +36,7 @@ const RoomPage = () => {
 	// console.log("[Room] room: ", room, isRoomLoading);
 
 	const { width } = useWindowSize();
+	const { exitFullscreen } = useFullscreen();
 
 	const { setConnected } = useGlobalStore((s) => ({
 		setConnected: s.setConnected,
@@ -152,6 +153,7 @@ const RoomPage = () => {
 			socket.off("connect_error", onConnectError);
 			socket.off("message", onMessage);
 			socket.off("onKicked", onGotKicked);
+			exitFullscreen();
 		};
 	}, []);
 
