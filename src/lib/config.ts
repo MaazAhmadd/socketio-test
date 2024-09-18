@@ -1,7 +1,7 @@
 export const SOCKET_URL =
 	process.env.NODE_ENV == "development"
 		? "http://localhost:3000/"
-		: "https://codingwebninja.site/api/";
+		: "https://codingwebninja.site/";
 // : "https://socketiotest.adaptable.app/";
 
 export const API_URL =
