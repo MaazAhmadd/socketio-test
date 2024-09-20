@@ -37,7 +37,7 @@ const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 				"mx-auto mt-2 max-w-[95vw] cursor-pointer overflow-hidden rounded-xl border border-background bg-background/50 hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground",
 				className,
 			)}
-			// onClick={onClick}
+			onClick={onClick}
 		>
 			<div className="flex h-[80px] justify-start gap-4 sm:h-[100px]">
 				{room.v_thumbnailUrl ? (
