@@ -51,7 +51,7 @@ const HomePage = () => {
 			<div className="h-[100vh] bg-primary-foreground md:container md:py-12">
 				<div className="flex h-[100vh] flex-col items-center justify-between md:flex-row">
 					<LeftText />
-					<div className=" w-[100vw] max-w-[700px] pt-2 md:w-[80vw] md:px-4 md:pt-0">
+					<div className=" w-[100vw] pt-2 md:w-[80vw] md:px-4 md:pt-0 lg:max-w-[45vw]">
 						<div className="mb-4 px-5">
 							<Label className="sr-only" htmlFor="searchrooms">
 								Search Rooms
@@ -65,7 +65,7 @@ const HomePage = () => {
 								autoComplete="off"
 							/>
 						</div>
-						<div className="flex justify-between md:gap-24">
+						<div className="flex justify-between">
 							<div className="flex gap-1">
 								<TabButton
 									setBg={showRoomTab == "public" && "bg-muted"}
@@ -116,7 +116,7 @@ const TabButton = ({ className, setBg, ...props }: any) => {
 	return (
 		<button
 			className={cn(
-				"scroll-m-20 rounded-t-lg border-2 border-muted bg-primary-foreground px-2 py-1 font-extrabold text-md text-muted-foreground tracking-tight md:px-4 lg:text-xl ",
+				"scroll-m-20 whitespace-nowrap rounded-t-lg border-2 border-muted bg-primary-foreground px-2 py-1 font-extrabold text-muted-foreground text-sm tracking-tight md:px-4 md:text-base lg:text-lg",
 				setBg,
 				className,
 			)}
@@ -131,7 +131,7 @@ const LeftText = () => {
 			<TextGradient className="text-xl sm:text-3xl md:text-6xl">
 				Gather Groove{" "}
 			</TextGradient>{" "}
-			<h2 className="mx-4 mb-2 scroll-m-20 font-semibold text-md text-primary tracking-tight transition-colors first:mt-0 sm:text-xl md:mt-1 md:text-pretty md:text-3xl">
+			<h2 className="mx-0 mb-2 scroll-m-20 text-muted-foreground text-sm tracking-tight transition-colors first:mt-0 sm:mx-2 sm:text-lg md:mt-1 md:text-pretty lg:text-3xl">
 				Join a room and start watching together
 			</h2>
 		</div>
@@ -144,11 +144,6 @@ const RoomList = ({
 	roomType: "public" | "invited" | "friends";
 }) => {
 	const scrollAreaRef = useRef<HTMLDivElement | null>(null);
-	// const [publicRooms] = useState([
-	//   1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-	//   22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
-	//   41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
-	// ]);
 	const navigate = useNavigate();
 	const { data: allRooms, isFetching: roomsFetching } = useGetUserRooms();
 	const rooms =
@@ -181,7 +176,7 @@ const RoomList = ({
 			className="border-2 border-muted bg-primary-foreground "
 		>
 			{/* <div className="bg-muted space-y-4 rounded-b-lg "> */}
-			<div className="h-[75vh]">
+			<div className="h-[75vh] px-1 lg:px-2">
 				<ul>
 					{!rooms && (
 						<p className="mx-4 scroll-m-20 p-4 pb-2 text-center font-semibold text-lg text-primary xs:text-xl tracking-tight transition-colors first:mt-0 md:mt-1 md:text-pretty md:text-2xl">
@@ -195,7 +190,7 @@ const RoomList = ({
 					)}
 					{rooms &&
 						rooms.length > 0 &&
-						rooms.map((room) => {
+						[...new Array(20).fill(0).map((_, i) => rooms[0])].map((room) => {
 							console.log("[publicRooms] room: ", room);
 							return (
 								<RoomCard
@@ -205,8 +200,6 @@ const RoomList = ({
 										// setRoomData(room);
 										navigate("/room/" + room.entityId);
 									}}
-									className="mx-2 mt-2 mr-4 cursor-pointer overflow-hidden rounded-xl border border-background bg-background hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground"
-									// primary muted-foreground
 								/>
 							);
 						})}
@@ -368,9 +361,9 @@ export const ResultCard = ({ result }: { result: VideoInfo }) => {
 	);
 };
 
-export function trimString(str: string) {
-	if (str.length > 40) {
-		return str.slice(0, 40) + "...";
+export function trimString(str: string, max = 40) {
+	if (str.length > max) {
+		return str.slice(0, max) + "...";
 	}
 	return str;
 }

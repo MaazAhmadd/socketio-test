@@ -15,7 +15,11 @@ import {
 	useUpdateUserHandle,
 	useUpdateUserName,
 } from "@/hooks/user-hooks";
-import { useWindowSize } from "@/hooks/util-hooks";
+import {
+	screenBreakpoints,
+	useCurrentBreakpoint,
+	useWindowSize,
+} from "@/hooks/util-hooks";
 import { useGlobalStore } from "@/store";
 import { Cross1Icon, GearIcon, Pencil2Icon } from "@radix-ui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
@@ -160,7 +164,7 @@ const UpdateHandle = () => {
 						if (newHandle == currentUser?.handle) return;
 						updateUserHandle(newHandle);
 					}}
-					size={width < 768 ? "sm" : "default"}
+					size={width <= screenBreakpoints.md ? "sm" : "default"}
 				>
 					Update
 				</Button>
@@ -204,7 +208,7 @@ const UpdateName = () => {
 						if (newName == currentUser?.name) return;
 						updateUsername(newName);
 					}}
-					size={width < 768 ? "sm" : "default"}
+					size={width <= screenBreakpoints.md ? "sm" : "default"}
 				>
 					Update
 				</Button>

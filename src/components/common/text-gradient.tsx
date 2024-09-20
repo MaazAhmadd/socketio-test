@@ -15,7 +15,7 @@ export const TextGradient = ({
 		<span
 			onClick={onClick}
 			className={cn(
-				"gradient-text animate-gradient font-Scripto font-medium text-4xl text-transparent",
+				"gradient-text animate-gradient select-none font-Scripto font-medium text-4xl text-transparent",
 				className,
 			)}
 		>
@@ -25,7 +25,7 @@ export const TextGradient = ({
 		<p
 			onClick={onClick}
 			className={cn(
-				"gradient-text animate-gradient font-Scripto font-medium text-4xl text-transparent",
+				"gradient-text animate-gradient select-none font-Scripto font-medium text-4xl text-transparent",
 				className,
 			)}
 		>

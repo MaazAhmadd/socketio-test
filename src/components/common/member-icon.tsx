@@ -12,21 +12,24 @@ const MemberIcon = ({
 }: {
 	_id: string;
 	className?: string;
-	_size?: "sm" | "md" | "lg";
+	_size?: "xs" | "sm" | "md" | "lg";
 	crown?: boolean;
 	flag?: boolean;
 }) => {
 	const sizeMap = {
+		xs: "!size-[32px]",
 		sm: "!size-[42px]",
 		md: "!size-[56px]",
 		lg: "!size-[65px]",
 	};
 	const crownClassesMap = {
+		xs: "top-[-13px] left-[2px] size-[18px] rotate-[-21deg]",
 		sm: "top-[-13px] left-[2px] size-[18px] rotate-[-21deg]",
 		md: "top-[-17px] left-[2px] size-6 rotate-[-21deg]",
 		lg: "top-[-17px] left-[2px] size-[26px] rotate-[-24deg]",
 	};
 	const flagClassesMap = {
+		xs: "top-[24px] left-[28px] size-4 opacity-80",
 		sm: "top-[24px] left-[28px] size-4 opacity-80",
 		md: "top-[33px] left-[36px] size-7 opacity-80",
 		lg: "top-[38px] left-[40px] size-10 opacity-80",

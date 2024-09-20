@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
-
+import { useState, useEffect, useCallback, useLayoutEffect } from "react";
 export function useDebounce(value: any, delay: number) {
 	const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -39,7 +38,7 @@ export function useWindowSize() {
 	return windowSize;
 }
 
-const useFullscreen = () => {
+export const useFullscreen = () => {
 	const [isFullscreen, setIsFullscreen] = useState(false);
 
 	const enterFullscreen = useCallback(() => {
@@ -58,5 +57,34 @@ const useFullscreen = () => {
 
 	return { isFullscreen, enterFullscreen, exitFullscreen };
 };
+export const screenBreakpoints = {
+	xs: 320,
+	sm: 395,
+	md: 769,
+	lg: 1024,
+	xl: 1280,
+	"2xl": 1440,
+};
+export function useCurrentBreakpoint() {
+	type Breakpoints = keyof typeof screenBreakpoints;
+	const [breakpoint, setBreakpoint] = useState<Breakpoints>("xs");
 
-export default useFullscreen;
+	useLayoutEffect(() => {
+		const updateBreakpoint = () => {
+			const width = window.innerWidth;
+			let newBreakpoint: Breakpoints = "xs";
+			if (width >= screenBreakpoints.sm) newBreakpoint = "sm";
+			if (width >= screenBreakpoints.md) newBreakpoint = "md";
+			if (width >= screenBreakpoints.lg) newBreakpoint = "lg";
+			if (width >= screenBreakpoints.xl) newBreakpoint = "xl";
+			if (width >= screenBreakpoints["2xl"]) newBreakpoint = "2xl";
+			setBreakpoint(newBreakpoint);
+		};
+
+		updateBreakpoint();
+		window.addEventListener("resize", updateBreakpoint);
+
+		return () => window.removeEventListener("resize", updateBreakpoint);
+	}, []);
+	return breakpoint;
+}

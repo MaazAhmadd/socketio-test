@@ -2,7 +2,11 @@ import ConnectionStatus from "@/components/common/connection-status";
 import { TextGradient } from "@/components/common/text-gradient";
 import { Button } from "@/components/ui/button";
 import { useGetRoom } from "@/hooks/room-hooks";
-import useFullscreen, { useWindowSize } from "@/hooks/util-hooks";
+import {
+	useWindowSize,
+	useFullscreen,
+	screenBreakpoints,
+} from "@/hooks/util-hooks";
 import { socket } from "@/socket";
 import { useGlobalStore, useRoomStore } from "@/store";
 import { useEffect, useRef } from "react";
@@ -187,7 +191,7 @@ const RoomPage = () => {
 	// mobile videoplayer height 33vh
 	// desktop chat width 30vw
 	// turn to svh if caused issue on mobile
-	const mobileView = width < 768;
+	const mobileView = width <= screenBreakpoints.md;
 	return (
 		<>
 			<ConnectionStatus />
