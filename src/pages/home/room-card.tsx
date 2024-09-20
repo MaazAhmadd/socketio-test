@@ -63,14 +63,7 @@ const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 					<div className="flex">
 						<div className="no-scrollbar flex gap-1 overflow-x-scroll">
 							{/* <div className="flex gap-2 overflow-x-scroll"> */}
-							{[
-								...activeMembersList,
-								...activeMembersList,
-								...activeMembersList,
-								...activeMembersList,
-								...activeMembersList,
-								...activeMembersList,
-							]?.map((m) => {
+							{activeMembersList?.map((m) => {
 								return (
 									<MemberIcon
 										key={m}

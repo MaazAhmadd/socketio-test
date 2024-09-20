@@ -190,7 +190,8 @@ const RoomList = ({
 					)}
 					{rooms &&
 						rooms.length > 0 &&
-						[...new Array(20).fill(0).map((_, i) => rooms[0])].map((room) => {
+						// [...new Array(20).fill(0).map((_, i) => rooms[0])].map((room) => {
+						rooms.map((room) => {
 							console.log("[publicRooms] room: ", room);
 							return (
 								<RoomCard
