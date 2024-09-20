@@ -37,9 +37,9 @@ export function SettingsDrawer() {
 			<DrawerTrigger asChild>
 				<Button
 					variant="outline"
-					className="fixed top-2 left-2 h-auto p-3 md:top-4 md:left-4 md:p-4 "
+					className="fixed top-2 left-2 rounded-lg p-[9px] md:top-4 md:left-4 md:px-[16px] md:py-[24px] "
 				>
-					<GearIcon className="size-4 md:size-6" />
+					<GearIcon className="size-[18px] md:size-6" />
 				</Button>
 			</DrawerTrigger>
 			<DrawerContent className="mr-24 ml-0 max-w-[85vw] bg-background/80">

@@ -2,7 +2,7 @@ import axios from "axios";
 import express from "express";
 import mongooseModels, { YtVideoType } from "../mongoose/models";
 import { authUser } from "../middlewares";
-import { asyncWrapper } from "./asyncWrapper";
+import { forwardError } from "./asyncWrapper";
 import { logger } from "../logger";
 
 const YtVideo = mongooseModels.YtVideo;
@@ -11,7 +11,7 @@ const router = express.Router();
 router.get(
 	"/ytservice",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const videoInfo = await ytInfoService(req.query?.url as string);
 		if (videoInfo) {
 			return res.send(videoInfo);
@@ -23,7 +23,7 @@ router.get(
 router.get(
 	"/ytservice/search",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		try {
 			const response = await searchVideos(req.query?.q as string);
 			if (response) {

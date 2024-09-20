@@ -13,14 +13,15 @@ import { cn } from "@/lib/utils";
 import { socket } from "@/socket";
 import { useRoomStore } from "@/store";
 import { PaperPlaneIcon } from "@radix-ui/react-icons";
-import React, { useEffect } from "react";
+import { useEffect, useState, useRef, ReactNode, FormEvent } from "react";
 import { Message } from "server/src/types";
 import DialogWrapperPfpIcon from "./dialog-wrapper-pfp-icon";
+import { Textarea } from "@/components/ui/textarea";
 
 export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
-	const scrollAreaRef = React.useRef<HTMLDivElement | null>(null);
+	const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+
 	const { data: user } = useGetCurrentUser();
-	const [input, setInput] = React.useState("");
 	const { messages, activeMembersList } = useRoomStore((s) => ({
 		messages: s.messages,
 		activeMembersList: s.roomData?.activeMembersList,
@@ -33,13 +34,6 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 			});
 		}
 	}, [messages.length]);
-
-	const handleSendMessage = (event: React.FormEvent) => {
-		event.preventDefault();
-		if (input.trim().length === 0) return;
-		socket.emit("sendMessage", input);
-		setInput("");
-	};
 
 	const renderMessage = (message: Message, index: number) => {
 		const isSystemMsg = Boolean(message.system);
@@ -74,7 +68,7 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 			<div key={message.time} className={messageClasses}>
 				{!isMe && (isSystemMsg || isNewSender) && (
 					<DialogWrapperPfpIcon _id={message.sender}>
-						<MemberIcon _id={message.sender} />
+						<MemberIcon _id={message.sender} crown />
 					</DialogWrapperPfpIcon>
 				)}
 				<div className={bubbleClasses}>
@@ -97,7 +91,7 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 				</div>
 				{isMe && (isSystemMsg || isNewSender) && (
 					<DialogWrapperPfpIcon _id={message.sender}>
-						<MemberIcon _id={message.sender} />
+						<MemberIcon _id={message.sender} crown />
 					</DialogWrapperPfpIcon>
 				)}
 			</div>
@@ -106,37 +100,96 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 
 	return (
 		<>
-			<ScrollArea hideScrollBar viewportRef={scrollAreaRef}>
-				<div className={cn(screen === "mobile" ? "h-[56vh]" : "h-[89vh]")}>
-					{messages.map(renderMessage)}
-				</div>
+			<ScrollArea
+				hideScrollBar
+				viewportRef={scrollAreaRef}
+				className={cn(
+					"bg-primary-foreground pb-5",
+					screen === "mobile" ? "h-[56vh]" : "h-[89vh]",
+				)}
+			>
+				<div className={cn()}>{messages.map(renderMessage)}</div>
 			</ScrollArea>
-			<div className="mt-1 h-[5vh] w-full">
-				<form
-					onSubmit={handleSendMessage}
-					className="flex w-full items-center space-x-[10px] px-1"
-				>
-					<Input
-						id="message"
-						placeholder="Type your message..."
-						className="flex-1"
-						autoComplete="off"
-						value={input}
-						onChange={(event) => setInput(event.target.value)}
-					/>
-					<Button
-						type="submit"
-						size="icon"
-						disabled={input.trim().length === 0}
-					>
-						<PaperPlaneIcon className="h-4 w-4" />
-						<span className="sr-only">Send</span>
-					</Button>
-				</form>
-			</div>
+			<ChatInput />
 		</>
 	);
 }
+
+const ChatInput = () => {
+	const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
+	const enterButtonRef = useRef<HTMLButtonElement | null>(null);
+	const [heightInc, setHeightInc] = useState(0);
+	const [input, setInput] = useState("");
+	const handleSendMessage = (e: FormEvent) => {
+		e.preventDefault();
+		if (input.trim().length === 0) return;
+		socket.emit("sendMessage", input);
+		setInput("");
+		setHeightInc(0);
+		if (textAreaRef.current) {
+			textAreaRef.current.focus();
+			textAreaRef.current.style.height = "40px";
+		}
+	};
+	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+		if (event.shiftKey && event.key === "Enter") {
+			event.preventDefault();
+			if (input.trim().length === 0) return;
+			socket.emit("sendMessage", input);
+			setInput("");
+			setHeightInc(0);
+			if (textAreaRef.current) {
+				textAreaRef.current.focus();
+				textAreaRef.current.style.height = "40px";
+			}
+		}
+	};
+	return (
+		<div
+			className="fixed bottom-0 w-full bg-primary-foreground py-2"
+			onKeyDown={handleKeyDown}
+		>
+			<div className="flex w-full items-center space-x-[10px] px-1">
+				<Textarea
+					style={{ resize: "none" }}
+					ref={textAreaRef}
+					id="message"
+					placeholder="Type your message..."
+					className="h-10 max-h-min min-h-min"
+					autoComplete="off"
+					value={input}
+					aria-autocomplete="none"
+					onChange={(e) => {
+						const value = e.target.value;
+						setInput(value);
+						const isNewLineChar = value[value.length - 1] === "\n";
+
+						if (isNewLineChar) {
+							setHeightInc((v) => v + 1);
+						}
+						if (textAreaRef.current) {
+							if (heightInc === 1) {
+								textAreaRef.current.style.height = "60px";
+							}
+							if (heightInc === 10) {
+								textAreaRef.current.style.height = "120px";
+							}
+						}
+					}}
+				/>
+				<Button
+					ref={enterButtonRef}
+					size="icon"
+					disabled={input.trim().length === 0}
+					onClick={handleSendMessage}
+				>
+					<PaperPlaneIcon className="h-4 w-4" />
+					<span className="sr-only">Send</span>
+				</Button>
+			</div>
+		</div>
+	);
+};
 
 const Name = ({
 	sender,
@@ -158,25 +211,6 @@ const Name = ({
 			{name}
 			{!isSystemMsg && ":"}{" "}
 		</span>
-	);
-};
-
-const DropdownMenuWrapperMemberPfpIcon = ({
-	children,
-}: {
-	children: React.ReactNode;
-}) => {
-	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger>{children}</DropdownMenuTrigger>
-			<DropdownMenuContent>
-				<DropdownMenuItem>Profile Picture</DropdownMenuItem>
-				<DropdownMenuItem>Give Leadership</DropdownMenuItem>
-				<DropdownMenuItem>Disable Mic</DropdownMenuItem>
-				<DropdownMenuItem>Mute</DropdownMenuItem>
-				<DropdownMenuItem>Kick</DropdownMenuItem>
-			</DropdownMenuContent>
-		</DropdownMenu>
 	);
 };
 

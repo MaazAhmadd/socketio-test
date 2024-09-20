@@ -227,11 +227,6 @@ export async function joinRoom(
 	}
 }
 
-async function getCurrentLeader(roomId: string) {
-	const room = await roomRepository.fetch(roomId);
-	return await User.findOne({ _id: room.activeMembersList![0] });
-}
-
 export async function makeMemberLeave(
 	socket: CustomSocket,
 	io: CustomIO,
@@ -409,48 +404,6 @@ export async function enableDisableMic(
 	}
 }
 
-// export async function returnRoomWithActiveMembersInOrder(roomId: string) {
-//   const room = await roomRepository.fetch(roomId);
-//   if (!room) {
-//     return null;
-//   }
-//   room.entityId = (room as any)[EntityId];
-
-//   const activeMembers = await memberRepository
-//     .search()
-//     .where("roomId")
-//     .equals(roomId)
-//     .and("isConnected")
-//     .equals(true)
-//     .sortBy("leaderPC")
-//     .return.all();
-
-//   room.members = activeMembers;
-
-//   return room;
-// }
-
-// export const deleteInactiveRooms = async (prisma: PrismaClient) => {
-//   const rooms = await prisma.room.findMany({
-//     where: {
-//       members: {
-//         every: {
-//           isConnected: false,
-//         },
-//       },
-//     },
-//   });
-//   logger.info("deleteInactiveRooms", "found inactive rooms: ", rooms.length);
-
-//   for (const room of rooms) {
-//     logger.info("deleteInactiveRooms", "deleting inactive room: ", room.id);
-//     await prisma.room.delete({
-//       where: {
-//         id: room.id,
-//       },
-//     });
-//   }
-// };
 
 const initializeSocketServer = async (io: CustomIO) => {
 	logger.info("initializeSocketServer, initializing socket server...");
@@ -575,3 +528,46 @@ function executeKickMember(room: Room, targetMemberId: string) {
 	room.activeMembersCount = room.activeMembersList?.length || 0;
 	return room;
 }
+
+// export async function returnRoomWithActiveMembersInOrder(roomId: string) {
+//   const room = await roomRepository.fetch(roomId);
+//   if (!room) {
+//     return null;
+//   }
+//   room.entityId = (room as any)[EntityId];
+
+//   const activeMembers = await memberRepository
+//     .search()
+//     .where("roomId")
+//     .equals(roomId)
+//     .and("isConnected")
+//     .equals(true)
+//     .sortBy("leaderPC")
+//     .return.all();
+
+//   room.members = activeMembers;
+
+//   return room;
+// }
+
+// export const deleteInactiveRooms = async (prisma: PrismaClient) => {
+//   const rooms = await prisma.room.findMany({
+//     where: {
+//       members: {
+//         every: {
+//           isConnected: false,
+//         },
+//       },
+//     },
+//   });
+//   logger.info("deleteInactiveRooms", "found inactive rooms: ", rooms.length);
+
+//   for (const room of rooms) {
+//     logger.info("deleteInactiveRooms", "deleting inactive room: ", room.id);
+//     await prisma.room.delete({
+//       where: {
+//         id: room.id,
+//       },
+//     });
+//   }
+// };

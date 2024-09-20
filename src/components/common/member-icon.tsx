@@ -2,25 +2,34 @@ import { useGetNormalUser, useGetCurrentUser } from "@/hooks/user-hooks";
 import { getHexColorFromString, cn } from "@/lib/utils";
 import { useRoomStore } from "@/store";
 import { CgCrown } from "react-icons/cg";
-
+import ReactCountryFlag from "react-country-flag";
 const MemberIcon = ({
 	_id,
 	className,
 	_size = "sm",
+	crown = false,
+	flag = false,
 }: {
 	_id: string;
 	className?: string;
 	_size?: "sm" | "md" | "lg";
+	crown?: boolean;
+	flag?: boolean;
 }) => {
 	const sizeMap = {
-		sm: "size-[42px]",
-		md: "size-[56px]",
-		lg: "size-[65px]",
+		sm: "!size-[42px]",
+		md: "!size-[56px]",
+		lg: "!size-[65px]",
 	};
-	const classesMap = {
+	const crownClassesMap = {
 		sm: "top-[-13px] left-[2px] size-[18px] rotate-[-21deg]",
 		md: "top-[-17px] left-[2px] size-6 rotate-[-21deg]",
 		lg: "top-[-17px] left-[2px] size-[26px] rotate-[-24deg]",
+	};
+	const flagClassesMap = {
+		sm: "top-[24px] left-[28px] size-4 opacity-80",
+		md: "top-[33px] left-[36px] size-7 opacity-80",
+		lg: "top-[38px] left-[40px] size-10 opacity-80",
 	};
 	const randomColor = getHexColorFromString(_id);
 	const { data: user } = useGetNormalUser(_id);
@@ -33,8 +42,14 @@ const MemberIcon = ({
 
 	return (
 		<div className="relative">
-			{activeMembersList && activeMembersList[0] === _id && (
-				<CgCrown className={cn("absolute", classesMap[_size])} />
+			{crown && activeMembersList && activeMembersList[0] === _id && (
+				<CgCrown className={cn("absolute", crownClassesMap[_size])} />
+			)}
+			{flag && user && (
+				<ReactCountryFlag
+					countryCode={user.country}
+					className={cn("absolute", flagClassesMap[_size])}
+				/>
 			)}
 			{user &&
 				(user.pfp ? (

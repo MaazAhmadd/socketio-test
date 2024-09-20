@@ -25,6 +25,7 @@ import { IconType } from "react-icons/lib";
 import { useParams } from "react-router-dom";
 import { FriendshipButton } from "./room-members-drawer";
 import { Button } from "@/components/ui/button";
+import ReactCountryFlag from "react-country-flag";
 
 const DialogWrapperPfpIcon = ({
 	children,
@@ -77,15 +78,17 @@ const DialogWrapperPfpIcon = ({
 				</DialogHeader>
 				<div className="flex flex-col items-center">
 					<div className="flex items-center gap-6">
-						<div className="w-14"></div>
+						<div className="flex w-14 items-center justify-center">
+							<ReactCountryFlag countryCode={user?.country!} className="" />
+						</div>
 						<div className="flex flex-col items-center gap-1 hover:bg-background/50">
 							<div className="text-primary text-sm">{user?.name}</div>
 							<div className="font-semibold text-primary text-sm">
 								@{user?.handle}
 							</div>
 						</div>
-						<div>
-							<FriendshipButton className="mr-0" _id={_id} />
+						<div className="w-14">
+							<FriendshipButton _id={_id} />
 						</div>
 					</div>
 					{currentUser?._id != _id && <Separator className="my-4 mb-2" />}

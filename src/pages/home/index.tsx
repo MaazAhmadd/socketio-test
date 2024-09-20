@@ -48,10 +48,10 @@ const HomePage = () => {
 		<>
 			<SettingsDrawer />
 			<FriendsDrawer />
-			<div className="h-[100vh] md:container md:py-12">
-				<div className="flex h-[100vh] flex-col justify-between md:flex-row">
+			<div className="h-[100vh] bg-primary-foreground md:container md:py-12">
+				<div className="flex h-[100vh] flex-col items-center justify-between md:flex-row">
 					<LeftText />
-					<div className=" max-w-[700px] pt-2 md:w-[700px] md:px-4 md:pt-0">
+					<div className=" w-[100vw] max-w-[700px] pt-2 md:w-[80vw] md:px-4 md:pt-0">
 						<div className="mb-4 px-5">
 							<Label className="sr-only" htmlFor="searchrooms">
 								Search Rooms
@@ -128,10 +128,10 @@ const TabButton = ({ className, setBg, ...props }: any) => {
 const LeftText = () => {
 	return (
 		<div className="mx-10 flex flex-col gap-2 self-center pt-3 text-center md:mx-20 md:mb-20 md:gap-6 md:pt-0">
-			<TextGradient className="text-2xl xs:text-3xl md:text-6xl">
+			<TextGradient className="text-xl sm:text-3xl md:text-6xl">
 				Gather Groove{" "}
 			</TextGradient>{" "}
-			<h2 className="mx-4 scroll-m-20 pb-2 font-semibold text-lg text-primary xs:text-xl tracking-tight transition-colors first:mt-0 md:mt-1 md:text-pretty md:text-3xl">
+			<h2 className="mx-4 mb-2 scroll-m-20 font-semibold text-md text-primary tracking-tight transition-colors first:mt-0 sm:text-xl md:mt-1 md:text-pretty md:text-3xl">
 				Join a room and start watching together
 			</h2>
 		</div>
@@ -474,7 +474,7 @@ export const Spinner = ({ className }: { className?: string }) => {
 		<div className={cn("flex h-[20vh] items-center justify-center", className)}>
 			<div
 				className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-current border-e-transparent border-solid align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
-				role="status"
+				// role="status"
 			>
 				<span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
 					Loading...

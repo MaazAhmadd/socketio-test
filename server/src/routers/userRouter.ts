@@ -8,7 +8,7 @@ import { z } from "zod";
 import { authUser } from "../middlewares";
 import mongooseModels from "../mongoose/models";
 import { NormalUser } from "../types";
-import { asyncWrapper } from "./asyncWrapper";
+import { forwardError } from "./asyncWrapper";
 import { logger } from "../logger";
 const User = mongooseModels.User;
 
@@ -29,16 +29,51 @@ const cacheKeys = {
 	USERCHECK: "user-check-",
 };
 
+const validations = {
+	name: z
+		.string({ required_error: "name is required" })
+		.max(4096, "name is too long"),
+	pfp: z
+		.string({ required_error: "pfp is required" })
+		.max(4096, "pfp url is too long"),
+	handle: z
+		.string({ required_error: "handle is required" })
+		.regex(
+			/^[a-zA-Z0-9#$_&\-+@()/*"':;!?~`|•√÷×§∆\\}{=°^¥€¢£%©®™✓\[\]\,\.<>]*$/,
+			{ message: "no spaces or invalid characters allowed in handle" },
+		)
+		.min(6, "handle should me minimum 6 characters")
+		.max(64, "handle should me maximum 64 characters"),
+	password: z
+		.string({ required_error: "password is required" })
+		.min(6, "password should me minimum 6 characters")
+		.max(64, "password should me maximum 64 characters"),
+};
 // Create user
 router.post(
 	"/user/register",
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const { name, handle, pfp, password } = req.body as NormalUser & {
 			password: string;
 		};
+		const updateBodySchema = z.object({
+			handle: validations.handle,
+			password: validations.password,
+		});
+		const { error } = updateBodySchema.safeParse({ handle, password });
+		if (error) {
+			return res
+				.status(400)
+				.send({ error: error.issues.map((issue) => issue.message)[0] });
+		}
+
 		let user = await User.findOne({ handle });
 
 		if (user) {
+			const isMatch = await user.comparePassword(password);
+			if (!isMatch) {
+				return res.status(400).send({ error: "Invalid handle or password" });
+			}
 			return res.status(200).send(user.generateAuthToken());
 		}
 		user = new User({ name, handle, pfp, password });
@@ -52,18 +87,20 @@ router.post(
 router.put(
 	"/user/updateusername",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const updateBodySchema = z.object({
-			name: z.string().max(4096, "name is too long"),
+			name: validations.name,
 		});
 		const { error } = updateBodySchema.safeParse(req.body);
 		if (error) {
-			return res.status(400).send(error.issues[0].message);
+			return res
+				.status(400)
+				.send({ error: error.issues.map((issue) => issue.message)[0] });
 		}
 		const userId = req.user?._id;
 		const user = await User.findById(userId);
 		if (!user) {
-			return res.status(404).send("User not found");
+			return res.status(404).send({ error: "User not found" });
 		}
 		user.name = req.body.name;
 		await user.save();
@@ -76,25 +113,23 @@ router.put(
 router.put(
 	"/user/updateuserhandle",
 	authUser,
-	asyncWrapper(async function (req, res) {
-		const updateBodySchema = z.object({
-			handle: z
-				.string()
-				.min(6, "handle is too short")
-				.max(4096, "handle is too long"),
-		});
+	forwardError(async function (req, res) {
+		const updateBodySchema = z.object({ handle: validations.handle });
 		const { error } = updateBodySchema.safeParse(req.body);
 		if (error) {
-			return res.status(400).send(error.issues[0].message);
+			return res
+				.status(400)
+				.send({ error: error.issues.map((issue) => issue.message)[0] });
 		}
+
 		const alreadyExistingUser = await User.findOne({ handle: req.body.handle });
 		if (alreadyExistingUser) {
-			return res.status(400).send("handle taken");
+			return res.status(400).send({ error: "handle taken" });
 		}
 		const userId = req.user?._id;
 		const user = await User.findById(userId);
 		if (!user) {
-			return res.status(404).send("User not found");
+			return res.status(404).send({ error: "User not found" });
 		}
 		user.handle = req.body.handle;
 		await user.save();
@@ -106,22 +141,21 @@ router.put(
 router.put(
 	"/user/updateuserpassword",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const updateBodySchema = z.object({
-			password: z
-				.string()
-				.min(6, "password is too short")
-				.max(4096, "password is too long"),
+			password: validations.password,
 		});
 		const { error } = updateBodySchema.safeParse(req.body);
 		if (error) {
-			return res.status(400).send(error.issues[0].message);
+			return res
+				.status(400)
+				.send({ error: error.issues.map((issue) => issue.message)[0] });
 		}
 
 		const userId = req.user?._id;
 		const user = await User.findById(userId);
 		if (!user) {
-			return res.status(404).send("User not found");
+			return res.status(404).send({ error: "User not found" });
 		}
 		user.password = req.body.password;
 		await user.save();
@@ -135,20 +169,20 @@ router.put(
 	"/user/updateuserpfp",
 	authUser,
 	upload.single("image"),
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
 		if (!allowedTypes.includes(req.file?.mimetype!)) {
-			return res.status(400).send("Invalid file type");
+			return res.status(400).send({ error: "Invalid file type" });
 		}
 		// Check file size (max 2MB)
 		if (req.file?.size! > 2_000_000) {
-			return res.status(400).send("File is too large");
+			return res.status(400).send({ error: "File is too large" });
 		}
 		const userId = req.user?._id;
 
 		const user = await User.findById(userId);
 		if (!user) {
-			return res.status(404).send("User not found");
+			return res.status(404).send({ error: "User not found" });
 		}
 		if (user.profilePicId) {
 			await cloudinary.v2.uploader.destroy(user.profilePicId);
@@ -182,16 +216,16 @@ router.put(
 router.post(
 	"/user/sendFriendRequest/:receiverId",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		if (req.user?._id === req.params.receiverId) {
 			return res
 				.status(400)
-				.send({ message: "You cannot send a friend request to yourself." });
+				.send({ error: "You cannot send a friend request to yourself." });
 		}
 		const user = await User.findById(req.user?._id);
 		const friend = await User.findById(req.params.receiverId);
 		if (!user || !friend) {
-			return res.status(404).send();
+			return res.status(404).send({ error: "User not found" });
 		}
 		logger.info(
 			`/user/sendFriendRequest/:receiverId user: ${user}, friend: ${friend}`,
@@ -229,11 +263,11 @@ router.post(
 router.post(
 	"/user/cancelFriendRequest/:receiverId",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const user = await User.findById(req.user?._id);
 		const friend = await User.findById(req.params.receiverId);
 		if (!user || !friend) {
-			return res.status(404).send();
+			return res.status(404).send({ error: "User not found" });
 		}
 
 		if (user.friendReqsSent.includes(friend._id)) {
@@ -256,11 +290,11 @@ router.post(
 router.post(
 	"/user/acceptFriendRequest/:senderId",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const user = await User.findById(req.user?._id);
 		const friend = await User.findById(req.params.senderId);
 		if (!user || !friend) {
-			return res.status(404).send();
+			return res.status(404).send({ error: "User not found" });
 		}
 		if (
 			friend.friendReqsSent.includes(user._id) &&
@@ -287,11 +321,11 @@ router.post(
 router.post(
 	"/user/rejectFriendRequest/:senderId",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const user = await User.findById(req.user?._id);
 		const friend = await User.findById(req.params.senderId);
 		if (!user || !friend) {
-			return res.status(404).send();
+			return res.status(404).send({ error: "User not found" });
 		}
 		if (user.friendReqsReceived.includes(friend._id)) {
 			user.friendReqsReceived.pull(friend._id);
@@ -313,11 +347,11 @@ router.post(
 router.post(
 	"/user/removeFriend/:friendId",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const user = await User.findById(req.user?._id);
 		const friend = await User.findById(req.params.friendId);
 		if (!user || !friend) {
-			return res.status(404).send();
+			return res.status(404).send({ error: "User not found" });
 		}
 		logger.info(`/user/removeFriend/:friendId user ${user} friend: ${friend}`);
 		if (user.friends.includes(friend._id)) {
@@ -340,7 +374,7 @@ router.post(
 router.get(
 	"/user/getuser/:id",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		// setTimeout(async () => {
 		const id = req.params.id;
 		if (mongoose.Types.ObjectId.isValid(id)) {
@@ -351,7 +385,7 @@ router.get(
 			// .cache(60, cacheKeys.USER + id);
 
 			if (!user) {
-				return res.status(404).send("User not found");
+				return res.status(404).send({ error: "User not found" });
 			}
 			res.send(user);
 		} else {
@@ -363,7 +397,7 @@ router.get(
 			// .cache(60, cacheKeys.USERCHECK + handle);
 
 			if (!user) {
-				return res.status(404).send("User not found");
+				return res.status(404).send({ error: "User not found" });
 			}
 			res.send(user);
 		}
@@ -375,12 +409,12 @@ router.get(
 router.get(
 	"/user/getCurrentUser",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		// let userToSend: CurrentUser;
 		const user = await User.findById(req.user?._id);
 		// .cache(2);
 		// .cache(60, cacheKeys.USER + req.user?._id);
-		if (!user) return res.status(404).send("User not found");
+		if (!user) return res.status(404).send({ error: "User not found" });
 		user.password = "";
 		res.send(user);
 	}),
@@ -390,7 +424,7 @@ router.get(
 router.get(
 	"/user/search",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const query = req.query.q as string;
 		const users = await User.find({
 			$or: [
@@ -408,7 +442,7 @@ router.get(
 // check if user exists
 router.get(
 	"/user/check",
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const handle = req.query.q as string;
 		const userCount = await User.countDocuments({ handle });
 		// .cache(2);
@@ -421,8 +455,18 @@ router.get(
 // login user
 router.post(
 	"/user/login",
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const { handle, password } = req.body;
+		const updateBodySchema = z.object({
+			handle: validations.handle,
+			password: validations.password,
+		});
+		const { error } = updateBodySchema.safeParse(req.body);
+		if (error) {
+			return res
+				.status(400)
+				.send({ error: error.issues.map((issue) => issue.message)[0] });
+		}
 		const user = await User.findOne({ handle });
 		// .cache(2);
 		// .cache(60, cacheKeys.USERCHECK + handle);
@@ -450,11 +494,11 @@ router.post(
 router.get(
 	"/user/unfriendAll",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const userId = req.user?._id;
 		const user = await User.findById(userId);
 		if (!user) {
-			return res.status(404).send("User not found");
+			return res.status(404).send({ error: "User not found" });
 		}
 		for (const friend of user.friends) {
 			const friendUser = await User.findById(friend);

@@ -23,9 +23,9 @@ export function FriendsDrawer() {
 			<DrawerTrigger asChild>
 				<Button
 					variant="outline"
-					className="fixed top-2 right-2 h-auto p-3 md:top-4 md:right-4 md:p-4 "
+					className="fixed top-2 right-2 rounded-lg p-[10px] md:top-4 md:right-4 md:px-[16px] md:py-[24px] "
 				>
-					<PersonIcon className="h-4 w-4 md:h-6 md:w-6" />
+					<PersonIcon className="size-[18px] md:size-5" />
 				</Button>
 			</DrawerTrigger>
 			<DrawerContent className="right-0 mr-0 ml-24 max-w-[80vw] bg-background/80">

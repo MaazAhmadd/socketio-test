@@ -6,7 +6,7 @@ import redisSchemas from "../redis-om/schemas";
 import { makeRoom, splitMembersAndMicsArray } from "../socketServer";
 import { authUser } from "../middlewares";
 import { Room } from "../types";
-import { asyncWrapper } from "./asyncWrapper";
+import { forwardError } from "./asyncWrapper";
 import { logger } from "../logger";
 const router = express.Router();
 
@@ -17,7 +17,7 @@ const User = mongooseModels.User;
 router.get(
 	"/room/userrooms",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		// Pagination setup
 		const pageNumber = Number.isNaN(Number(req.query.pageNumber))
 			? 1
@@ -218,7 +218,7 @@ router.get(
 router.post(
 	"/room/makeRoom",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const url = req.body.url as string;
 		const userId = req.user?._id as string;
 		const nextAvailableTime = await checkMemberRoomMakingHourlyLimit(userId);
@@ -241,7 +241,7 @@ router.post(
 router.get(
 	"/room/getRoom/:roomId",
 	authUser,
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const roomId = req.params.roomId as string;
 		const room = await roomRepository.fetch(roomId);
 		if (!room) {
@@ -259,7 +259,7 @@ router.get(
 // delete /room/deleteAllRooms
 router.delete(
 	"/room/deleteAllRooms",
-	asyncWrapper(async function (req, res) {
+	forwardError(async function (req, res) {
 		const rooms = await roomRepository.search().return.all();
 		for (const room of rooms) {
 			await roomRepository.remove((room as any)[EntityId]);

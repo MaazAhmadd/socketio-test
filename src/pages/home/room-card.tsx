@@ -3,19 +3,15 @@ import { useGetCurrentUser } from "@/hooks/user-hooks";
 import { cn } from "@/lib/utils";
 import { trimString } from "@/pages/home";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
-import React from "react";
 import { Room } from "server/src/types";
+
 interface RoomCardProps {
 	room: Room;
 	className?: string;
 	onClick?: () => void;
 }
-const RoomCard: React.FC<RoomCardProps> = ({
-	room,
-	className,
-	onClick,
-	...props
-}) => {
+
+const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 	const { data } = useGetCurrentUser();
 	if (!data) return <></>;
 	if (!room || !room.activeMembersList || room.activeMembersList?.length! < 1)
@@ -34,7 +30,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
 		});
 	}
 	return (
-		<li className={cn("", className)} {...props} onClick={onClick}>
+		<li className={cn("", className)} onClick={onClick}>
 			<div className="flex h-[100px] justify-between gap-4">
 				{room.v_thumbnailUrl ? (
 					<img

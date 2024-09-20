@@ -1,25 +1,19 @@
 import api from "@/api";
 import { isValidJwt } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { toast } from "react-hot-toast";
 import { CurrentUser, NormalUser } from "server/src/types";
 
+type ResError = AxiosError<{ error: string }>;
 export const useLoginUser = () => {
-	const loginUser = async (formData: Record<string, any>) => {
-		try {
-			const response = await api.post<string>("/user/login/", formData);
-			// if (response.data && isValidJwt(response.data)) {
-			//   localStorage.setItem("auth_token", response.data);
-			//   window.location.reload();
-			// }
-			return response.data;
-		} catch (error) {
-			console.error("|| error in useLoginUser", error);
-			throw error;
-		}
+	type FormData = Record<string, any>;
+	const loginUser = async (formData: FormData) => {
+		const response = await api.post<string>("/user/login/", formData);
+		return response.data;
 	};
 
-	return useMutation<string, Error, Record<string, any>>({
+	return useMutation<string, ResError, FormData>({
 		mutationFn: loginUser,
 		onSuccess: (data) => {
 			if (data && isValidJwt(data)) {
@@ -27,6 +21,7 @@ export const useLoginUser = () => {
 				window.location.reload();
 			}
 		},
+		onError: (error) => toast.error(error.response?.data?.error!),
 	});
 };
 export const useCheckUser = (
@@ -40,21 +35,17 @@ export const useCheckUser = (
 		});
 		return Boolean(Number.parseInt(response.data));
 	};
-	return useQuery<boolean, Error>({
+	return useQuery<boolean, ResError>({
 		queryKey: ["checkuser", debouncedValue],
 		queryFn: checkUser,
 		enabled: !isStateError,
 	});
 };
 export const useRegisterUser = () => {
-	const registerUser = async (formData: Record<string, any>) => {
+	type FormData = Record<string, any>;
+	const registerUser = async (formData: FormData) => {
 		try {
-			const response = await api.post("/user/register/", formData);
-			// if (response.data && isValidJwt(response.data)) {
-			//   localStorage.setItem("auth_token", response.data);
-			//   window.location.reload();
-			//   // navigate("/home");
-			// }
+			const response = await api.post<string>("/user/register/", formData);
 			return response.data;
 		} catch (error) {
 			console.error("|| error in useRegisterUser", error);
@@ -62,7 +53,7 @@ export const useRegisterUser = () => {
 		}
 	};
 
-	return useMutation({
+	return useMutation<string, ResError, FormData>({
 		mutationFn: registerUser,
 		onSuccess: (data) => {
 			if (data && isValidJwt(data)) {
@@ -70,20 +61,22 @@ export const useRegisterUser = () => {
 				window.location.reload();
 			}
 		},
-		onError: (error) => toast.error(error.message),
+		onError: (error) => toast.error(error.response?.data.error!),
 	});
 };
 export const useUpdateUserName = () => {
 	const queryClient = useQueryClient();
 	const updateUsername = async (newName: string) => {
-		const response = await api.put("/user/updateusername", { name: newName });
+		const response = await api.put<string>("/user/updateusername", {
+			name: newName,
+		});
 		return response.data;
 	};
-	return useMutation({
+	return useMutation<string, ResError, string>({
 		mutationFn: updateUsername,
 		onSuccess: () =>
 			queryClient.invalidateQueries({ queryKey: ["currentUser"] }),
-		onError: (error) => toast.error(error.message),
+		onError: (error) => toast.error(error.response?.data.error!),
 	});
 };
 export const useUpdateUserHandle = () => {
@@ -94,11 +87,11 @@ export const useUpdateUserHandle = () => {
 		});
 		return response.data;
 	};
-	return useMutation<CurrentUser, Error, string>({
+	return useMutation<CurrentUser, ResError, string>({
 		mutationFn: updateUserHandle,
 		onSuccess: () =>
 			queryClient.invalidateQueries({ queryKey: ["currentUser"] }),
-		onError: (error) => toast.error(error.message),
+		onError: (error) => toast.error(error.response?.data.error!),
 	});
 };
 export const useUpdateUserPassword = () => {
@@ -109,11 +102,11 @@ export const useUpdateUserPassword = () => {
 		});
 		return response.data;
 	};
-	return useMutation<CurrentUser, Error, string>({
+	return useMutation<CurrentUser, ResError, string>({
 		mutationFn: updateUserPassword,
 		onSuccess: () =>
 			queryClient.invalidateQueries({ queryKey: ["currentUser"] }),
-		onError: (error) => toast.error(error.message),
+		onError: (error) => toast.error(error.response?.data.error!),
 	});
 };
 export const useGetNormalUser = (idOrHandle: string) => {
@@ -121,7 +114,7 @@ export const useGetNormalUser = (idOrHandle: string) => {
 		const response = await api.get("/user/getuser/" + idOrHandle);
 		return response.data;
 	};
-	return useQuery<NormalUser>({
+	return useQuery<NormalUser, ResError>({
 		queryKey: ["user", idOrHandle],
 		queryFn: getUser,
 		staleTime: 1000 * 60 * 60, // 1 hour
@@ -132,7 +125,7 @@ export const useGetCurrentUser = () => {
 		const response = await api.get("/user/getCurrentUser");
 		return response.data;
 	};
-	return useQuery<CurrentUser>({
+	return useQuery<CurrentUser, ResError>({
 		queryKey: ["currentUser"],
 		queryFn: getCurrentUser,
 		staleTime: 1000 * 60 * 60, // 1 hour
@@ -156,77 +149,84 @@ export const useSendFriendRequest = () => {
 		const response = await api.post<string>(
 			"/user/sendFriendRequest/" + receiverId,
 		);
-
 		return response.data;
 	};
-	return useMutation({
+	return useMutation<string, ResError, string>({
 		mutationFn: sendFriendRequest,
 		onSuccess: (data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ["currentUser"] });
 			queryClient.invalidateQueries({ queryKey: ["user", variables] });
 		},
+		onError: (error) => toast.error(error.response?.data.error!),
 	});
 };
 
 export const useCancelFriendRequest = () => {
 	const queryClient = useQueryClient();
 	const cancelFriendRequest = async (receiverId: string) => {
-		const response = await api.post("/user/cancelFriendRequest/" + receiverId);
-
+		const response = await api.post<string>(
+			"/user/cancelFriendRequest/" + receiverId,
+		);
 		return response.data;
 	};
-	return useMutation({
+	return useMutation<string, ResError, string>({
 		mutationFn: cancelFriendRequest,
 		onSuccess: (data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ["currentUser"] });
 			queryClient.invalidateQueries({ queryKey: ["user", variables] });
 		},
+		onError: (error) => toast.error(error.response?.data.error!),
 	});
 };
 
 export const useAcceptFriendRequest = () => {
 	const queryClient = useQueryClient();
 	const acceptFriendRequest = async (senderId: string) => {
-		const response = await api.post("/user/acceptFriendRequest/" + senderId);
+		const response = await api.post<string>(
+			"/user/acceptFriendRequest/" + senderId,
+		);
 		return response.data;
 	};
-	return useMutation({
+	return useMutation<string, ResError, string>({
 		mutationFn: acceptFriendRequest,
 		onSuccess: (data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ["currentUser"] });
 			queryClient.invalidateQueries({ queryKey: ["user", variables] });
 		},
+		onError: (error) => toast.error(error.response?.data.error!),
 	});
 };
 
 export const useRejectFriendRequest = () => {
 	const queryClient = useQueryClient();
 	const rejectFriendRequest = async (senderId: string) => {
-		const response = await api.post("/user/rejectFriendRequest/" + senderId);
-
+		const response = await api.post<string>(
+			"/user/rejectFriendRequest/" + senderId,
+		);
 		return response.data;
 	};
-	return useMutation({
+	return useMutation<string, ResError, string>({
 		mutationFn: rejectFriendRequest,
 		onSuccess: (data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ["currentUser"] });
 			queryClient.invalidateQueries({ queryKey: ["user", variables] });
 		},
+		onError: (error) => toast.error(error.response?.data.error!),
 	});
 };
 
 export const useRemoveFriend = () => {
 	const queryClient = useQueryClient();
 	const removeFriend = async (friendId: string) => {
-		const response = await api.post("/user/removeFriend/" + friendId);
+		const response = await api.post<string>("/user/removeFriend/" + friendId);
 		return response.data;
 	};
-
-	return useMutation({
+	return useMutation<string, ResError, string>({
 		mutationFn: removeFriend,
 		onSuccess: (data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ["currentUser"] });
 			queryClient.invalidateQueries({ queryKey: ["user", variables] });
 		},
+		onError: (error) => toast.error(error.response?.data.error!),
 	});
 };

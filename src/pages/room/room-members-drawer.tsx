@@ -102,7 +102,7 @@ const RoomMember = ({ _id }: { _id: string }) => {
 			<div className="mb-6 flex items-center justify-between gap-4">
 				<div className="flex items-center gap-4">
 					<DialogWrapperPfpIcon _id={_id}>
-						<MemberIcon _id={_id} _size="md" />
+						<MemberIcon _id={_id} _size="md" crown flag />
 					</DialogWrapperPfpIcon>
 
 					<div className="flex flex-col items-start">
@@ -133,7 +133,7 @@ const RoomMember = ({ _id }: { _id: string }) => {
 					</Button>
 				)} */}
 				<div>
-					<FriendshipButton _id={user._id} />
+					<FriendshipButton _id={user._id} className="mr-6" />
 				</div>
 			</div>
 		)
@@ -236,7 +236,7 @@ const FriendshipDropdownWrapper = ({
 		<DropdownMenu>
 			<DropdownMenuTrigger>
 				<TooktipWrapper label={tooltipLabel}>
-					<Button className={cn("mr-6", className)} variant={"secondary"}>
+					<Button className={cn(className)} variant={"secondary"}>
 						{children}
 					</Button>
 				</TooktipWrapper>
