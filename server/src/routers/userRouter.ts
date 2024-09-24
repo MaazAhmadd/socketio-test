@@ -411,6 +411,7 @@ router.get(
 	authUser,
 	forwardError(async function (req, res) {
 		// let userToSend: CurrentUser;
+		if(!req.user) return res.status(404).send({ error: "User not found" });
 		const user = await User.findById(req.user?._id);
 		// .cache(2);
 		// .cache(60, cacheKeys.USER + req.user?._id);

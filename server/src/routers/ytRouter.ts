@@ -155,33 +155,38 @@ async function getVideoInfo(videoId: string): Promise<YtVideoType | null> {
 			},
 		);
 
+		console.log("getVideoInfo youtube data api, info fetching response:", {
+			title: response.data.items[0].snippet.title as string,
+			thumbnail: response.data.items[0].snippet.thumbnails.high.url as string,
+			duration: response.data.items[0].contentDetails.duration,
+			ytId: videoId as string,
+			updatedAt: new Date(),
+		});
 		return {
 			title: response.data.items[0].snippet.title as string,
 			thumbnail: response.data.items[0].snippet.thumbnails.high.url as string,
-			duration: convertISO8601ToMinutesAndSeconds(
-				response.data.items[0].contentDetails.duration,
-			) as string,
+			duration: response.data.items[0].contentDetails.duration as string,
 			ytId: videoId as string,
 			updatedAt: new Date(),
 		};
 	} catch (error: any) {
-		logger.info(
-			`getVideoInfo youtube data api, info fetching error: ${error.data}`,
-		);
+		logger.info(`getVideoInfo youtube data api, info fetching error: ${error}`);
 
 		return null;
 	}
 }
 
-function convertISO8601ToMinutesAndSeconds(iso8601Duration: string) {
-	const match = iso8601Duration.match(/PT(\d+M)?(\d+S)?/);
+// function parseYouTubeDuration(duration: string): number {
+// 	const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+// 	if (!match) {
+// 		throw new Error("Invalid duration format");
+// 	}
 
-	let minutes = 0;
-	let seconds = 0;
-	if (match) {
-		if (match[1]) minutes = Number.parseInt(match[1].replace("M", ""));
-		if (match[2]) seconds = Number.parseInt(match[2].replace("S", ""));
-		return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-	}
-	return "00:00";
-}
+// 	const hours = (Number.parseInt(match[1]) || 0) * 3600000;
+// 	const minutes = (Number.parseInt(match[2]) || 0) * 60000;
+// 	const seconds = (Number.parseInt(match[3]) || 0) * 1000;
+
+// 	return hours + minutes + seconds;
+// }
+
+

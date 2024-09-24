@@ -64,7 +64,7 @@ export default function LoginPage() {
 
 	return (
 		<div className="container relative grid flex-col items-center justify-center gap-4 md:h-[100vh] md:gap-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
-			<div className="relative flex h-full flex-col bg-muted text-white max-sm:py-4 md:p-10 dark:border-r">
+			<div className="relative flex h-full flex-col bg-muted py-4 text-white md:p-10 dark:border-r">
 				<div className="full-bleed absolute inset-0 bg-zinc-900" />
 				<div className="relative z-20 flex items-center justify-center font-medium">
 					<TextGradient className="mb-2 text-2xl md:text-4xl">
@@ -73,7 +73,7 @@ export default function LoginPage() {
 				</div>
 				{/* <ModeToggle className="fixed top-4 right-4" /> */}
 				{/* <br /> */}
-				<div className="relative z-20 my-auto flex flex-col items-center font-medium md:pr-40">
+				<div className="relative z-20 my-auto flex flex-col items-start px-2 font-medium md:pr-40 lg:items-center">
 					<p className="hidden text-md md:block md:text-2xl">
 						Welcome to Gather Groove. Sign up and step into a world where
 						watching videos becomes a social experience. Explore public rooms

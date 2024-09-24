@@ -49,10 +49,11 @@ const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 				) : (
 					<div className="w-[120px] max-w-[200px] bg-slate-400" />
 				)}
-				<div className="flex w-[60vw] flex-col justify-between py-2 pr-1 sm:w-[65vw] lg:w-[40vw]">
-					<p className="text-xs leading-tight sm:text-sm md:text-base">
+				<div className="flex w-[60vw] flex-col justify-between py-2 pr-1 sm:w-[69vw] lg:max-w-[430px]">
+					<p className="text-xs leading-tight sm:text-sm md:text-[15px]">
 						{trimString(
-							`${room.v_title} ${room.v_title} ${room.v_title}`,
+							// `${room.v_title} ${room.v_title} ${room.v_title}`,
+							room.v_title,
 							width <= screenBreakpoints.sm
 								? 48
 								: width < screenBreakpoints.md - 100
@@ -61,7 +62,12 @@ const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 						)}
 					</p>
 					<div className="flex">
-						<div className="no-scrollbar flex gap-1 overflow-x-scroll">
+						<div
+							className={cn(
+								"no-scrollbar flex gap-1 overflow-x-scroll",
+								activeMembersList.length > 5 && "pr-10",
+							)}
+						>
 							{/* <div className="flex gap-2 overflow-x-scroll"> */}
 							{activeMembersList?.map((m) => {
 								return (

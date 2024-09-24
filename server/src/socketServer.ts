@@ -45,7 +45,7 @@ export default function socketServer(io: CustomIO) {
 			const decoded = jwt.verify(token, process.env.JWT_PRIVATE_KEY || "") as {
 				_id: string;
 			};
-			if (decoded) {
+			if (decoded?._id) {
 				const forwarded = socket.handshake.headers["x-forwarded-for"] as string;
 				const ipAddress = forwarded
 					? forwarded.split(",")[0]
@@ -83,28 +83,29 @@ export default function socketServer(io: CustomIO) {
 				return;
 			}
 			socket.roomId = roomId;
-			await joinRoom(io, socket, roomId);
+			await joinRoom(roomId);
 		});
 		socket.on("giveLeader", async (targetMember) => {
 			if (!socket?.roomId) {
 				socket.emit("stateError", "roomId not found on socket");
 				return;
 			}
-			await giveLeader(io, socket, targetMember);
+			await giveLeader(targetMember);
 		});
 		socket.on("sendMessage", (msg) => {
-			if (!socket?.roomId) {
+			if (msg.length > 512) {
+				socket.emit("stateError", "message too long");
+				return;
+			}
+			const roomId = socket?.roomId;
+			if (!roomId) {
 				socket.emit("stateError", "roomId not found on socket");
 				return;
 			}
-			const msgData = {
-				msg,
-				sender: socket.user?._id as string,
-				time: Date.now(),
-				system: false,
-			};
-			io.in(socket?.roomId).emit("message", msgData);
+			// check types/index.ts for details
+			io.in(roomId).emit("message", [0, socket.user?._id!, Date.now(), msg]);
 		});
+
 		socket.on("mic", async (micstr) => {
 			if (!socket?.roomId) {
 				socket.emit("stateError", "roomId not found on socket");
@@ -112,299 +113,254 @@ export default function socketServer(io: CustomIO) {
 			}
 			// micstr = "targetmember,reqtype"
 			const [targetMember, reqtype] = micstr.split(",");
-			await enableDisableMic(io, socket, targetMember, reqtype);
+			await enableDisableMic(targetMember, reqtype);
 		});
 		socket.on("kickMember", async (targetMember) => {
 			if (!socket?.roomId) {
 				socket.emit("stateError", "roomId not found on socket");
 				return;
 			}
-			await kickMember(io, socket, targetMember);
+			await kickMember(targetMember);
 		});
 		socket.on("leaveRoom", async () => {
-			await makeMemberLeave(socket, io);
+			await makeMemberLeave();
 		});
 		socket.on("disconnect", async () => {
-			await makeMemberLeave(socket, io);
+			await makeMemberLeave();
 		});
-	});
-}
 
-export async function makeRoom(userId: string, url: string) {
-	// logger.info("makeRoom", "url: ", url);
-
-	const videoInfo = await ytInfoService(url);
-	if (!videoInfo) {
-		return null;
-	}
-	const userIDandMic = userId + ",1";
-	const room = await roomRepository.save({
-		privacy: 0, // public(0), private(1), friends(2)
-		playback: 0, // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
-		roomMic: false,
-		membersJoinedList: [userIDandMic],
-		activeMembersList: [userId],
-		activeMembersCount: 1,
-		countries: [],
-		kicked: [],
-		createdByMongoId: [String(userId)],
-		createdAt: Date.now(),
-		// searchKeywords: [videoInfo.title, user.handle, user.name].join(","),
-		v_isPlaying: false,
-		v_sourceUrl: url,
-		v_thumbnailUrl: videoInfo.thumbnail,
-		v_title: videoInfo.title,
-		v_totalDuration: 0,
-		v_playedTill: 0,
-	});
-	room.entityId = (room as any)[EntityId];
-	room.activeMembersList!.push("1");
-	return room;
-}
-
-export async function joinRoom(
-	io: CustomIO,
-	socket: CustomSocket,
-	roomId: string,
-): Promise<void> {
-	try {
-		logger.info(`joinRoom roomId: ${roomId}`);
-		const room = await roomRepository.fetch(roomId);
-		// logger.info("joinRoom", "room: ", room);
-		if (!room || !room.activeMembersList) {
-			socket.emit("stateError", "Room not found");
-			return;
+		// functions
+		async function joinRoom(roomId: string) {
+			try {
+				logger.info(`joinRoom roomId: ${roomId}`);
+				const room = await roomRepository.fetch(roomId);
+				// logger.info("joinRoom", "room: ", room);
+				if (!room || !room.activeMembersList) {
+					socket.emit("stateError", "Room not found");
+					return;
+				}
+				if (room.kicked.includes(socket.user?._id!)) {
+					socket.emit("stateError", "You have been kicked from this room");
+					return;
+				}
+				room.countries.push(socket.user?.country!);
+				// room.countries = [...new Set(room.countries)];
+				room.countries = Array.from(new Set(room.countries));
+				const { membersJoinedMongoIds } = splitMembersAndMicsArray(room);
+				if (membersJoinedMongoIds.includes(socket.user?._id!)) {
+					room.activeMembersList?.push(socket.user?._id!);
+					// room.activeMembersList = [...new Set(room.activeMembersList)];
+					room.activeMembersList = Array.from(new Set(room.activeMembersList));
+					room.activeMembersCount = room.activeMembersList?.length;
+					sortActiveMembers(room.membersJoinedList!, room?.activeMembersList);
+					await roomRepository.save(room);
+					sendActiveMemberListUpdate(room, roomId);
+					socket.join(roomId);
+					io.in(roomId).emit("message", [1, socket.user?._id!, Date.now(), ""]);
+					room.membersJoinedList = [];
+					socket.emit("roomDesc", room);
+				} else {
+					room.membersJoinedList?.push(
+						socket.user!._id + (room.roomMic ? ",1" : ",0"),
+					);
+					room.activeMembersList?.push(socket.user!._id);
+					// room.activeMembersList = [...new Set(room.activeMembersList)];
+					room.activeMembersList = Array.from(new Set(room.activeMembersList));
+					room.activeMembersCount = room.activeMembersList?.length;
+					sortActiveMembers(room?.membersJoinedList!, room?.activeMembersList!);
+					await roomRepository.save(room);
+					sendActiveMemberListUpdate(room, roomId);
+					socket.join(roomId);
+					io.in(roomId).emit("message", [1, socket.user?._id!, Date.now(), ""]);
+					room.membersJoinedList = [];
+					socket.emit("roomDesc", room);
+				}
+			} catch (error) {
+				logger.info(`joinRoom error while joining room ${error}`);
+				socket.emit("stateError", "couldn't join room");
+			}
 		}
-		if (room.kicked.includes(socket.user?._id!)) {
-			socket.emit("stateError", "You have been kicked from this room");
-			return;
-		}
-		room.countries.push(socket.user?.country!);
-		// room.countries = [...new Set(room.countries)];
-		room.countries = Array.from(new Set(room.countries));
-		const { membersJoinedMongoIds } = splitMembersAndMicsArray(room);
-		if (membersJoinedMongoIds.includes(socket.user?._id!)) {
-			room.activeMembersList?.push(socket.user?._id!);
-			// room.activeMembersList = [...new Set(room.activeMembersList)];
-			room.activeMembersList = Array.from(new Set(room.activeMembersList));
-			room.activeMembersCount = room.activeMembersList?.length;
-			sortActiveMembers(room.membersJoinedList!, room?.activeMembersList);
-			await roomRepository.save(room);
-			sendActiveMemberListUpdate(io, room, roomId);
-			socket.join(roomId);
-			io.in(roomId).emit("message", {
-				msg: "has joined",
-				sender: socket.user?._id!,
-				time: Date.now(),
-				system: true,
-			});
-			room.membersJoinedList = [];
-			socket.emit("roomDesc", room);
-		} else {
-			room.membersJoinedList?.push(
-				socket.user!._id + (room.roomMic ? ",1" : ",0"),
+
+		async function makeMemberLeave() {
+			const roomId = socket.roomId;
+			if (!roomId) {
+				socket.emit("stateError", "no roomId found");
+				return;
+			}
+			const room = await roomRepository.fetch(roomId);
+			if (!room.activeMembersList?.includes(socket.user?._id!)) {
+				return;
+			}
+			room.activeMembersList = room.activeMembersList?.filter(
+				(member) => member !== socket.user?._id,
 			);
-			room.activeMembersList?.push(socket.user!._id);
 			// room.activeMembersList = [...new Set(room.activeMembersList)];
 			room.activeMembersList = Array.from(new Set(room.activeMembersList));
 			room.activeMembersCount = room.activeMembersList?.length;
-			sortActiveMembers(room?.membersJoinedList!, room?.activeMembersList!);
-			await roomRepository.save(room);
-			sendActiveMemberListUpdate(io, room, roomId);
-			socket.join(roomId);
-			io.in(roomId).emit("message", {
-				msg: "has joined",
-				sender: socket.user?._id!,
-				time: Date.now(),
-				system: true,
+			room.membersJoinedList?.forEach((member, index) => {
+				if (member.startsWith(room.activeMembersList![0])) {
+					room.membersJoinedList![index] = member.split(",")[0] + ",1";
+				}
 			});
+			await roomRepository.save(room);
+			sendActiveMemberListUpdate(room, roomId);
+			const newLeader = await User.findById(room?.activeMembersList[0]);
+			const socketId = newLeader?.socketId;
+			if (socketId) {
+				io.to(socketId).emit("message", [4, newLeader._id, Date.now(), ""]);
+			}
+			io.in(roomId).emit("message", [2, socket.user?._id!, Date.now(), ""]);
+			socket.disconnect();
+		}
+
+		async function giveLeader(targetMemberMongoId: string) {
+			if (!socket.roomId) {
+				return socket.emit("stateError", "No roomId found");
+			}
+
+			const room = await roomRepository.fetch(socket.roomId);
+			if (!room) {
+				return socket.emit("stateError", "Room not found");
+			}
+
+			const activeMembers = room.activeMembersList || [];
+			if (activeMembers.length < 1) {
+				return socket.emit("stateError", "Empty room");
+			}
+
+			if (!activeMembers.includes(targetMemberMongoId)) {
+				return socket.emit("stateError", "Target member not in the room");
+			}
+
+			const currentLeader = activeMembers[0];
+			if (currentLeader !== socket.user?._id) {
+				return socket.emit("stateError", "You are not the leader");
+			}
+
+			transferLeadership(
+				room.membersJoinedList!,
+				currentLeader,
+				targetMemberMongoId,
+			);
+
+			sortActiveMembers(room.membersJoinedList!, room.activeMembersList!);
+			room.membersJoinedList?.forEach((member, index) => {
+				if (member.startsWith(room.activeMembersList![0])) {
+					room.membersJoinedList![index] = member.split(",")[0] + ",1";
+				}
+			});
+			await roomRepository.save(room);
+			// Notify all clients in the room about the updated room description
+			room.activeMembersList?.push(
+				splitMembersAndMicsArray(room).activeMembersMics.join(""),
+			);
 			room.membersJoinedList = [];
-			socket.emit("roomDesc", room);
-		}
-	} catch (error) {
-		logger.info(`joinRoom error while joining room ${error}`);
-		socket.emit("stateError", "couldn't join room");
-	}
-}
-
-export async function makeMemberLeave(
-	socket: CustomSocket,
-	io: CustomIO,
-): Promise<void> {
-	if (!socket.roomId) {
-		socket.emit("stateError", "no roomId found");
-		return;
-	}
-	const room = await roomRepository.fetch(socket.roomId);
-	if (!room.activeMembersList?.includes(socket.user?._id!)) {
-		return;
-	}
-	room.activeMembersList = room.activeMembersList?.filter(
-		(member) => member !== socket.user?._id,
-	);
-	// room.activeMembersList = [...new Set(room.activeMembersList)];
-	room.activeMembersList = Array.from(new Set(room.activeMembersList));
-	room.activeMembersCount = room.activeMembersList?.length;
-	room.membersJoinedList?.forEach((member, index) => {
-		if (member.startsWith(room.activeMembersList![0])) {
-			room.membersJoinedList![index] = member.split(",")[0] + ",1";
-		}
-	});
-	await roomRepository.save(room);
-	sendActiveMemberListUpdate(io, room, socket.roomId);
-	io.in(socket.roomId).emit("message", {
-		msg: "has left",
-		sender: socket.user?._id!,
-		time: Date.now(),
-		system: true,
-	});
-	socket.disconnect();
-}
-
-export async function giveLeader(
-	io: CustomIO,
-	socket: CustomSocket,
-	targetMemberMongoId: string,
-) {
-	if (!socket.roomId) {
-		return socket.emit("stateError", "No roomId found");
-	}
-
-	const room = await roomRepository.fetch(socket.roomId);
-	if (!room) {
-		return socket.emit("stateError", "Room not found");
-	}
-
-	const activeMembers = room.activeMembersList || [];
-	if (activeMembers.length < 1) {
-		return socket.emit("stateError", "Empty room");
-	}
-
-	if (!activeMembers.includes(targetMemberMongoId)) {
-		return socket.emit("stateError", "Target member not in the room");
-	}
-
-	const currentLeader = activeMembers[0];
-	if (currentLeader !== socket.user?._id) {
-		return socket.emit("stateError", "You are not the leader");
-	}
-
-	transferLeadership(
-		room.membersJoinedList!,
-		currentLeader,
-		targetMemberMongoId,
-	);
-
-	sortActiveMembers(room.membersJoinedList!, room.activeMembersList!);
-	room.membersJoinedList?.forEach((member, index) => {
-		if (member.startsWith(room.activeMembersList![0])) {
-			room.membersJoinedList![index] = member.split(",")[0] + ",1";
-		}
-	});
-	await roomRepository.save(room);
-	// Notify all clients in the room about the updated room description
-	room.activeMembersList?.push(
-		splitMembersAndMicsArray(room).activeMembersMics.join(""),
-	);
-	room.membersJoinedList = [];
-	io.in(socket.roomId).emit("roomDesc", room);
-}
-
-export async function kickMember(
-	io: CustomIO,
-	socket: CustomSocket,
-	targetMemberMongoId: string,
-) {
-	if (!socket.roomId) {
-		return socket.emit("stateError", "roomId not found on socket");
-	}
-	const room = await roomRepository.fetch(socket.roomId);
-	if (!room) {
-		return socket.emit("stateError", "Room not found");
-	}
-	const activeMembers = room.activeMembersList || [];
-	if (activeMembers.length < 1) {
-		return socket.emit("stateError", "Empty room");
-	}
-	if (!activeMembers.includes(targetMemberMongoId)) {
-		return socket.emit("stateError", "Target member not in the room");
-	}
-	const currentLeader = activeMembers[0];
-	if (currentLeader !== socket.user?._id) {
-		return socket.emit("stateError", "You are not the leader");
-	}
-	if (room.kicked.includes(targetMemberMongoId)) {
-		return socket.emit("stateError", "Member already kicked");
-	}
-	executeKickMember(room, targetMemberMongoId);
-	sortActiveMembers(room.membersJoinedList!, room.activeMembersList!);
-	await roomRepository.save(room);
-	const targetUser = await User.findById(targetMemberMongoId);
-	io.to(targetUser?.socketId!).emit("onKicked", "You have been kicked");
-	sendActiveMemberListUpdate(io, room, socket.roomId);
-	const message: Message = {
-		msg: `${targetUser?.name || ""} (@${targetUser?.handle}) has been kicked 🦶`,
-		sender: "", // socket.user?._id!,
-		time: Date.now(),
-		system: true,
-	};
-	io.in(socket.roomId).emit("message", message);
-}
-
-export async function enableDisableMic(
-	io: CustomIO,
-	socket: CustomSocket,
-	targetMember: string,
-	reqtype: string,
-) {
-	if (!socket.roomId) {
-		return socket.emit("stateError", "roomId not found");
-	}
-	const room = await roomRepository.fetch(socket.roomId);
-	if (!room) {
-		return socket.emit("stateError", "room not found");
-	}
-	if (!room.activeMembersList || room.activeMembersList.length < 1) {
-		return socket.emit("stateError", "Empty room");
-	}
-
-	if (!room.activeMembersList.includes(targetMember)) {
-		return socket.emit("stateError", "Target member not in the room");
-	}
-
-	if (room.activeMembersList[0] !== socket.user?._id) {
-		return socket.emit("stateError", "You are not the leader");
-	}
-	if (reqtype == "1") {
-		room.membersJoinedList!.forEach((id, i) => {
-			const [key, value] = id.split(",");
-			if (key === targetMember) {
-				room.membersJoinedList![i] = `${key},1`;
+			io.in(socket.roomId).emit("roomDesc", room);
+			const newLeader = await User.findById(room?.activeMembersList![0]);
+			const socketId = newLeader?.socketId;
+			if (socketId) {
+				io.to(socketId).emit("message", [4, newLeader._id, Date.now(), ""]);
 			}
-		});
-	} else if (reqtype == "0") {
-		room.membersJoinedList!.forEach((id, i) => {
-			const [key, value] = id.split(",");
-			if (key === targetMember) {
-				room.membersJoinedList![i] = `${key},0`;
+		}
+
+		async function kickMember(targetMemberMongoId: string) {
+			const roomId = socket.roomId;
+			if (!roomId) {
+				return socket.emit("stateError", "roomId not found on socket");
 			}
-		});
-	}
-	const targetUser = await User.findById(targetMember);
+			const room = await roomRepository.fetch(roomId);
+			if (!room) {
+				return socket.emit("stateError", "Room not found");
+			}
+			const activeMembers = room.activeMembersList || [];
+			if (activeMembers.length < 1) {
+				return socket.emit("stateError", "Empty room");
+			}
+			if (!activeMembers.includes(targetMemberMongoId)) {
+				return socket.emit("stateError", "Target member not in the room");
+			}
+			const currentLeader = activeMembers[0];
+			if (currentLeader !== socket.user?._id) {
+				return socket.emit("stateError", "You are not the leader");
+			}
+			if (room.kicked.includes(targetMemberMongoId)) {
+				return socket.emit("stateError", "Member already kicked");
+			}
+			executeKickMember(room, targetMemberMongoId);
+			sortActiveMembers(room.membersJoinedList!, room.activeMembersList!);
+			await roomRepository.save(room);
+			const targetUser = await User.findById(targetMemberMongoId);
+			io.to(targetUser?.socketId!).emit("onKicked", "You have been kicked");
+			sendActiveMemberListUpdate(room, roomId);
+			io.in(roomId).emit("message", [1, socket.user?._id!, Date.now(), ""]);
 
-	await roomRepository.save(room);
-	sendActiveMemberListUpdate(io, room, socket.roomId);
-	if (targetUser?.socketId) {
-		io.to(targetUser.socketId).emit("message", {
-			msg: reqtype == "0" ? "your mic disabled" : "your mic enabled",
-			sender: targetMember,
-			time: Date.now(),
-			system: true,
-		});
-	}
+			// const message: Message = {
+			// 	msg: `${targetUser?.name || ""} (@${targetUser?.handle}) has been kicked 🦶`,
+			// 	sender: "", // socket.user?._id!,
+			// 	time: Date.now(),
+			// 	system: true,
+			// };
+			io.in(roomId).emit("message", [3, socket.user?._id!, Date.now(), ""]);
+		}
+
+		async function enableDisableMic(targetMember: string, reqtype: string) {
+			const roomId = socket.roomId;
+			if (!roomId) {
+				return socket.emit("stateError", "roomId not found");
+			}
+			const room = await roomRepository.fetch(roomId);
+			if (!room) {
+				return socket.emit("stateError", "room not found");
+			}
+			if (!room.activeMembersList || room.activeMembersList.length < 1) {
+				return socket.emit("stateError", "Empty room");
+			}
+
+			if (!room.activeMembersList.includes(targetMember)) {
+				return socket.emit("stateError", "Target member not in the room");
+			}
+
+			if (room.activeMembersList[0] !== socket.user?._id) {
+				return socket.emit("stateError", "You are not the leader");
+			}
+			if (reqtype == "1") {
+				room.membersJoinedList!.forEach((id, i) => {
+					const [key, value] = id.split(",");
+					if (key === targetMember) {
+						room.membersJoinedList![i] = `${key},1`;
+					}
+				});
+			} else if (reqtype == "0") {
+				room.membersJoinedList!.forEach((id, i) => {
+					const [key, value] = id.split(",");
+					if (key === targetMember) {
+						room.membersJoinedList![i] = `${key},0`;
+					}
+				});
+			}
+			const targetUser = await User.findById(targetMember);
+
+			await roomRepository.save(room);
+			sendActiveMemberListUpdate(room, roomId);
+			if (targetUser?.socketId) {
+				reqtype == "0"
+					? io
+							.to(targetUser.socketId)
+							.emit("message", [6, socket.user?._id!, Date.now(), ""])
+					: io
+							.to(targetUser.socketId)
+							.emit("message", [5, socket.user?._id!, Date.now(), ""]);
+			}
+		}
+
+		function sendActiveMemberListUpdate(room: Room, roomId: string) {
+			room.activeMembersList?.push(
+				splitMembersAndMicsArray(room).activeMembersMics.join(""),
+			);
+			io.in(roomId).emit("activeMemberListUpdate", room.activeMembersList!);
+		}
+	});
 }
-
-
 const initializeSocketServer = async (io: CustomIO) => {
 	logger.info("initializeSocketServer, initializing socket server...");
 	io.disconnectSockets();
@@ -471,13 +427,6 @@ export function splitMembersAndMicsArray(input: Room) {
 	};
 }
 
-function sendActiveMemberListUpdate(io: CustomIO, room: Room, roomId: string) {
-	room.activeMembersList?.push(
-		splitMembersAndMicsArray(room).activeMembersMics.join(""),
-	);
-	io.in(roomId).emit("activeMemberListUpdate", room.activeMembersList!);
-}
-
 function transferLeadership(
 	membersJoinedList: string[],
 	leaderId: string,
@@ -526,6 +475,38 @@ function executeKickMember(room: Room, targetMemberId: string) {
 		(member) => member !== targetMemberId,
 	);
 	room.activeMembersCount = room.activeMembersList?.length || 0;
+	return room;
+}
+
+export async function makeRoom(userId: string, url: string) {
+	// logger.info("makeRoom", "url: ", url);
+
+	const videoInfo = await ytInfoService(url);
+	if (!videoInfo) {
+		return null;
+	}
+	const userIDandMic = userId + ",1";
+	const room = await roomRepository.save({
+		privacy: 0, // public(0), private(1), friends(2)
+		playback: 0, // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
+		roomMic: false,
+		membersJoinedList: [userIDandMic],
+		activeMembersList: [userId],
+		activeMembersCount: 1,
+		countries: [],
+		kicked: [],
+		createdByMongoId: [String(userId)],
+		createdAt: Date.now(),
+		// searchKeywords: [videoInfo.title, user.handle, user.name].join(","),
+		v_isPlaying: false,
+		v_sourceUrl: url,
+		v_thumbnailUrl: videoInfo.thumbnail,
+		v_title: videoInfo.title,
+		v_totalDuration: 0,
+		v_playedTill: 0,
+	});
+	room.entityId = (room as any)[EntityId];
+	room.activeMembersList!.push("1");
 	return room;
 }
 

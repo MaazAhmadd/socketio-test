@@ -11,6 +11,7 @@ import {
 	DrawerTrigger,
 } from "@/components/ui/drawer";
 import {
+	ResError,
 	useGetCurrentUser,
 	useUpdateUserHandle,
 	useUpdateUserName,
@@ -144,7 +145,7 @@ const UpdateHandle = () => {
 			</Label>
 			{updateUserHandleError ? (
 				<p className="text-red-400 text-sm">
-					{(updateUserHandleError as AxiosError).response?.data as string}
+					{updateUserHandleError.response?.data.error}
 				</p>
 			) : (
 				""
@@ -256,7 +257,7 @@ const UpdateProfilePic: React.FC = () => {
 				console.log(response.data);
 			} catch (error) {
 				setLoadingState(false);
-				if ((error as AxiosError).response?.data == "File is too large") {
+				if ((error as ResError).response?.data.error == "File is too large") {
 					setErrorState("File is too large. Max file size is 2MB");
 				} else {
 					setErrorState("Failed to update profile picture");

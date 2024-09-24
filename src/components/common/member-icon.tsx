@@ -17,7 +17,7 @@ const MemberIcon = ({
 	flag?: boolean;
 }) => {
 	const sizeMap = {
-		xs: "!size-[32px]",
+		xs: "!size-[36px]",
 		sm: "!size-[42px]",
 		md: "!size-[56px]",
 		lg: "!size-[65px]",
@@ -29,17 +29,19 @@ const MemberIcon = ({
 		lg: "top-[-17px] left-[2px] size-[26px] rotate-[-24deg]",
 	};
 	const flagClassesMap = {
-		xs: "top-[24px] left-[28px] size-4 opacity-80",
-		sm: "top-[24px] left-[28px] size-4 opacity-80",
-		md: "top-[33px] left-[36px] size-7 opacity-80",
-		lg: "top-[38px] left-[40px] size-10 opacity-80",
+		xs: "top-[24px] left-[28px] size-4",
+		sm: "top-[24px] left-[28px] size-4",
+		md: "top-[33px] left-[36px] size-7",
+		lg: "top-[38px] left-[40px] size-10",
 	};
 	const randomColor = getHexColorFromString(_id);
 	const { data: user } = useGetNormalUser(_id);
+
 	const { data: currentUser } = useGetCurrentUser();
 	const { activeMembersList } = useRoomStore((s) => ({
 		activeMembersList: s.roomData?.activeMembersList,
 	}));
+	
 	const isFriend =
 		currentUser?._id === _id || currentUser?.friends.includes(_id);
 
@@ -51,21 +53,23 @@ const MemberIcon = ({
 			{flag && user && (
 				<ReactCountryFlag
 					countryCode={user.country}
-					className={cn("absolute", flagClassesMap[_size])}
+					className={cn("absolute opacity-80", flagClassesMap[_size])}
 				/>
 			)}
 			{user &&
 				(user.pfp ? (
-					<img
-						src={user.pfp}
-						alt=""
-						className={cn(
-							"rounded-full border object-cover p-[2px]",
-							isFriend ? "border-primary" : "border-muted",
-							sizeMap[_size],
-							className,
-						)}
-					/>
+					<div className={cn(sizeMap[_size])}>
+						<img
+							src={user.pfp}
+							alt=""
+							className={cn(
+								"rounded-full border object-cover p-[2px]",
+								isFriend ? "border-primary" : "border-muted",
+								sizeMap[_size],
+								className,
+							)}
+						/>
+					</div>
 				) : (
 					<div
 						style={{

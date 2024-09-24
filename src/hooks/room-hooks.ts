@@ -55,9 +55,10 @@ export const useGetSearchResults = (
 };
 
 export const useMakeRoom = () => {
-	const { setRoomData, setMics } = useRoomStore((s) => ({
+	const { setRoomData, setMics, setLoading } = useRoomStore((s) => ({
 		setRoomData: s.setRoomData,
 		setMics: s.setMics,
+		setLoading: s.setLoading,
 	}));
 	const navigate = useNavigate();
 	const makeRoom = async (url: string) => {
@@ -82,6 +83,7 @@ export const useMakeRoom = () => {
 				const mics = data.activeMembersList?.pop();
 				setMics(mics!);
 				setRoomData(data);
+				setLoading(true);
 				navigate("/room/" + data?.entityId!);
 			}
 		},

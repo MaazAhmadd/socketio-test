@@ -3,7 +3,7 @@ interface ServerToClientEvents {
 	message: (data: Message) => void;
 	stateError: (data: string) => void;
 	activeMemberListUpdate: (data: string[]) => void;
-  onKicked: (data: string) => void;
+	onKicked: (data: string) => void;
 
 	// noArg: () => void;
 	// sendMessage: (value: string) => void;
@@ -96,12 +96,25 @@ interface Room {
 	[key: string]: any;
 }
 
-type Message = {
-	msg: string;
-	sender: string;
-	time: number;
-	system?: boolean;
-};
+type Message = [number, string, number, string];
+/*
+	[type,sender,time,msg]
+	type: 
+		chat-----------------(0)
+		join-----------------(1)
+		leave----------------(2)
+		kick-----------------(3)
+		leadership-----------(4)
+		micenable------------(5)
+		micdisable-----------(6)
+		roompublic-----------(7)
+		roomprivate----------(8)
+		roomfriends----------(9)
+		videovote-----------(10)
+		videojustplay-------(11)
+		videoleaderschoice--(12) 
+		playingvideochanged-(13)
+*/
 
 type CurrentUser = {
 	_id: string;

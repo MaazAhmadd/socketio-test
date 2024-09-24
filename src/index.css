@@ -73,7 +73,7 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-primary-foreground text-foreground;
+    @apply !bg-primary-foreground text-foreground;
   }
 }
 

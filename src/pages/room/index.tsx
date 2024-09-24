@@ -24,7 +24,14 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-
+// const RoomLoading = () => {
+// 	const { loading, } = useRoomStore((s) => ({ loading: s.loading, }));
+// 	return loading ? (
+// 		<div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/40 backdrop-blur-sm"></div>
+// 	) : (
+// 		null
+// 	);
+// };
 const RoomPage = () => {
 	const navigate = useNavigate();
 	const { id } = useParams();
@@ -42,7 +49,8 @@ const RoomPage = () => {
 	const { width } = useWindowSize();
 	const { exitFullscreen } = useFullscreen();
 
-	const { setConnected } = useGlobalStore((s) => ({
+	const { connected, setConnected } = useGlobalStore((s) => ({
+		connected: s.connected,
 		setConnected: s.setConnected,
 	}));
 
@@ -54,6 +62,8 @@ const RoomPage = () => {
 		setMessages,
 		setMutedMembers,
 		setMics,
+		loading,
+		setLoading,
 	} = useRoomStore((s) => ({
 		roomData: s.roomData,
 		setRoomData: s.setRoomData,
@@ -62,6 +72,8 @@ const RoomPage = () => {
 		setMessages: s.setMessages,
 		setMutedMembers: s.setMutedMembers,
 		setMics: s.setMics,
+		loading: s.loading,
+		setLoading: s.setLoading,
 	}));
 
 	console.log("[Room] roomData: ", roomData);
@@ -89,6 +101,7 @@ const RoomPage = () => {
 			console.log("[socket connect] connected");
 			socket.emit("joinRoom", id!);
 			setConnected(true);
+			setLoading(false);
 		}
 
 		function onDisconnect() {
@@ -96,6 +109,7 @@ const RoomPage = () => {
 			// setRoomData(null);
 			// setMessages([]);
 			setConnected(false);
+			setLoading(false);
 		}
 
 		function onStateError(err: string) {
@@ -172,6 +186,7 @@ const RoomPage = () => {
 	// }
 
 	if (!roomData) {
+		// setLoading(true);
 		return <></>;
 	}
 	// if (!connected) {
@@ -184,6 +199,7 @@ const RoomPage = () => {
 		setRoomData(null);
 		setMessages([]);
 		setMutedMembers([]);
+		setLoading(false);
 		socket.disconnect();
 		navigate("/home");
 	}
@@ -194,6 +210,7 @@ const RoomPage = () => {
 	const mobileView = width <= screenBreakpoints.md;
 	return (
 		<>
+			{loading&&<div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/40 backdrop-blur-sm"></div>}
 			<ConnectionStatus />
 			{mobileView ? (
 				<div>

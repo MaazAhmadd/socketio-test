@@ -5,7 +5,7 @@ import { AxiosError } from "axios";
 import { toast } from "react-hot-toast";
 import { CurrentUser, NormalUser } from "server/src/types";
 
-type ResError = AxiosError<{ error: string }>;
+export type ResError = AxiosError<{ error: string }>;
 export const useLoginUser = () => {
 	type FormData = Record<string, any>;
 	const loginUser = async (formData: FormData) => {

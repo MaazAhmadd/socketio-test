@@ -1,31 +1,27 @@
 import MemberIcon from "@/components/common/member-icon";
 import { Button } from "@/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 import { useGetCurrentUser, useGetNormalUser } from "@/hooks/user-hooks";
+import { useWindowSize } from "@/hooks/util-hooks";
 import { cn } from "@/lib/utils";
 import { socket } from "@/socket";
 import { useRoomStore } from "@/store";
 import { PaperPlaneIcon } from "@radix-ui/react-icons";
-import { useEffect, useState, useRef, ReactNode, FormEvent } from "react";
+import React, {
+	FormEvent,
+	ReactNode,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import { Message } from "server/src/types";
 import DialogWrapperPfpIcon from "./dialog-wrapper-pfp-icon";
-import { Textarea } from "@/components/ui/textarea";
 
 export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 	const scrollAreaRef = useRef<HTMLDivElement | null>(null);
-
+	const { messages } = useRoomStore((s) => ({ messages: s.messages }));
 	const { data: user } = useGetCurrentUser();
-	const { messages, activeMembersList } = useRoomStore((s) => ({
-		messages: s.messages,
-		activeMembersList: s.roomData?.activeMembersList,
-	}));
 
 	useEffect(() => {
 		if (scrollAreaRef.current) {
@@ -35,16 +31,25 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 		}
 	}, [messages.length]);
 
-	const renderMessage = (message: Message, index: number) => {
-		const isSystemMsg = Boolean(message.system);
-		const _message = (message.msg && splitLongWords(message.msg)) || "";
-		const isMe = message.sender === user?._id;
-		const isNewSender =
-			!messages[index - 1] || messages[index - 1].sender !== message.sender;
+	const ChatMessage = ({
+		message,
+		prevSender,
+	}: { message: Message; prevSender: string | null }) => {
+		const type = message[0];
+		const sender = message[1];
+		const time = message[2];
+		const msg = message[3];
+
+		const isSystemMsg = type !== 0;
+		// const _message = (msg && splitLongWords(msg)) || "";
+		const _message = msg || "";
+
+		const isMe = sender === user?._id;
+		const isNewSender = prevSender !== sender;
 
 		const messageClasses = cn(
 			"flex w-max items-start gap-1 px-1 py-0 text-sm mt-2",
-			isMe ? "ml-auto" : "",
+			isMe ? "ml-auto flex-row-reverse" : "",
 			isSystemMsg
 				? "py-1"
 				: isNewSender
@@ -62,40 +67,205 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 					: "max-w-[80vw]"
 				: "max-w-[24vw]",
 			_message.length < 100 && "mt-[7px]",
+			isSystemMsg && "border-muted-foreground/60",
 		);
-
-		return (
-			<div key={message.time} className={messageClasses}>
-				{!isMe && (isSystemMsg || isNewSender) && (
-					<DialogWrapperPfpIcon _id={message.sender}>
-						<MemberIcon _id={message.sender} crown />
-					</DialogWrapperPfpIcon>
-				)}
-				<div className={bubbleClasses}>
-					{((!isMe && isNewSender) || isSystemMsg) && (
-						<Name sender={message.sender} isSystemMsg={isSystemMsg} />
-					)}
-					{isSystemMsg && _message.includes("joined") && (
-						<span className="text-green-500">{_message}</span>
-					)}
-					{isSystemMsg && _message.includes("left") && (
-						<span className="text-red-500">{_message}</span>
-					)}
-					{isSystemMsg && _message.includes("mic") && (
-						<span className="">{_message}</span>
-					)}
-					{isSystemMsg && _message.includes("kick") && (
-						<span className="">{_message}</span>
-					)}
-					{!isSystemMsg && _message}
-				</div>
-				{isMe && (isSystemMsg || isNewSender) && (
-					<DialogWrapperPfpIcon _id={message.sender}>
-						<MemberIcon _id={message.sender} crown />
-					</DialogWrapperPfpIcon>
-				)}
-			</div>
-		);
+		/*
+			[type,sender,time,msg]
+			type: 
+				chat-----------------(0)
+				join-----------------(1)
+				leave----------------(2)
+				kick-----------------(3)
+				leadership-----------(4)
+				micenable------------(5)
+				micdisable-----------(6)
+				roompublic-----------(7)
+				roomprivate----------(8)
+				roomfriends----------(9)
+				videovote-----------(10)
+				videojustplay-------(11)
+				videoleaderschoice--(12) 
+				playingvideochanged-(13)
+*/
+		switch (type) {
+			case 0: // chat
+				return (
+					<div className={messageClasses}>
+						{isNewSender && (
+							<DialogWrapperPfpIcon _id={sender}>
+								<MemberIcon _id={sender} crown />
+							</DialogWrapperPfpIcon>
+						)}
+						<div className={bubbleClasses}>
+							<ChatText
+								text={_message}
+								name={
+									!isMe && isNewSender ? (
+										<Name sender={sender} isSystemMsg={isSystemMsg} />
+									) : null
+								}
+							/>
+						</div>
+					</div>
+				);
+			case 1: // join
+				return (
+					<div className={messageClasses}>
+						<DialogWrapperPfpIcon _id={sender}>
+							<MemberIcon _id={sender} crown />
+						</DialogWrapperPfpIcon>
+						<div className={bubbleClasses}>
+							<ChatText
+								text={"has joined"}
+								doLineBreakCheck={false}
+								// textClassName="text-green-500"
+								name={<Name sender={sender} isSystemMsg />}
+							/>
+						</div>
+					</div>
+				);
+			case 2: // leave
+				return (
+					<div className={messageClasses}>
+						<DialogWrapperPfpIcon _id={sender}>
+							<MemberIcon _id={sender} crown />
+						</DialogWrapperPfpIcon>
+						<div className={bubbleClasses}>
+							<ChatText
+								text={"has left"}
+								doLineBreakCheck={false}
+								// textClassName="text-red-500"
+								name={<Name sender={sender} isSystemMsg />}
+							/>
+						</div>
+					</div>
+				);
+			case 3: // kick
+				return (
+					<div className={messageClasses}>
+						<div className={bubbleClasses}>
+							<ChatText
+								text={"has been kicked 🦶"}
+								doLineBreakCheck={false}
+								name={<Name sender={sender} isSystemMsg />}
+							/>
+						</div>
+					</div>
+				);
+			case 4: // leadership
+				return (
+					<div className={messageClasses}>
+						<div className={bubbleClasses}>
+							<ChatText
+								text={"you're the leader now 👑"}
+								doLineBreakCheck={false}
+							/>
+						</div>
+					</div>
+				);
+			case 5: // micenable
+				return (
+					<div className={messageClasses}>
+						<div className={bubbleClasses}>
+							<ChatText
+								text={"your mic has been enabled"}
+								doLineBreakCheck={false}
+							// textClassName="text-green-500"
+							/>
+						</div>
+					</div>
+				);
+			case 6: // micdisable
+				return (
+					<div className={messageClasses}>
+						<div className={bubbleClasses}>
+							<ChatText
+								text={"your mic has been disabled"}
+								doLineBreakCheck={false}
+							// textClassName="text-red-500"
+							/>
+						</div>
+					</div>
+				);
+			case 7: // roompublic
+				return (
+					<div className={messageClasses}>
+						<div className={bubbleClasses}>
+							<ChatText
+								text={"room is public, anyone can join this room"}
+								doLineBreakCheck={false}
+							/>
+						</div>
+					</div>
+				);
+			case 8: // roomprivate
+				return (
+					<div className={messageClasses}>
+						<div className={bubbleClasses}>
+							<ChatText
+								text={"room is private, invited people can join"}
+								doLineBreakCheck={false}
+							/>
+						</div>
+					</div>
+				);
+			case 9: // roomfriends
+				return (
+					<div className={messageClasses}>
+						<div className={bubbleClasses}>
+							<ChatText
+								text={
+									"room is friends only, friends or invited people can join"
+								}
+								doLineBreakCheck={false}
+							/>
+						</div>
+					</div>
+				);
+			case 10: // videovote
+				return (
+					<div className={messageClasses}>
+						<div className={bubbleClasses}>
+							<ChatText text={"video voting is on"} doLineBreakCheck={false} />
+						</div>
+					</div>
+				);
+			case 11: // videojustplay
+				return (
+					<div className={messageClasses}>
+						<div className={bubbleClasses}>
+							<ChatText
+								text={"videos will just play without waiting for votes"}
+								doLineBreakCheck={false}
+							/>
+						</div>
+					</div>
+				);
+			case 12: // videoleaderschoice
+				return (
+					<div className={messageClasses}>
+						<div className={bubbleClasses}>
+							<ChatText
+								text={"video selection set to leader's choice only"}
+								doLineBreakCheck={false}
+							/>
+						</div>
+					</div>
+				);
+			case 13: // playingvideochanged
+				return (
+					<div className={messageClasses}>
+						<div className={bubbleClasses}>
+							<ChatText
+								text={"Now playing: " + _message}
+								doLineBreakCheck={false}
+							/>
+						</div>
+					</div>
+				);
+			default: // chat
+				return <></>;
+		}
 	};
 
 	return (
@@ -108,40 +278,88 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 					screen === "mobile" ? "h-[56vh]" : "h-[89vh]",
 				)}
 			>
-				<div className={cn()}>{messages.map(renderMessage)}</div>
+				<div className={cn()}>
+					{messages.map((m, i, a) => (
+						<ChatMessage
+							message={m}
+							prevSender={i === 0 ? null : String(a[i - 1][1])}
+							key={m[2]}
+						/>
+					))}
+				</div>
 			</ScrollArea>
-			<ChatInput />
+			<ChatInput screen={screen} />
 		</>
 	);
 }
-
-const ChatInput = () => {
+function ChatText({
+	text,
+	name = null,
+	doLineBreakCheck = true,
+	textClassName,
+}: {
+	text: string;
+	name?: ReactNode | null;
+	doLineBreakCheck?: boolean;
+	textClassName?: string;
+}) {
+	if (doLineBreakCheck) {
+		const filteredText = text.trim().replace(/\n+/g, "\n");
+		const parts = filteredText.split("\n");
+		const limitedParts = parts.slice(0, 50);
+		const remainingParts = parts.slice(50).join(" ");
+		const finalParts = [...limitedParts, remainingParts];
+		const textWithBreaks = finalParts.map((part, index) => (
+			<React.Fragment key={index}>
+				{part}
+				{index < finalParts.length - 1 && <br />}
+			</React.Fragment>
+		));
+		return (
+			<div>
+				{name} <span className={cn('break-words', textClassName)}>{textWithBreaks}</span>
+			</div>
+		);
+	}
+	return (
+		<div>
+			{name} <span className={cn(textClassName)}>{text}</span>
+		</div>
+	);
+}
+const ChatInput = ({ screen }: { screen: "mobile" | "desktop" }) => {
 	const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
 	const enterButtonRef = useRef<HTMLButtonElement | null>(null);
-	const [heightInc, setHeightInc] = useState(0);
 	const [input, setInput] = useState("");
+	const { width } = useWindowSize();
+
 	const handleSendMessage = (e: FormEvent) => {
 		e.preventDefault();
 		if (input.trim().length === 0) return;
 		socket.emit("sendMessage", input);
 		setInput("");
-		setHeightInc(0);
 		if (textAreaRef.current) {
 			textAreaRef.current.focus();
 			textAreaRef.current.style.height = "40px";
 		}
 	};
-	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-		if (event.shiftKey && event.key === "Enter") {
-			event.preventDefault();
-			if (input.trim().length === 0) return;
-			socket.emit("sendMessage", input);
-			setInput("");
-			setHeightInc(0);
-			if (textAreaRef.current) {
-				textAreaRef.current.focus();
-				textAreaRef.current.style.height = "40px";
-			}
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+		if (screen === "mobile" && e.shiftKey && e.key === "Enter") {
+			handleSendMessage(e);
+		} else if (screen === "desktop" && e.shiftKey && e.key === "Enter") {
+		} else if (screen === "desktop" && e.key === "Enter") {
+			handleSendMessage(e);
+		}
+	};
+	const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+		const value = e.target.value;
+		setInput(value.slice(0, 512));
+		if (textAreaRef.current) {
+			const newLines = (value.match(/\n/g) || []).length;
+			const maxLines = 10;
+			const baseHeight = 40;
+			const lineHeight = 20;
+			textAreaRef.current.style.height = `${baseHeight + Math.min(newLines, maxLines) * lineHeight}px`;
 		}
 	};
 	return (
@@ -149,38 +367,22 @@ const ChatInput = () => {
 			className="fixed bottom-0 w-full bg-primary-foreground py-2"
 			onKeyDown={handleKeyDown}
 		>
-			<div className="flex w-full items-center space-x-[10px] px-1">
+			<div className="flex w-full items-center space-x-[10px] px-1 lg:w-[30vw]">
 				<Textarea
 					style={{ resize: "none" }}
 					ref={textAreaRef}
 					id="message"
 					placeholder="Type your message..."
-					className="h-10 max-h-min min-h-min"
+					className="!max-h-[30vh] no-scrollbar h-[40px] min-h-[40px]"
 					autoComplete="off"
 					value={input}
 					aria-autocomplete="none"
-					onChange={(e) => {
-						const value = e.target.value;
-						setInput(value);
-						const isNewLineChar = value[value.length - 1] === "\n";
-
-						if (isNewLineChar) {
-							setHeightInc((v) => v + 1);
-						}
-						if (textAreaRef.current) {
-							if (heightInc === 1) {
-								textAreaRef.current.style.height = "60px";
-							}
-							if (heightInc === 10) {
-								textAreaRef.current.style.height = "120px";
-							}
-						}
-					}}
+					onChange={onChange}
 				/>
 				<Button
 					ref={enterButtonRef}
 					size="icon"
-					disabled={input.trim().length === 0}
+					// disabled={input.trim().length === 0}
 					onClick={handleSendMessage}
 				>
 					<PaperPlaneIcon className="h-4 w-4" />
@@ -214,18 +416,15 @@ const Name = ({
 	);
 };
 
-function splitLongWords(inputString: string, length = 50) {
-	return inputString
-		.split(" ")
-		.map((word) => {
-			if (word.length > length) {
-				const chunks = [];
-				for (let i = 0; i < word.length; i += length) {
-					chunks.push(word.slice(i, i + length));
-				}
-				return chunks.join(" ");
+function splitLongWords(inputString: string, length = 50): string {
+	return inputString.replace(/\S+/g, (word) => {
+		if (word.length > length) {
+			let result = "";
+			for (let i = 0; i < word.length; i += length) {
+				result += word.slice(i, i + length) + " ";
 			}
-			return word;
-		})
-		.join(" ");
+			return result.trim();
+		}
+		return word;
+	});
 }
