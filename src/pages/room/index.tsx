@@ -24,6 +24,8 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import VideoPlayer from "./video-player";
+import { HiMiniXMark } from "react-icons/hi2";
 // const RoomLoading = () => {
 // 	const { loading, } = useRoomStore((s) => ({ loading: s.loading, }));
 // 	return loading ? (
@@ -47,7 +49,7 @@ const RoomPage = () => {
 	// console.log("[Room] room: ", room, isRoomLoading);
 
 	const { width } = useWindowSize();
-	const { exitFullscreen } = useFullscreen();
+	const { isFullscreen, exitFullscreen } = useFullscreen();
 
 	const { connected, setConnected } = useGlobalStore((s) => ({
 		connected: s.connected,
@@ -173,7 +175,9 @@ const RoomPage = () => {
 			socket.off("connect_error", onConnectError);
 			socket.off("message", onMessage);
 			socket.off("onKicked", onGotKicked);
-			exitFullscreen();
+			if (isFullscreen) {
+				exitFullscreen();
+			}
 		};
 	}, []);
 
@@ -204,40 +208,43 @@ const RoomPage = () => {
 		navigate("/home");
 	}
 
-	// mobile videoplayer height 33vh
-	// desktop chat width 30vw
-	// turn to svh if caused issue on mobile
+	// mobile videoplayer height 33svh
+	// desktop chat width 30svw
+	// turn to ssvh if caused issue on mobile
 	const mobileView = width <= screenBreakpoints.md;
 	return (
 		<>
-			{loading&&<div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/40 backdrop-blur-sm"></div>}
+			{loading && <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/40 backdrop-blur-sm"></div>}
 			<ConnectionStatus />
 			{mobileView ? (
 				<div>
-					<div className="h-[5vh]">
+					<div className="h-[100svh]">
+						<Chat screen={"mobile"} />
+					</div>
+
+					<div className="fixed top-[40px] w-full">
+						<VideoPlayer />
+					</div>
+					<div className="fixed top-0 h-[40px] w-full border-muted border-b bg-primary-foreground">
 						<RoomButtons
 							kickDialogRef={kickDialogRef}
 							onLeaveRoom={onLeaveRoom}
 						/>
 					</div>
-					<div className="h-[33vh] bg-red-800">videoplayer</div>
-					<div className="h-[62vh]">
-						<Chat screen={"mobile"} />
-					</div>
 				</div>
 			) : (
 				<div className="flex">
-					<div className="w-[70vw]">
-						<div className="h-[80vh] bg-red-800">videoplayer</div>
+					<div className="w-[70svw]">
+						<div className="h-[80svh] bg-red-800">videoplayer</div>
 					</div>
-					<div className="w-[30vw]">
-						<div className=" h-[5vh]">
+					<div className="w-[30svw]">
+						<div className=" h-[5svh]">
 							<RoomButtons
 								kickDialogRef={kickDialogRef}
 								onLeaveRoom={onLeaveRoom}
 							/>
 						</div>
-						<div className="h-[95vh]">
+						<div className="h-[95svh]">
 							<Chat screen={"desktop"} />
 						</div>
 					</div>
@@ -257,9 +264,9 @@ const RoomButtons = ({
 	return (
 		<>
 			<KickDialogBox kickDialogRef={kickDialogRef} />
-			<div className="flex h-[5vh] items-center justify-between px-2">
-				<Button variant={"destructive"} onClick={() => onLeaveRoom()}>
-					Leave
+			<div className="flex items-center justify-between px-2">
+				<Button variant={"ghost"} onClick={() => onLeaveRoom()}>
+					<HiMiniXMark className="size-7" />
 				</Button>
 				<RoomSettingsDrawer />
 				<TextGradient

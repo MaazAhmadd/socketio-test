@@ -54,10 +54,10 @@ const HomePage = () => {
 		<>
 			<SettingsDrawer />
 			<FriendsDrawer />
-			<div className="h-[100vh] bg-primary-foreground md:container md:py-6">
-				<div className="flex h-[100vh] flex-col items-center justify-between md:flex-row">
+			<div className="h-[100svh] bg-primary-foreground md:container md:py-6">
+				<div className="flex h-[100svh] flex-col items-center justify-between md:flex-row">
 					<LeftText />
-					<div className=" w-[100vw] pt-2 md:w-[80vw] md:px-4 md:pt-0 lg:max-w-[650px]">
+					<div className=" w-[100svw] pt-2 md:w-[80svw] md:px-4 md:pt-0 lg:max-w-[650px]">
 						<div className="mb-4 px-5">
 							<Label className="sr-only" htmlFor="searchrooms">
 								Search Rooms
@@ -169,7 +169,7 @@ const RoomList = ({
 				viewportRef={scrollAreaRef}
 				className="border-2 border-muted bg-primary-foreground "
 			>
-				<div className="h-[75vh]">
+				<div className="h-[75svh]">
 					<Spinner />
 				</div>
 			</ScrollArea>
@@ -182,7 +182,7 @@ const RoomList = ({
 			className="border-2 border-muted bg-primary-foreground "
 		>
 			{/* <div className="bg-muted space-y-4 rounded-b-lg "> */}
-			<div className="h-[75vh] px-1 lg:px-2">
+			<div className="h-[75svh] px-1 lg:px-2">
 				<ul>
 					{!rooms && (
 						<p className="mx-4 scroll-m-20 p-4 pb-2 text-center font-semibold text-lg text-primary xs:text-xl tracking-tight transition-colors first:mt-0 md:mt-1 md:text-pretty md:text-2xl">
@@ -252,7 +252,7 @@ const CreateRoom = () => {
 
 
 	return (
-		<div className="h-[75vh] border-2 border-muted bg-primary-foreground">
+		<div className="h-[75svh] border-2 border-muted bg-primary-foreground">
 			<p className="mx-4 scroll-m-20 p-4 pb-2 text-center font-semibold text-lg text-primary xs:text-xl tracking-tight transition-colors first:mt-0 md:mt-1 md:text-pretty md:text-2xl">
 				Create Room
 			</p>
@@ -484,7 +484,7 @@ export function LikedVideosDialog() {
 
 export const Spinner = ({ className }: { className?: string }) => {
 	return (
-		<div className={cn("flex h-[20vh] items-center justify-center", className)}>
+		<div className={cn("flex h-[20svh] items-center justify-center", className)}>
 			<div
 				className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-current border-e-transparent border-solid align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
 			// role="status"

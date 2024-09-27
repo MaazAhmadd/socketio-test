@@ -63,7 +63,7 @@ export default function LoginPage() {
 	};
 
 	return (
-		<div className="container relative grid flex-col items-center justify-center gap-4 md:h-[100vh] md:gap-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
+		<div className="container relative grid flex-col items-center justify-center gap-4 md:h-[100svh] md:gap-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
 			<div className="relative flex h-full flex-col bg-muted py-4 text-white md:p-10 dark:border-r">
 				<div className="full-bleed absolute inset-0 bg-zinc-900" />
 				<div className="relative z-20 flex items-center justify-center font-medium">

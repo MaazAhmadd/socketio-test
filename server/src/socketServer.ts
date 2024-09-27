@@ -14,6 +14,7 @@ import {
 	ServerToClientEvents,
 } from "./types";
 import { logger } from "./logger";
+import mongoose from "mongoose";
 
 // const memberRepository = redisSchemas.member;
 const roomRepository = redisSchemas.room;
@@ -45,7 +46,7 @@ export default function socketServer(io: CustomIO) {
 			const decoded = jwt.verify(token, process.env.JWT_PRIVATE_KEY || "") as {
 				_id: string;
 			};
-			if (decoded?._id) {
+			if (mongoose.isValidObjectId(decoded?._id)) {
 				const forwarded = socket.handshake.headers["x-forwarded-for"] as string;
 				const ipAddress = forwarded
 					? forwarded.split(",")[0]
@@ -107,6 +108,10 @@ export default function socketServer(io: CustomIO) {
 		});
 
 		socket.on("mic", async (micstr) => {
+			if (!micstr) {
+				socket.emit("stateError", "micstr not provided");
+				return;
+			}
 			if (!socket?.roomId) {
 				socket.emit("stateError", "roomId not found on socket");
 				return;
@@ -116,6 +121,10 @@ export default function socketServer(io: CustomIO) {
 			await enableDisableMic(targetMember, reqtype);
 		});
 		socket.on("kickMember", async (targetMember) => {
+			if (!targetMember) {
+				socket.emit("stateError", "targetMember not provided");
+				return;
+			}
 			if (!socket?.roomId) {
 				socket.emit("stateError", "roomId not found on socket");
 				return;
@@ -203,13 +212,15 @@ export default function socketServer(io: CustomIO) {
 				}
 			});
 			await roomRepository.save(room);
-			sendActiveMemberListUpdate(room, roomId);
-			const newLeader = await User.findById(room?.activeMembersList[0]);
-			const socketId = newLeader?.socketId;
-			if (socketId) {
-				io.to(socketId).emit("message", [4, newLeader._id, Date.now(), ""]);
+			if (room?.activeMembersList.length > 0) {
+				sendActiveMemberListUpdate(room, roomId);
+				const newLeader = await User.findById(room?.activeMembersList[0]);
+				const socketId = newLeader?.socketId;
+				if (socketId) {
+					io.to(socketId).emit("message", [4, newLeader._id, Date.now(), ""]);
+				}
+				io.in(roomId).emit("message", [2, socket.user?._id!, Date.now(), ""]);
 			}
-			io.in(roomId).emit("message", [2, socket.user?._id!, Date.now(), ""]);
 			socket.disconnect();
 		}
 
@@ -293,13 +304,6 @@ export default function socketServer(io: CustomIO) {
 			io.to(targetUser?.socketId!).emit("onKicked", "You have been kicked");
 			sendActiveMemberListUpdate(room, roomId);
 			io.in(roomId).emit("message", [1, socket.user?._id!, Date.now(), ""]);
-
-			// const message: Message = {
-			// 	msg: `${targetUser?.name || ""} (@${targetUser?.handle}) has been kicked 🦶`,
-			// 	sender: "", // socket.user?._id!,
-			// 	time: Date.now(),
-			// 	system: true,
-			// };
 			io.in(roomId).emit("message", [3, socket.user?._id!, Date.now(), ""]);
 		}
 

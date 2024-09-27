@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 export const Spinner = ({ className }: { className?: string }) => {
 	return (
-		<div className={cn("flex h-[20vh] items-center justify-center", className)}>
+		<div className={cn("flex h-[20svh] items-center justify-center", className)}>
 			<div
 				className="text-surface inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
 				role="status"

@@ -130,7 +130,7 @@ export function CardsChat() {
         </CardHeader>
         <CardContent>
           <ScrollArea viewportRef={scrollAreaRef}>
-            <div className="space-y-4 pr-4 max-h-[60vh]">
+            <div className="space-y-4 pr-4 max-h-[60svh]">
               {messages.map((message, index) => (
                 <div
                   key={index}

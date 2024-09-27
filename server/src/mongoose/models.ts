@@ -73,7 +73,6 @@ const YtVideoSchema: Schema = new Schema({
 	duration: { type: String },
 	updatedAt: { type: Date },
 });
-
 const User = mongoose.model<IUser>("User", UserSchema);
 const YtVideo = mongoose.model<IYtVideo>("YtVideo", YtVideoSchema);
 

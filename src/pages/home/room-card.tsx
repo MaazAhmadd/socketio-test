@@ -34,7 +34,7 @@ const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 	return (
 		<li
 			className={cn(
-				"mx-auto mt-2 max-w-[95vw] cursor-pointer overflow-hidden rounded-xl border border-background bg-background/50 hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground",
+				"mx-auto mt-2 max-w-[95svw] cursor-pointer overflow-hidden rounded-xl border border-background bg-background/50 hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground",
 				className,
 			)}
 			onClick={onClick}
@@ -49,7 +49,7 @@ const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 				) : (
 					<div className="w-[120px] max-w-[200px] bg-slate-400" />
 				)}
-				<div className="flex w-[60vw] flex-col justify-between py-2 pr-1 sm:w-[69vw] lg:max-w-[430px]">
+				<div className="flex w-[60svw] flex-col justify-between py-2 pr-1 sm:w-[69svw] lg:max-w-[430px]">
 					<p className="text-xs leading-tight sm:text-sm md:text-[15px]">
 						{trimString(
 							// `${room.v_title} ${room.v_title} ${room.v_title}`,
@@ -57,8 +57,8 @@ const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 							width <= screenBreakpoints.sm
 								? 48
 								: width < screenBreakpoints.md - 100
-									? 64
-									: 128,
+									? 54
+									: 96,
 						)}
 					</p>
 					<div className="flex">

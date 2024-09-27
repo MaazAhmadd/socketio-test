@@ -27,17 +27,17 @@ export function RoomSettingsDrawer() {
 					<GearIcon className="h-4 w-4 md:h-6 md:w-6" />
 				</Button>
 			</DrawerTrigger>
-			<DrawerContent className="right-0 mt-0 mb-24 flex h-min max-h-[50vh] w-[100vw] flex-col bg-background/80 md:w-[30vw]">
+			<DrawerContent className="right-0 mt-0 mb-24 flex h-min max-h-[50svh] w-[100svw] flex-col bg-background/80 md:w-[30svw]">
 				{/* horizontal */}
 				{/* <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted " /> */}
 				{/* vertical */}
 				<div className="">
-					<DrawerHeader className="h-[7vh] py-0">
+					<DrawerHeader className="h-[7svh] py-0">
 						<DrawerTitle className="my-2 text-center text-xl md:text-2xl">
 							Settings
 						</DrawerTitle>
 					</DrawerHeader>
-					<div className="flex w-[85vw] flex-col gap-2 rounded-md bg-muted/40 px-8 py-4 md:w-[28vw]">
+					<div className="flex w-[85svw] flex-col gap-2 rounded-md bg-muted/40 px-8 py-4 md:w-[28svw]">
 						<div className="flex items-center justify-between">
 							<DrawerDescription>Room Privacy:</DrawerDescription>
 							<SelectRoomPrivacy />

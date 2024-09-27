@@ -59,7 +59,7 @@ export function RoomMembersDrawer() {
 						<PersonIcon className="h-4 w-4 md:h-6 md:w-6" />
 					</Button>
 				</DrawerTrigger>
-				<DrawerContent className="right-0 mr-0 ml-24 max-w-[80vw] bg-background/80">
+				<DrawerContent className="right-0 mr-0 ml-24 max-w-[80svw] bg-background/80">
 					<div className="flex h-full flex-col items-center justify-between ">
 						<div></div>
 						<DrawerClose asChild>
@@ -68,14 +68,14 @@ export function RoomMembersDrawer() {
 						</DrawerClose>
 						<div></div>
 					</div>
-					<div className="h-full w-[80vw] max-w-sm pr-1 md:max-w-[27vw]">
+					<div className="h-full w-[80svw] max-w-sm pr-1 md:max-w-[27svw]">
 						{/* <DrawerHeader>
             <DrawerTitle className="my-2 pr-4 text-center text-xl md:text-2xl">
               Members
             </DrawerTitle>
           </DrawerHeader> */}
 						<ScrollArea viewportRef={scrollAreaRef} className="">
-							<div className="mt-6 h-[95vh]">
+							<div className="mt-6 h-[95svh]">
 								{activeMembersList?.map((m) => {
 									return <RoomMember _id={m} key={m} />;
 								})}

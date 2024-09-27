@@ -34,14 +34,14 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 	const ChatMessage = ({
 		message,
 		prevSender,
-	}: { message: Message; prevSender: string | null }) => {
+		isLast
+	}: { message: Message; prevSender: string | null, isLast: boolean }) => {
 		const type = message[0];
 		const sender = message[1];
 		const time = message[2];
 		const msg = message[3];
 
 		const isSystemMsg = type !== 0;
-		// const _message = (msg && splitLongWords(msg)) || "";
 		const _message = msg || "";
 
 		const isMe = sender === user?._id;
@@ -49,7 +49,8 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 
 		const messageClasses = cn(
 			"flex w-max items-start gap-1 px-1 py-0 text-sm mt-2",
-			isMe ? "ml-auto flex-row-reverse" : "",
+			isLast && "mb-[60px]",
+			isMe && "ml-auto flex-row-reverse",
 			isSystemMsg
 				? "py-1"
 				: isNewSender
@@ -63,9 +64,9 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 			"rounded-md border border-muted bg-background/20 px-2 py-1",
 			screen === "mobile"
 				? isMe
-					? "max-w-[75vw]"
-					: "max-w-[80vw]"
-				: "max-w-[24vw]",
+					? "max-w-[75svw]"
+					: "max-w-[80svw]"
+				: "max-w-[24svw]",
 			_message.length < 100 && "mt-[7px]",
 			isSystemMsg && "border-muted-foreground/60",
 		);
@@ -274,16 +275,20 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 				hideScrollBar
 				viewportRef={scrollAreaRef}
 				className={cn(
-					"bg-primary-foreground pb-5",
-					screen === "mobile" ? "h-[56vh]" : "h-[89vh]",
+					"bg-primary-foreground",
+					screen === "mobile" ? "h-[100svh]" : "h-[89svh]",
 				)}
 			>
-				<div className={cn()}>
+				<div className={cn("flex flex-col justify-end")}>
+					<div className="" style={{
+						height: `max(calc(calc(100svh - 60px) - ${messages.length * 50}px), 272px)`,
+					}}></div>
 					{messages.map((m, i, a) => (
 						<ChatMessage
 							message={m}
 							prevSender={i === 0 ? null : String(a[i - 1][1])}
 							key={m[2]}
+							isLast={i === a.length - 1}
 						/>
 					))}
 				</div>
@@ -364,16 +369,16 @@ const ChatInput = ({ screen }: { screen: "mobile" | "desktop" }) => {
 	};
 	return (
 		<div
-			className="fixed bottom-0 w-full bg-primary-foreground py-2"
+			className="fixed bottom-0 w-full bg-transparent py-2"
 			onKeyDown={handleKeyDown}
 		>
-			<div className="flex w-full items-center space-x-[10px] px-1 lg:w-[30vw]">
+			<div className="flex w-full items-center space-x-[10px] px-1 lg:w-[30svw]">
 				<Textarea
 					style={{ resize: "none" }}
 					ref={textAreaRef}
 					id="message"
 					placeholder="Type your message..."
-					className="!max-h-[30vh] no-scrollbar h-[40px] min-h-[40px]"
+					className="!max-h-[30svh] no-scrollbar h-[40px] min-h-[40px] bg-primary-foreground"
 					autoComplete="off"
 					value={input}
 					aria-autocomplete="none"

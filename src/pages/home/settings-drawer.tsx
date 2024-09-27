@@ -47,11 +47,11 @@ export function SettingsDrawer() {
 					<GearIcon className="size-[18px] md:size-6" />
 				</Button>
 			</DrawerTrigger>
-			<DrawerContent className="mr-24 ml-0 max-w-[85vw] bg-background/80">
+			<DrawerContent className="mr-24 ml-0 max-w-[85svw] bg-background/80">
 				{/* horizontal */}
 				{/* <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted " /> */}
 				{/* vertical */}
-				<div className="h-full w-[80vw] max-w-sm pl-5 md:max-w-md">
+				<div className="h-full w-[80svw] max-w-sm pl-5 md:max-w-md">
 					{/* <div className="flex justify-between"> */}
 					{/* <div></div> */}
 					<DrawerHeader>

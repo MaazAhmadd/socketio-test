@@ -11,7 +11,7 @@ export function AccordionDemo() {
       {/* <Accordion type="multiple"  className="w-full pr-4"> */}
       <AccordionItem value="item-1">
         <AccordionTrigger>Friends</AccordionTrigger>
-        <AccordionContent className="h-[50vh]">
+        <AccordionContent className="h-[50svh]">
           All Friend here...
         </AccordionContent>
       </AccordionItem>

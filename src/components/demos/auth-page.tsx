@@ -80,7 +80,7 @@ export default function AuthenticationPage() {
 
 	return (
 		<>
-			<div className="container relative  grid h-[100vh] flex-col items-center justify-center gap-4 md:gap-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
+			<div className="container relative  grid h-[100svh] flex-col items-center justify-center gap-4 md:gap-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
 				<div className="relative  flex h-full flex-col bg-muted text-white dark:border-r max-sm:py-4 md:p-10">
 					<div className="full-bleed absolute inset-0 bg-zinc-900" />
 					<div className="relative z-20 flex items-center  font-medium">

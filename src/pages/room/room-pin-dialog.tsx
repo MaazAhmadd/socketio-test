@@ -67,7 +67,7 @@ export function RoomPinDialog() {
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-[425px]">
-				<div className="h-[75vh] border-2 border-muted bg-primary-foreground">
+				<div className="h-[75svh] border-2 border-muted bg-primary-foreground">
 					<p className="mx-4 scroll-m-20 p-4 pb-2 text-center font-semibold text-lg text-primary xs:text-xl tracking-tight transition-colors first:mt-0 md:mt-1 md:text-pretty md:text-2xl">
 						Pin in Queue
 					</p>
@@ -127,7 +127,7 @@ export function RoomPinDialog() {
 							</p>
 						)}
 						{isFetchingSearchResults && (
-							<div className="flex h-[20vh] items-center justify-center">
+							<div className="flex h-[20svh] items-center justify-center">
 								<div
 									className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-current border-e-transparent border-solid align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
 									// role="status"

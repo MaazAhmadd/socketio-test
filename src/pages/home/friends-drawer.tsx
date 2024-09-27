@@ -28,7 +28,7 @@ export function FriendsDrawer() {
 					<PersonIcon className="size-[18px] md:size-5" />
 				</Button>
 			</DrawerTrigger>
-			<DrawerContent className="right-0 mr-0 ml-24 max-w-[80vw] bg-background/80">
+			<DrawerContent className="right-0 mr-0 ml-24 max-w-[80svw] bg-background/80">
 				<div className="flex h-full flex-col items-center justify-between ">
 					<DrawerClose asChild>
 						<Cross1Icon className="mt-5 ml-5 h-6 w-6 cursor-pointer md:h-8 md:w-8" />
@@ -50,7 +50,7 @@ export function FriendsDrawer() {
 				{/* horizontal */}
 				{/* <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted " /> */}
 				{/* vertical */}
-				<div className="h-full w-[80vw] max-w-sm pr-5 md:max-w-md">
+				<div className="h-full w-[80svw] max-w-sm pr-5 md:max-w-md">
 					{/* <div className="flex justify-between"> */}
 					{/* <div></div> */}
 					<DrawerHeader>
@@ -75,7 +75,7 @@ export function FriendsDrawer() {
 						</div>
 					</DrawerHeader>
 					{/* </div> */}
-					<div className=" flex flex-col items-center justify-center gap-2 py-4">
+					<div className="flex flex-col items-center justify-center gap-2 py-4">
 						<div className="flex w-full flex-col items-center justify-center rounded-md bg-primary-foreground/80 px-3">
 							<FriendlistAccordian />
 						</div>
