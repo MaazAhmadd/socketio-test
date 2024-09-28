@@ -9,7 +9,7 @@ const YtVideo = mongooseModels.YtVideo;
 const router = express.Router();
 
 router.get(
-	"/ytservice",
+	"/",
 	authUser,
 	forwardError(async function (req, res) {
 		const videoInfo = await ytInfoService(req.query?.url as string);
@@ -21,7 +21,7 @@ router.get(
 );
 
 router.get(
-	"/ytservice/search",
+	"/search",
 	authUser,
 	forwardError(async function (req, res) {
 		try {

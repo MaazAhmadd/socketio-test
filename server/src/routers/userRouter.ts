@@ -51,7 +51,7 @@ const validations = {
 };
 // Create user
 router.post(
-	"/user/register",
+	"/register",
 	forwardError(async function (req, res) {
 		const { name, handle, pfp, password } = req.body as NormalUser & {
 			password: string;
@@ -85,7 +85,7 @@ router.post(
 
 // Update user name
 router.put(
-	"/user/updateusername",
+	"/updateusername",
 	authUser,
 	forwardError(async function (req, res) {
 		const updateBodySchema = z.object({
@@ -104,14 +104,14 @@ router.put(
 		}
 		user.name = req.body.name;
 		await user.save();
-		// clearCacheAndLog("/user/updateusername", [cacheKeys.USER + userId]);
+		// clearCacheAndLog("/updateusername", [cacheKeys.USER + userId]);
 		res.status(200).send(user);
 	}),
 );
 
 // Update user handle
 router.put(
-	"/user/updateuserhandle",
+	"/updateuserhandle",
 	authUser,
 	forwardError(async function (req, res) {
 		const updateBodySchema = z.object({ handle: validations.handle });
@@ -139,7 +139,7 @@ router.put(
 
 // Update user password
 router.put(
-	"/user/updateuserpassword",
+	"/updateuserpassword",
 	authUser,
 	forwardError(async function (req, res) {
 		const updateBodySchema = z.object({
@@ -159,14 +159,14 @@ router.put(
 		}
 		user.password = req.body.password;
 		await user.save();
-		// clearCacheAndLog("/user/updateuserpassword", [cacheKeys.USER + userId]);
+		// clearCacheAndLog("/updateuserpassword", [cacheKeys.USER + userId]);
 		res.status(200).send(user);
 	}),
 );
 
 // Update user pfp
 router.put(
-	"/user/updateuserpfp",
+	"/updateuserpfp",
 	authUser,
 	upload.single("image"),
 	forwardError(async function (req, res) {
@@ -203,7 +203,7 @@ router.put(
 				user.pfp = result?.secure_url!;
 				user.profilePicId = result?.public_id!;
 				user.save();
-				// clearCacheAndLog("/user/updateuserpfp", [cacheKeys.USER + userId]);
+				// clearCacheAndLog("/updateuserpfp", [cacheKeys.USER + userId]);
 				res.status(200).send(user);
 			},
 		);
@@ -214,7 +214,7 @@ router.put(
 
 // Send Friend Request
 router.post(
-	"/user/sendFriendRequest/:receiverId",
+	"/sendFriendRequest/:receiverId",
 	authUser,
 	forwardError(async function (req, res) {
 		if (req.user?._id === req.params.receiverId) {
@@ -261,7 +261,7 @@ router.post(
 
 // Cancel Sent Friend Request
 router.post(
-	"/user/cancelFriendRequest/:receiverId",
+	"/cancelFriendRequest/:receiverId",
 	authUser,
 	forwardError(async function (req, res) {
 		const user = await User.findById(req.user?._id);
@@ -275,7 +275,7 @@ router.post(
 			friend.friendReqsReceived.pull(user._id);
 			await user.save();
 			await friend.save();
-			// clearCacheAndLog("/user/sendFriendRequest/:receiverId", [
+			// clearCacheAndLog("/sendFriendRequest/:receiverId", [
 			//   cacheKeys.USER + friend._id,
 			//   cacheKeys.USER + user._id,
 			// ]);
@@ -288,7 +288,7 @@ router.post(
 
 // Accept Friend Request
 router.post(
-	"/user/acceptFriendRequest/:senderId",
+	"/acceptFriendRequest/:senderId",
 	authUser,
 	forwardError(async function (req, res) {
 		const user = await User.findById(req.user?._id);
@@ -306,7 +306,7 @@ router.post(
 			user.friends.push(friend._id);
 			await friend.save();
 			await user.save();
-			// clearCacheAndLog("/user/sendFriendRequest/:receiverId", [
+			// clearCacheAndLog("/sendFriendRequest/:receiverId", [
 			//   cacheKeys.USER + friend._id,
 			//   cacheKeys.USER + user._id,
 			// ]);
@@ -319,7 +319,7 @@ router.post(
 
 // Reject Received Friend Request
 router.post(
-	"/user/rejectFriendRequest/:senderId",
+	"/rejectFriendRequest/:senderId",
 	authUser,
 	forwardError(async function (req, res) {
 		const user = await User.findById(req.user?._id);
@@ -332,7 +332,7 @@ router.post(
 			friend.friendReqsSent.pull(user._id);
 			await user.save();
 			await friend.save();
-			// clearCacheAndLog("/user/sendFriendRequest/:receiverId", [
+			// clearCacheAndLog("/sendFriendRequest/:receiverId", [
 			//   cacheKeys.USER + friend._id,
 			//   cacheKeys.USER + user._id,
 			// ]);
@@ -345,7 +345,7 @@ router.post(
 
 // Remove Friend
 router.post(
-	"/user/removeFriend/:friendId",
+	"/removeFriend/:friendId",
 	authUser,
 	forwardError(async function (req, res) {
 		const user = await User.findById(req.user?._id);
@@ -359,7 +359,7 @@ router.post(
 			friend.friends.pull(user._id);
 			await user.save();
 			await friend.save();
-			// clearCacheAndLog("/user/sendFriendRequest/:receiverId", [
+			// clearCacheAndLog("/sendFriendRequest/:receiverId", [
 			//   cacheKeys.USER + friend._id,
 			//   cacheKeys.USER + user._id,
 			// ]);
@@ -372,7 +372,7 @@ router.post(
 
 // Get a single user by ID or handle
 router.get(
-	"/user/getuser/:id",
+	"/getuser/:id",
 	authUser,
 	forwardError(async function (req, res) {
 		// setTimeout(async () => {
@@ -407,7 +407,7 @@ router.get(
 
 // Get current user
 router.get(
-	"/user/getCurrentUser",
+	"/getCurrentUser",
 	authUser,
 	forwardError(async function (req, res) {
 		// let userToSend: CurrentUser;
@@ -423,7 +423,7 @@ router.get(
 
 // Search users by name or handle
 router.get(
-	"/user/search",
+	"/search",
 	authUser,
 	forwardError(async function (req, res) {
 		const query = req.query.q as string;
@@ -442,7 +442,7 @@ router.get(
 
 // check if user exists
 router.get(
-	"/user/check",
+	"/check",
 	forwardError(async function (req, res) {
 		const handle = req.query.q as string;
 		const userCount = await User.countDocuments({ handle });
@@ -455,7 +455,7 @@ router.get(
 
 // login user
 router.post(
-	"/user/login",
+	"/login",
 	forwardError(async function (req, res) {
 		const { handle, password } = req.body;
 		const updateBodySchema = z.object({
@@ -484,16 +484,16 @@ router.post(
 
 // clearCache user
 // router.get(
-// 	"/user/clearCache",
+// 	"/clearCache",
 // 	asyncWrapper(async function (req, res) {
-// 		clearCacheAndLog("/user/clearCache", null);
+// 		clearCacheAndLog("/clearCache", null);
 // 		res.status(200).send("cleared cache");
 // 	}),
 // );
 
 // unfriend all users
 router.get(
-	"/user/unfriendAll",
+	"/unfriendAll",
 	authUser,
 	forwardError(async function (req, res) {
 		const userId = req.user?._id;

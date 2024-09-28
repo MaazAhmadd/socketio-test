@@ -15,7 +15,7 @@ const User = mongooseModels.User;
 
 // get /room/userrooms
 router.get(
-	"/room/userrooms",
+	"/userrooms",
 	authUser,
 	forwardError(async function (req, res) {
 		// Pagination setup
@@ -216,7 +216,7 @@ router.get(
 );
 // post /room/makeRoom
 router.post(
-	"/room/makeRoom",
+	"/makeRoom",
 	authUser,
 	forwardError(async function (req, res) {
 		const url = req.body.url as string;
@@ -239,7 +239,7 @@ router.post(
 );
 // get /room/getRoom/:roomId
 router.get(
-	"/room/getRoom/:roomId",
+	"/getRoom/:roomId",
 	authUser,
 	forwardError(async function (req, res) {
 		const roomId = req.params.roomId as string;
@@ -258,7 +258,7 @@ router.get(
 );
 // delete /room/deleteAllRooms
 router.delete(
-	"/room/deleteAllRooms",
+	"/deleteAllRooms",
 	forwardError(async function (req, res) {
 		const rooms = await roomRepository.search().return.all();
 		for (const room of rooms) {

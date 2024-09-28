@@ -60,10 +60,10 @@ connectDB().then(() => {
 	app.use(allRequestLoggerMiddlerware);
 	// }
 
-	app.get("/api/test", (req, res) => res.send("Express Ready"));
-	app.use("/api", userRouter);
-	app.use("/api", roomRouter);
-	app.use("/api", ytRouter);
+	app.get("/test", (req, res) => res.send("Express Ready"));
+	app.use("/user", userRouter);
+	app.use("/room", roomRouter);
+	app.use("/ytservice", ytRouter);
 
 	app.use(errorHandler);
 
