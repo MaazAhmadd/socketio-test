@@ -26,6 +26,7 @@ import {
 import { Label } from "@/components/ui/label";
 import VideoPlayer from "./video-player";
 import { HiMiniXMark } from "react-icons/hi2";
+import { Spinner } from "@/components/common/spinner";
 // const RoomLoading = () => {
 // 	const { loading, } = useRoomStore((s) => ({ loading: s.loading, }));
 // 	return loading ? (
@@ -157,6 +158,15 @@ const RoomPage = () => {
 			kickDialogRef.current?.click();
 		}
 
+		function onSyncPlayerStats(data: number[]) {
+			const [duration, progress, lastChanged, status, type] = data;
+			console.log("[socket onSyncPlayerStats] onSyncPlayerStats: ", data);
+		}
+
+		function onSyncTimer(data: number) {
+			console.log("[socket onSyncTimer] onSyncTimer: ", data);
+		}
+
 		socket.on("connect", onConnect);
 		socket.on("disconnect", onDisconnect);
 		socket.on("activeMemberListUpdate", onActiveMemberListUpdate);
@@ -165,7 +175,8 @@ const RoomPage = () => {
 		socket.on("connect_error", onConnectError);
 		socket.on("message", onMessage);
 		socket.on("onKicked", onGotKicked);
-
+		socket.on("syncPlayerStats", onSyncPlayerStats);
+		socket.on("syncTimer", onSyncTimer);
 		return () => {
 			socket.off("connect", onConnect);
 			socket.off("disconnect", onDisconnect);
@@ -214,7 +225,11 @@ const RoomPage = () => {
 	const mobileView = width <= screenBreakpoints.md;
 	return (
 		<>
-			{loading && <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/40 backdrop-blur-sm"></div>}
+			{loading && (
+				<div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/40 backdrop-blur-sm">
+					<Spinner />
+				</div>
+			)}
 			<ConnectionStatus />
 			{mobileView ? (
 				<div>
@@ -223,7 +238,7 @@ const RoomPage = () => {
 					</div>
 
 					<div className="fixed top-[40px] w-full">
-						<VideoPlayer />
+						<VideoPlayer screen={"mobile"} />
 					</div>
 					<div className="fixed top-0 h-[40px] w-full border-muted border-b bg-primary-foreground">
 						<RoomButtons
@@ -235,7 +250,7 @@ const RoomPage = () => {
 			) : (
 				<div className="flex">
 					<div className="w-[70svw]">
-						<div className="h-[80svh] bg-red-800">videoplayer</div>
+						<VideoPlayer screen={"desktop"} />
 					</div>
 					<div className="w-[30svw]">
 						<div className=" h-[5svh]">

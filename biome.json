@@ -5,7 +5,6 @@
 	},
 	"linter": {
 		"enabled": true,
-
 		"rules": {
 			"recommended": true,
 			"suspicious": {
@@ -26,13 +25,15 @@
 				"useTemplate": "off",
 				"noNonNullAssertion": "off",
 				"useSelfClosingElements": "off",
+				"noParameterAssign": "off",
 				"noVar": "warn"
 			},
 			"correctness": {
 				"useExhaustiveDependencies": "warn"
 			},
 			"a11y": {
-				"useKeyWithClickEvents": "off"
+				"useKeyWithClickEvents": "off",
+				"useButtonType": "off"
 			},
 			"nursery": {
 				"useSortedClasses": "info"

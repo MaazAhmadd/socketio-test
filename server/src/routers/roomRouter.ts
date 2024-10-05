@@ -3,12 +3,14 @@ import { EntityId } from "redis-om";
 import { PRIVACY_FRIENDS, PRIVACY_INVITED, PRIVACY_PUBLIC } from "../constants";
 import mongooseModels from "../mongoose/models";
 import redisSchemas from "../redis-om/schemas";
-import { makeRoom, splitMembersAndMicsArray } from "../socketServer";
+import { splitMembersAndMicsArray } from "../socketServer";
 import { authUser } from "../middlewares";
 import { Room } from "../types";
 import { forwardError } from "./asyncWrapper";
 import { logger } from "../logger";
+import { ytInfoService } from "./ytRouter";
 const router = express.Router();
+import { z } from "zod";
 
 const roomRepository = redisSchemas.room;
 const User = mongooseModels.User;
@@ -214,13 +216,35 @@ router.get(
 		// return res.status(200).send(sortedRooms);
 	}),
 );
+
+const validations = {
+	url: z
+		.string({ required_error: "url is required" })
+		.max(2048, "name is too long"),
+	duration: z
+		.number({ required_error: "duration is required" })
+		.min(1, "duration should be greater than 0"),
+};
 // post /room/makeRoom
 router.post(
 	"/makeRoom",
 	authUser,
 	forwardError(async function (req, res) {
 		const url = req.body.url as string;
+		const duration = req.body.duration as number;
 		const userId = req.user?._id as string;
+
+		const updateBodySchema = z.object({
+			url: validations.url,
+			duration: validations.duration,
+		});
+		const { error } = updateBodySchema.safeParse({ url, duration });
+		if (error) {
+			return res
+				.status(400)
+				.send({ error: error.issues.map((issue) => issue.message)[0] });
+		}
+
 		const nextAvailableTime = await checkMemberRoomMakingHourlyLimit(userId);
 		if (nextAvailableTime) {
 			res.status(429).send({
@@ -229,7 +253,7 @@ router.post(
 			});
 			return;
 		}
-		const room = await makeRoom(userId, url);
+		const room = await makeRoom(userId, url, duration);
 		if (!room) {
 			return res.status(401).send({ message: "couldn't make room" });
 		}
@@ -291,4 +315,32 @@ async function checkMemberRoomMakingHourlyLimit(userId: string) {
 		return nextAvailableTime;
 	}
 	return null;
+}
+
+export async function makeRoom(userId: string, url: string, duration: number) {
+	// logger.info("makeRoom", "url: ", url);
+
+	const userIDandMic = userId + ",1";
+	const room = await roomRepository.save({
+		privacy: 0, // public(0), private(1), friends(2)
+		playback: 0, // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
+		roomMic: false,
+		membersJoinedList: [userIDandMic],
+		activeMembersList: [userId],
+		activeMembersCount: 1,
+		countries: [],
+		kicked: [],
+		createdByMongoId: [String(userId)],
+		createdAt: Date.now(),
+		// searchKeywords: [videoInfo.title, user.handle, user.name].join(","),
+		videoUrl: url,
+		playerStats: [Number(duration), 0, getDateInSeconds(), 0, 0], // [duration,progress,lastChanged,status,type] // type youtube(0) custom(1)
+	});
+	room.entityId = (room as any)[EntityId];
+	room.activeMembersList!.push("1");
+	return room;
+}
+
+function getDateInSeconds() {
+	return Math.floor(Date.now() / 1000);
 }

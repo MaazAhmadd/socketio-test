@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/api";
 import { Room, SupportedPlatforms, VideoInfo } from "server/src/types";
-import { useRoomStore } from "@/store";
+import { usePlayerStore, useRoomStore } from "@/store";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { AxiosError } from "axios";
@@ -60,14 +60,35 @@ export const useMakeRoom = () => {
 		setMics: s.setMics,
 		setLoading: s.setLoading,
 	}));
+	const { setUrl, setDuration, setPlaying } = usePlayerStore((s) => ({
+		setUrl: s.setUrl,
+		setDuration: s.setDuration,
+		setPlaying: s.setPlaying,
+	}));
 	const navigate = useNavigate();
-	const makeRoom = async (url: string) => {
-		const response = await api.post<Room>("/room/makeRoom", { url });
+	const makeRoom = async ({
+		url,
+		duration,
+	}: { url: string; duration: number }) => {
+		const response = await api.post<Room>("/room/makeRoom", { url, duration });
 		return response.data;
 	};
 
 	return useMutation({
 		mutationFn: makeRoom,
+		onSuccess: (data) => {
+			if (data) {
+				// const [duration, progress, lastChanged, status, type] =
+				// 	data.playerStats;
+				const mics = data.activeMembersList?.pop();
+				setMics(mics!);
+				setRoomData(data);
+				setUrl(data.videoUrl);
+				setDuration(data.playerStats[0]);
+				setLoading(true);
+				navigate("/room/" + data?.entityId!);
+			}
+		},
 		onError: (error) => {
 			type ErrorResponse = {
 				message: string;
@@ -76,15 +97,6 @@ export const useMakeRoom = () => {
 			const err = error as AxiosError<ErrorResponse>;
 			if (err.response) {
 				toast.error(err.response.data.message);
-			}
-		},
-		onSuccess: (data) => {
-			if (data) {
-				const mics = data.activeMembersList?.pop();
-				setMics(mics!);
-				setRoomData(data);
-				setLoading(true);
-				navigate("/room/" + data?.entityId!);
 			}
 		},
 	});

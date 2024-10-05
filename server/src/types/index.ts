@@ -3,7 +3,9 @@ interface ServerToClientEvents {
 	message: (data: Message) => void;
 	stateError: (data: string) => void;
 	activeMemberListUpdate: (data: string[]) => void;
-	onKicked: (data: string) => void;
+	onKicked: (data: string) => void; 
+	syncTimer: (data: number) => void;
+	syncPlayerStats: (data: number[]) => void;
 
 	// noArg: () => void;
 	// sendMessage: (value: string) => void;
@@ -20,14 +22,15 @@ interface ServerToClientEvents {
 }
 
 interface ClientToServerEvents {
-	// createRoom: (data: { videoUrl: string; roomId: string }) => void;
 	joinRoom: (roomId: string) => void;
 	giveLeader: (targetMember: string) => void;
 	mic: (data: string) => void;
-	// sendMessage: (data: { msg: string; roomId: string }) => void;
 	sendMessage: (msg: string) => void;
 	kickMember: (data: string) => void;
 	leaveRoom: () => void;
+	playPauseVideo : (data: number) => void;
+	sendSyncTimer: () => void;
+	sendSyncPlayerStats: () => void;
 	// memberJoin: (data: Member) => void;
 	// memberLeave: (data: string) => void;
 
@@ -85,19 +88,23 @@ interface Room {
 	createdByMongoId: string[];
 	createdAt: number;
 	// searchKeywords: string;
-	v_isPlaying: boolean;
-	v_sourceUrl: string;
-	v_thumbnailUrl: string;
-	v_title: string;
-	v_totalDuration: number;
-	v_playedTill: number;
+	videoUrl: string;
+	playerStats: number[];
 	entityId?: string;
 	// members?: Member[];
 	[key: string]: any;
 }
+/*
+	player stats:
+	[duration,progress,lastChanged,status,type]
+	type:
+		youtube------(0)
+		custom-------(1)
+*/
 
 type Message = [number, string, number, string];
-/*
+/*	
+	message:
 	[type,sender,time,msg]
 	type: 
 		chat-----------------(0)

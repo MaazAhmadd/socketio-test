@@ -1,4 +1,6 @@
 import { produce } from "immer";
+import { MutableRefObject } from "react";
+import ReactPlayer from "react-player";
 import { Message, Room } from "server/src/types";
 import { create } from "zustand";
 
@@ -9,15 +11,14 @@ export type RoomCreationRequestType = "join" | "create";
 // const token = localStorage.getItem("auth_token");
 
 export const useGlobalStore = create<GlobalStore>((set) => ({
+	showRoomTab: "public",
+	connected: false,
+	setShowRoomTab: (tab: Tabs) => set({ showRoomTab: tab }),
+	setConnected: (connected: boolean) => set({ connected }),
 	logout: () => {
 		localStorage.removeItem("auth_token");
 		window.location.reload();
 	},
-	showRoomTab: "public",
-	setShowRoomTab: (tab: Tabs) => set({ showRoomTab: tab }),
-
-	connected: false,
-	setConnected: (connected: boolean) => set({ connected }),
 }));
 
 export const useRoomStore = create<RoomStore>((set) => ({
@@ -70,6 +71,34 @@ export const useRoomStore = create<RoomStore>((set) => ({
 	setLoading: (loading: boolean) => set({ loading }),
 }));
 
+export const usePlayerStore = create<PlayerStore>((set) => ({
+	url: "",
+	pip: false,
+	playing: false,
+	loop: false,
+	playbackRate: 1,
+	volume: 0.8,
+	muted: false,
+	duration: 0,
+	progress: 0,
+	serverTimeOffset: 0,
+	playerType: 0,
+	playerRef: null,
+	setUrl: (url: string) => set({ url }),
+	setPip: (pip: boolean) => set({ pip }),
+	setPlaying: (playing: boolean) => set({ playing }),
+	setLoop: (loop: boolean) => set({ loop }),
+	setPlaybackRate: (rate: number) => set({ playbackRate: rate }),
+	setVolume: (volume: number) => set({ volume }),
+	setMuted: (muted: boolean) => set({ muted }),
+	setDuration: (duration: number) => set({ duration }),
+	setProgress: (progress: number) => set({ progress }),
+	setServerTimeOffset: (offset: number) => set({ serverTimeOffset: offset }),
+	setPlayerType: (playerType: number) => set({ playerType }),
+	setPlayerRef: (ref: MutableRefObject<ReactPlayer | null>) =>
+		set({ playerRef: ref }),
+}));
+
 interface GlobalStore {
 	logout: () => void;
 	showRoomTab: Tabs;
@@ -92,4 +121,30 @@ interface RoomStore {
 	setRoomData: (data: Room | null) => void;
 	updateActiveMembersList: (members: string[]) => void;
 	setLoading: (loading: boolean) => void;
+}
+interface PlayerStore {
+	url: string;
+	pip: boolean;
+	playing: boolean;
+	loop: boolean;
+	playbackRate: number;
+	volume: number;
+	muted: boolean;
+	duration: number;
+	progress: number;
+	serverTimeOffset: number;
+	playerType: number;
+	playerRef: MutableRefObject<ReactPlayer | null> | null;
+	setUrl: (url: string) => void;
+	setPip: (pip: boolean) => void;
+	setPlaying: (playing: boolean) => void;
+	setLoop: (loop: boolean) => void;
+	setPlaybackRate: (rate: number) => void;
+	setVolume: (volume: number) => void;
+	setMuted: (muted: boolean) => void;
+	setDuration: (duration: number) => void;
+	setProgress: (progress: number) => void;
+	setServerTimeOffset: (offset: number) => void;
+	setPlayerType: (type: number) => void;
+	setPlayerRef: (ref: MutableRefObject<ReactPlayer | null>) => void;
 }

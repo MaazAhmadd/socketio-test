@@ -2,18 +2,18 @@ import { Schema, Repository } from "redis-om";
 import redis from "./client";
 import { Member, Room } from "../types";
 
-const memberSchema = new Schema("Member", {
-	mongoId: { type: "string" },
-	name: { type: "string" },
-	handle: { type: "string" },
-	pfp: { type: "string" },
+// const memberSchema = new Schema("Member", {
+	// mongoId: { type: "string" },
+	// name: { type: "string" },
+	// handle: { type: "string" },
+	// pfp: { type: "string" },
 	// isConnected: { type: "boolean" },
 	// isLeader: { type: "boolean" },
-	mic: { type: "boolean" },
+	// mic: { type: "boolean" },
 	// leaderPC: { type: "number", sortable: true },
 	// roomId: { type: "string" },
-	country: { type: "string" },
-});
+	// country: { type: "string" },
+// });
 
 const roomSchema = new Schema("Room", {
 	privacy: { type: "number" }, // public(0), private(1), friends(2)
@@ -28,12 +28,8 @@ const roomSchema = new Schema("Room", {
 	createdByMongoId: { type: "string[]" },
 	createdAt: { type: "number" },
 	// searchKeywords: { type: "text" },
-	v_isPlaying: { type: "boolean" },
-	v_sourceUrl: { type: "string" },
-	v_thumbnailUrl: { type: "string" },
-	v_title: { type: "string" },
-	v_totalDuration: { type: "number" },
-	v_playedTill: { type: "number" },
+	videoUrl: { type: "string" },
+	playerStats: { type: "number[]" },
 });
 
 // export const memberRepository = new Repository<Member>(memberSchema, redis);

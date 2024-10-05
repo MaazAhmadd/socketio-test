@@ -38,8 +38,9 @@ import { SettingsDrawer } from "./settings-drawer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FieldValues, useForm } from "react-hook-form";
 import { z } from "zod";
-
-
+import { FaYoutube } from "react-icons/fa";
+import { TiPin } from "react-icons/ti";
+import { useYoutubeInfo } from "@/hooks/video-player-hooks";
 
 export type Tabs = "public" | "invited" | "friends" | "createRoom";
 
@@ -219,12 +220,13 @@ const RoomList = ({
 };
 
 const CreateRoom = () => {
+	const [url, setUrl] = useState("");
+	const [isLoading, setIsLoading] = useState(false);
 	const schema = z.object({
-		urlorId: z
+		url: z
 			.string()
 			.min(11, "url or id should me minimum 11 characters")
 			.max(512, "url or id should me maximum 512 characters"),
-
 	});
 	type FormData = z.infer<typeof schema>;
 	const {
@@ -234,148 +236,70 @@ const CreateRoom = () => {
 	} = useForm<FormData>({
 		resolver: zodResolver(schema),
 	});
+	const { info, player } = useYoutubeInfo(url);
 	const {
 		data: room,
 		mutate: makeRoom,
 		isPending: creatingRoom,
+		isError: roomError,
 	} = useMakeRoom();
+
+	useEffect(() => {
+		if (info.duration) {
+			console.log("[createRoom] about to makeRoom videoUrl: ", info);
+			makeRoom({ url, duration: info.duration });
+		}
+	}, [info.duration]);
+
+	if (roomError) {
+		console.log("[createRoom] roomError: ", roomError);
+		setIsLoading(false);
+	}
 
 	const onSubmitUrlForm = async (data: FieldValues) => {
 		if (data) {
-			console.log(
-				"[createRoom onsubmit] about to createRoom videoUrl: ",
-				data,
-			);
-			makeRoom(data.urlorId);
+			setIsLoading(true);
+			setUrl(data.url);
+			console.log("[createRoom onsubmit] about to createRoom videoUrl: ", data);
+			// makeRoom({ url: data.url, duration: 60 });
 		}
 	};
 
-
 	return (
 		<div className="h-[75svh] border-2 border-muted bg-primary-foreground">
+			{player}
 			<p className="mx-4 scroll-m-20 p-4 pb-2 text-center font-semibold text-lg text-primary xs:text-xl tracking-tight transition-colors first:mt-0 md:mt-1 md:text-pretty md:text-2xl">
 				Create Room
 			</p>
 			<form
 				onSubmit={handleSubmit(onSubmitUrlForm)}
-				className="mx-4 mt-4 flex items-end gap-4 md:mx-10"
+				className="mx-4 mt-4 flex items-center gap-4 md:mx-10"
 			>
-				<Button variant={'secondary'}>Youtube</Button>
+				{/* <Button variant={"secondary"}>Youtube</Button> */}
+				<FaYoutube className="h-9 w-14 text-[#FF0000]" />
 				<Label className="sr-only" htmlFor="searchquery">
 					Play Using Url
 				</Label>
 				<Input
-					{...register("urlorId")}
+					{...register("url")}
 					id="searchquery"
 					className="border-muted-foreground/50"
-					placeholder="Play Using Youtube Url or ID"
+					placeholder="Play Using Youtube Url"
 					type="text"
 					autoCapitalize="none"
 					autoCorrect="off"
 					autoComplete="off"
 					disabled={creatingRoom}
 				/>
-				<Button disabled={creatingRoom} type="submit" className="">
-					{creatingRoom && (
-						<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-					)}
-					Create Room
+				<Button disabled={creatingRoom} size={"sm"} type="submit" className="">
+					{isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
+					<TiPin className="size-6" />
 				</Button>
 			</form>
 			{/* <SearchYt /> */}
 			<div className="mx-4 mt-4 flex flex-wrap justify-center gap-4 overflow-y-hidden md:mx-10">
 				<RecentVideosDialog />
 				<LikedVideosDialog />
-			</div>
-		</div>
-	);
-};
-const SearchYt = () => {
-	const [searchQuery, setSearchQuery] = useState("");
-	const [selectedPlatform, setSelectedPlatform] =
-		useState<SupportedPlatforms>("youtube");
-	// const navigate = useNavigate();
-	const {
-		data: room,
-		mutate: makeRoom,
-		isPending: creatingRoom,
-	} = useMakeRoom();
-
-	// const { setRoomData, setMics } = useRoomStore((s) => ({
-	// 	setRoomData: s.setRoomData,
-	// 	setMics: s.setMics,
-	// }));
-	const debouncedSearchQuery = useDebounce(searchQuery, 1000);
-
-	const { data: searchResults, isFetching: isFetchingSearchResults } =
-		useGetSearchResults(searchQuery, debouncedSearchQuery, selectedPlatform);
-
-	return <>
-		<div className="mx-4 mt-4 flex items-end gap-4 md:mx-10">
-			<SelectSearchPlatform setSelectedValue={setSelectedPlatform} />
-			<Label className="sr-only" htmlFor="searchQuery">
-				Search
-			</Label>
-			<Input
-				onChange={(e) => {
-					setSearchQuery(e.target.value);
-				}}
-				value={searchQuery}
-				id="handle"
-				className="border-muted-foreground/50"
-				placeholder="Search"
-				type="text"
-				autoCapitalize="none"
-				autoCorrect="off"
-				autoComplete="off"
-				disabled={creatingRoom}
-			/>
-		</div>
-		<div className="mx-4 mt-4 flex flex-wrap justify-center gap-4 overflow-y-hidden md:mx-10">
-			{!isFetchingSearchResults && !searchResults && (
-				<p className="text-pretty px-20 pt-5 pb-20 font-bold capitalize">
-					start typing to search from {selectedPlatform} or select another
-					platform to search from...
-				</p>
-			)}
-			{isFetchingSearchResults && <Spinner />}
-			{!isFetchingSearchResults &&
-				searchResults?.map((r) => {
-					return <ResultCard key={r.ytId} result={r} />;
-				})}
-		</div></>
-}
-
-export const ResultCard = ({ result }: { result: VideoInfo }) => {
-	// const navigate = useNavigate();
-	const { data: room, mutate: makeRoom, isPending } = useMakeRoom();
-	// useEffect(() => {
-	// 	if (room) {
-	// 		navigate("/room/" + room?.entityId!);
-	// 	}
-	// }, [isPending]);
-	return (
-		<div
-			onClick={() => {
-				makeRoom(result.ytId);
-			}}
-			className="h-[135px] w-[180px] cursor-pointer rounded-sm border border-muted hover:border-muted-foreground"
-			style={{
-				backgroundImage: `url(${result.thumbnail})`,
-				backgroundSize: "cover",
-				backgroundRepeat: "no-repeat",
-				backgroundPosition: "center",
-			}}
-		>
-			<div className="flex h-full flex-col justify-between">
-				<div className="flex flex-col items-end ">
-					<span className="rounded-sm bg-muted/70 p-1 font-bold text-sm text-white leading-tight">
-						{parseYouTubeDuration(result.duration)}
-					</span>
-				</div>
-				<p className="rounded-t-sm bg-muted/70 px-2 text-white text-xs leading-tight">
-					{trimString(result.title, 50)}
-				</p>
 			</div>
 		</div>
 	);
@@ -484,14 +408,110 @@ export function LikedVideosDialog() {
 
 export const Spinner = ({ className }: { className?: string }) => {
 	return (
-		<div className={cn("flex h-[20svh] items-center justify-center", className)}>
+		<div
+			className={cn("flex h-[20svh] items-center justify-center", className)}
+		>
 			<div
 				className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-current border-e-transparent border-solid align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
-			// role="status"
+				// role="status"
 			>
 				<span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
 					Loading...
 				</span>
+			</div>
+		</div>
+	);
+};
+
+const SearchYt = () => {
+	const [searchQuery, setSearchQuery] = useState("");
+	const [selectedPlatform, setSelectedPlatform] =
+		useState<SupportedPlatforms>("youtube");
+	// const navigate = useNavigate();
+	const {
+		data: room,
+		mutate: makeRoom,
+		isPending: creatingRoom,
+	} = useMakeRoom();
+
+	// const { setRoomData, setMics } = useRoomStore((s) => ({
+	// 	setRoomData: s.setRoomData,
+	// 	setMics: s.setMics,
+	// }));
+	const debouncedSearchQuery = useDebounce(searchQuery, 1000);
+
+	const { data: searchResults, isFetching: isFetchingSearchResults } =
+		useGetSearchResults(searchQuery, debouncedSearchQuery, selectedPlatform);
+
+	return (
+		<>
+			<div className="mx-4 mt-4 flex items-end gap-4 md:mx-10">
+				<SelectSearchPlatform setSelectedValue={setSelectedPlatform} />
+				<Label className="sr-only" htmlFor="searchQuery">
+					Search
+				</Label>
+				<Input
+					onChange={(e) => {
+						setSearchQuery(e.target.value);
+					}}
+					value={searchQuery}
+					id="handle"
+					className="border-muted-foreground/50"
+					placeholder="Search"
+					type="text"
+					autoCapitalize="none"
+					autoCorrect="off"
+					autoComplete="off"
+					disabled={creatingRoom}
+				/>
+			</div>
+			<div className="mx-4 mt-4 flex flex-wrap justify-center gap-4 overflow-y-hidden md:mx-10">
+				{!isFetchingSearchResults && !searchResults && (
+					<p className="text-pretty px-20 pt-5 pb-20 font-bold capitalize">
+						start typing to search from {selectedPlatform} or select another
+						platform to search from...
+					</p>
+				)}
+				{isFetchingSearchResults && <Spinner />}
+				{!isFetchingSearchResults &&
+					searchResults?.map((r) => {
+						return <ResultCard key={r.ytId} result={r} />;
+					})}
+			</div>
+		</>
+	);
+};
+
+export const ResultCard = ({ result }: { result: VideoInfo }) => {
+	// const navigate = useNavigate();
+	const { data: room, mutate: makeRoom, isPending } = useMakeRoom();
+	// useEffect(() => {
+	// 	if (room) {
+	// 		navigate("/room/" + room?.entityId!);
+	// 	}
+	// }, [isPending]);
+	return (
+		<div
+			onClick={() => {
+				makeRoom({ url: result.ytId, duration: Number(result.duration) });
+			}}
+			className="h-[135px] w-[180px] cursor-pointer rounded-sm border border-muted hover:border-muted-foreground"
+			style={{
+				backgroundImage: `url(${result.thumbnail})`,
+				backgroundSize: "cover",
+				backgroundRepeat: "no-repeat",
+				backgroundPosition: "center",
+			}}
+		>
+			<div className="flex h-full flex-col justify-between">
+				<div className="flex flex-col items-end ">
+					<span className="rounded-sm bg-muted/70 p-1 font-bold text-sm text-white leading-tight">
+						{parseYouTubeDuration(result.duration)}
+					</span>
+				</div>
+				<p className="rounded-t-sm bg-muted/70 px-2 text-white text-xs leading-tight">
+					{trimString(result.title, 50)}
+				</p>
 			</div>
 		</div>
 	);

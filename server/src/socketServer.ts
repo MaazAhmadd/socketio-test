@@ -1,20 +1,17 @@
 import jwt from "jsonwebtoken";
-import { EntityId } from "redis-om";
 import { Server, Socket } from "socket.io";
 
+import mongoose from "mongoose";
+import { logger } from "./logger";
 import mongooseModels from "./mongoose/models";
 import redisSchemas from "./redis-om/schemas";
-import { ytInfoService } from "./routers/ytRouter";
 import { getCountryFromIP } from "./services/geoLocationService";
 import {
 	ClientToServerEvents,
 	InterServerEvents,
-	Message,
 	Room,
-	ServerToClientEvents,
+	ServerToClientEvents
 } from "./types";
-import { logger } from "./logger";
-import mongoose from "mongoose";
 
 // const memberRepository = redisSchemas.member;
 const roomRepository = redisSchemas.room;
@@ -106,7 +103,6 @@ export default function socketServer(io: CustomIO) {
 			// check types/index.ts for details
 			io.in(roomId).emit("message", [0, socket.user?._id!, Date.now(), msg]);
 		});
-
 		socket.on("mic", async (micstr) => {
 			if (!micstr) {
 				socket.emit("stateError", "micstr not provided");
@@ -130,6 +126,80 @@ export default function socketServer(io: CustomIO) {
 				return;
 			}
 			await kickMember(targetMember);
+		});
+		socket.on("playPauseVideo", async (reqType: number) => {
+			// 1 = play, 0 = pause
+			const roomId = socket.roomId;
+			if (!roomId) {
+				return socket.emit("stateError", "roomId not found on socket");
+			}
+			const room = await roomRepository.fetch(roomId);
+			if (!room) {
+				return socket.emit("stateError", "Room not found");
+			}
+			const activeMembers = room.activeMembersList || [];
+			if (activeMembers.length < 1) {
+				return socket.emit("stateError", "Empty room");
+			}
+			const currentLeader = activeMembers[0];
+			if (currentLeader !== socket.user?._id) {
+				return socket.emit("stateError", "You are not the leader");
+			}
+			const [duration, progress, lastChanged, status, type] = room.playerStats;
+			if (String(reqType) === "1") {
+				// play
+				room.playerStats = [
+					duration,
+					progress,
+					getDateInSeconds(),
+					Number(reqType),
+					type,
+				];
+			}
+			if (String(reqType) === "0") {
+				// pause
+				room.playerStats = [
+					duration,
+					progress + (getDateInSeconds() - lastChanged),
+					getDateInSeconds(),
+					Number(reqType),
+					type,
+				];
+			}
+			io.in(roomId).emit("syncPlayerStats", room.playerStats);
+			await roomRepository.save(room);
+		});
+		socket.on("sendSyncTimer", () => {
+			socket.emit("syncTimer", getDateInSeconds());
+		});
+		socket.on("sendSyncPlayerStats", async () => {
+			const roomId = socket.roomId;
+			if (!roomId) {
+				return socket.emit("stateError", "roomId not found on socket");
+			}
+			const room = await roomRepository.fetch(roomId);
+			if (!room) {
+				return socket.emit("stateError", "Room not found");
+			}
+			socket.emit("syncPlayerStats", room.playerStats);
+		});
+		socket.on("seekVideo", async (seekTo: number) => {
+			seekTo = Math.floor(Math.abs(seekTo));
+			const roomId = socket.roomId;
+			if (!roomId) {
+				return socket.emit("stateError", "roomId not found on socket");
+			}
+			const room = await roomRepository.fetch(roomId);
+			if (!room) {
+				return socket.emit("stateError", "Room not found");
+			}
+			const [duration, progress, lastChanged, status, type] = room.playerStats;
+			if (seekTo > duration) {
+				return socket.emit("stateError", "Seek to is greater than duration");
+			}
+			room.playerStats = [duration, seekTo, getDateInSeconds(), status, type];
+			io.in(roomId).emit("syncPlayerStats", room.playerStats);
+			await roomRepository.save(room);
 		});
 		socket.on("leaveRoom", async () => {
 			await makeMemberLeave();
@@ -482,36 +552,8 @@ function executeKickMember(room: Room, targetMemberId: string) {
 	return room;
 }
 
-export async function makeRoom(userId: string, url: string) {
-	// logger.info("makeRoom", "url: ", url);
-
-	const videoInfo = await ytInfoService(url);
-	if (!videoInfo) {
-		return null;
-	}
-	const userIDandMic = userId + ",1";
-	const room = await roomRepository.save({
-		privacy: 0, // public(0), private(1), friends(2)
-		playback: 0, // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
-		roomMic: false,
-		membersJoinedList: [userIDandMic],
-		activeMembersList: [userId],
-		activeMembersCount: 1,
-		countries: [],
-		kicked: [],
-		createdByMongoId: [String(userId)],
-		createdAt: Date.now(),
-		// searchKeywords: [videoInfo.title, user.handle, user.name].join(","),
-		v_isPlaying: false,
-		v_sourceUrl: url,
-		v_thumbnailUrl: videoInfo.thumbnail,
-		v_title: videoInfo.title,
-		v_totalDuration: 0,
-		v_playedTill: 0,
-	});
-	room.entityId = (room as any)[EntityId];
-	room.activeMembersList!.push("1");
-	return room;
+function getDateInSeconds() {
+	return Math.floor(Date.now() / 1000);
 }
 
 // export async function returnRoomWithActiveMembersInOrder(roomId: string) {

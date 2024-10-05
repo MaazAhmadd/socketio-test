@@ -40,6 +40,24 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 		const sender = message[1];
 		const time = message[2];
 		const msg = message[3];
+		/*
+			[type,sender,time,msg]
+			type: 
+				chat-----------------(0)
+				join-----------------(1)
+				leave----------------(2)
+				kick-----------------(3)
+				leadership-----------(4)
+				micenable------------(5)
+				micdisable-----------(6)
+				roompublic-----------(7)
+				roomprivate----------(8)
+				roomfriends----------(9)
+				videovote-----------(10)
+				videojustplay-------(11)
+				videoleaderschoice--(12) 
+				playingvideochanged-(13)
+*/
 
 		const isSystemMsg = type !== 0;
 		const _message = msg || "";
@@ -70,24 +88,6 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 			_message.length < 100 && "mt-[7px]",
 			isSystemMsg && "border-muted-foreground/60",
 		);
-		/*
-			[type,sender,time,msg]
-			type: 
-				chat-----------------(0)
-				join-----------------(1)
-				leave----------------(2)
-				kick-----------------(3)
-				leadership-----------(4)
-				micenable------------(5)
-				micdisable-----------(6)
-				roompublic-----------(7)
-				roomprivate----------(8)
-				roomfriends----------(9)
-				videovote-----------(10)
-				videojustplay-------(11)
-				videoleaderschoice--(12) 
-				playingvideochanged-(13)
-*/
 		switch (type) {
 			case 0: // chat
 				return (
