@@ -223,7 +223,8 @@ const validations = {
 		.max(2048, "name is too long"),
 	duration: z
 		.number({ required_error: "duration is required" })
-		.min(1, "duration should be greater than 0"),
+		.min(1, "duration should be greater than 0")
+		.max(5_000_000, "duration should be less than 5_000_000"),
 };
 // post /room/makeRoom
 router.post(

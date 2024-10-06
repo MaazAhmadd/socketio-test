@@ -13,12 +13,15 @@ export type RoomCreationRequestType = "join" | "create";
 export const useGlobalStore = create<GlobalStore>((set) => ({
 	showRoomTab: "public",
 	connected: false,
+	roomJoinDialogShown: true,
 	setShowRoomTab: (tab: Tabs) => set({ showRoomTab: tab }),
 	setConnected: (connected: boolean) => set({ connected }),
 	logout: () => {
 		localStorage.removeItem("auth_token");
 		window.location.reload();
 	},
+	setRoomJoinDialogShown: (shown: boolean) => set({ roomJoinDialogShown: shown }),
+
 }));
 
 export const useRoomStore = create<RoomStore>((set) => ({
@@ -69,6 +72,14 @@ export const useRoomStore = create<RoomStore>((set) => ({
 			}),
 		),
 	setLoading: (loading: boolean) => set({ loading }),
+	setPlayerStats: (stats: number[]) =>
+		set(
+			produce((state: RoomStore) => {
+				if (state.roomData) {
+					state.roomData.playerStats = stats;
+				}
+			}),
+		),
 }));
 
 export const usePlayerStore = create<PlayerStore>((set) => ({
@@ -84,6 +95,7 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
 	serverTimeOffset: 0,
 	playerType: 0,
 	playerRef: null,
+	initialSync: false,
 	setUrl: (url: string) => set({ url }),
 	setPip: (pip: boolean) => set({ pip }),
 	setPlaying: (playing: boolean) => set({ playing }),
@@ -97,14 +109,17 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
 	setPlayerType: (playerType: number) => set({ playerType }),
 	setPlayerRef: (ref: MutableRefObject<ReactPlayer | null>) =>
 		set({ playerRef: ref }),
+	setInitialSync: (sync: boolean) => set({ initialSync: sync }),
 }));
 
 interface GlobalStore {
-	logout: () => void;
-	showRoomTab: Tabs;
-	setShowRoomTab: (tab: Tabs) => void;
 	connected: boolean;
+	showRoomTab: Tabs;
+	roomJoinDialogShown: boolean;
 	setConnected: (connected: boolean) => void;
+	setShowRoomTab: (tab: Tabs) => void;
+	logout: () => void;
+	setRoomJoinDialogShown: (shown: boolean) => void;
 }
 interface RoomStore {
 	loading: boolean;
@@ -121,6 +136,7 @@ interface RoomStore {
 	setRoomData: (data: Room | null) => void;
 	updateActiveMembersList: (members: string[]) => void;
 	setLoading: (loading: boolean) => void;
+	setPlayerStats: (stats: number[]) => void;
 }
 interface PlayerStore {
 	url: string;
@@ -135,6 +151,7 @@ interface PlayerStore {
 	serverTimeOffset: number;
 	playerType: number;
 	playerRef: MutableRefObject<ReactPlayer | null> | null;
+	initialSync: boolean;
 	setUrl: (url: string) => void;
 	setPip: (pip: boolean) => void;
 	setPlaying: (playing: boolean) => void;
@@ -147,4 +164,5 @@ interface PlayerStore {
 	setServerTimeOffset: (offset: number) => void;
 	setPlayerType: (type: number) => void;
 	setPlayerRef: (ref: MutableRefObject<ReactPlayer | null>) => void;
+	setInitialSync: (sync: boolean) => void;
 }

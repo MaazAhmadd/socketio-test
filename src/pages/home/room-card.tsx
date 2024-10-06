@@ -1,6 +1,7 @@
 import MemberIcon from "@/components/common/member-icon";
 import { useGetCurrentUser } from "@/hooks/user-hooks";
 import { screenBreakpoints, useWindowSize } from "@/hooks/util-hooks";
+import { useYoutubeInfo } from "@/hooks/video-player-hooks";
 import { cn } from "@/lib/utils";
 import { trimString } from "@/pages/home";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
@@ -13,15 +14,16 @@ interface RoomCardProps {
 }
 
 const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
-	const { data } = useGetCurrentUser();
+	const { data: currentUser } = useGetCurrentUser();
 	const { width } = useWindowSize();
-	if (!data) return <></>;
-	if (!room || !room.activeMembersList || room.activeMembersList?.length! < 1)
+	if (!currentUser) return <></>;
+	if (!room || !room.activeMembersList || !room.activeMembersList?.length) {
 		return <></>;
+	}
 	const activeMembersList = [...room?.activeMembersList!];
-	if (data) {
+	if (currentUser) {
 		// sort room members based on friends come first
-		const friends = data.friends;
+		const friends = currentUser.friends;
 		activeMembersList.sort((a, b) => {
 			if (friends.includes(a) && friends.includes(b)) {
 				return friends.indexOf(a) - friends.indexOf(b);
@@ -31,6 +33,8 @@ const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 			return 0;
 		});
 	}
+	const { info } = useYoutubeInfo(room.videoUrl);
+
 	return (
 		<li
 			className={cn(
@@ -40,9 +44,9 @@ const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 			onClick={onClick}
 		>
 			<div className="flex h-[80px] justify-start gap-4 sm:h-[100px]">
-				{room.v_thumbnailUrl ? (
+				{info.thumbnail ? (
 					<img
-						src={room.v_thumbnailUrl}
+						src={info.thumbnail}
 						alt=""
 						className="w-[120px] max-w-[200px] object-cover sm:w-[150px]"
 					/>
@@ -51,15 +55,15 @@ const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 				)}
 				<div className="flex w-[60svw] flex-col justify-between py-2 pr-1 sm:w-[69svw] lg:max-w-[430px]">
 					<p className="text-xs leading-tight sm:text-sm md:text-[15px]">
-						{trimString(
-							// `${room.v_title} ${room.v_title} ${room.v_title}`,
-							room.v_title,
-							width <= screenBreakpoints.sm
-								? 48
-								: width < screenBreakpoints.md - 100
-									? 54
-									: 96,
-						)}
+						{info.title &&
+							trimString(
+								info.title,
+								width <= screenBreakpoints.sm
+									? 48
+									: width < screenBreakpoints.md - 100
+										? 54
+										: 96,
+							)}
 					</p>
 					<div className="flex">
 						<div
@@ -79,17 +83,17 @@ const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 								);
 							})}
 						</div>
-						{/* {[...activeMembersList, ...activeMembersList, ...activeMembersList]
-							.length > 4 && (
-							<span className="ml-1 flex items-center rounded-r-sm bg-muted">
-								<ChevronRightIcon className="h-3 w-3 text-muted-foreground" />
-							</span>
-						)} */}
 					</div>
 				</div>
 			</div>
 		</li>
 	);
 };
+/* {[...activeMembersList, ...activeMembersList, ...activeMembersList]
+	.length > 4 && (
+	<span className="ml-1 flex items-center rounded-r-sm bg-muted">
+		<ChevronRightIcon className="h-3 w-3 text-muted-foreground" />
+	</span>
+)} */
 
 export default RoomCard;

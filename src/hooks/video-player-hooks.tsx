@@ -5,6 +5,7 @@ import ReactPlayer from "react-player";
 type NoembedRes = {
 	thumbnail_url: string;
 	title: string;
+	error: string;
 };
 
 export type YoutubeInfo = {
@@ -19,31 +20,93 @@ export function useYoutubeInfo(yturl: string) {
 		thumbnail: "",
 		duration: null,
 	});
-	// const yturl = `https://www.youtube.com/watch?v=${ytId}`;
+	const [error, setError] = useState<string | null>(null);
+	const [isLoading, setIsLoading] = useState(false);
+
 	const noembedUrl = `https://noembed.com/embed?url=${yturl}`;
 
 	useEffect(() => {
-		axios.get<NoembedRes>(noembedUrl).then((res) => {
-			setInfo((prev) => ({
-				...prev,
-				title: res.data.title,
-				thumbnail: res.data.thumbnail_url,
-			}));
-		});
-	}, [noembedUrl]);
+		if (!yturl) return;
+		const fetchData = async () => {
+			setIsLoading(true);
+			try {
+				const res = await axios.get<NoembedRes>(noembedUrl);
+				if (res.data.error) {
+					setError("Invalid URL");
+					setIsLoading(false);
+				} else {
+					setInfo({
+						title: res.data.title,
+						thumbnail: res.data.thumbnail_url,
+						duration: null,
+					});
+				}
+			} catch (error) {
+				setError("Invalid URL");
+				setIsLoading(false);
+			} finally {
+				// setIsLoading(false);
+			}
+		};
 
-	const player = !info.duration ? (
-		<ReactPlayer
-			url={yturl}
-			style={{ display: "none" }}
-			onDuration={(duration: number) => {
-				setInfo((prev) => ({
-					...prev,
-					duration,
-				}));
-			}}
-		/>
-	) : null;
+		fetchData();
+	}, [yturl, noembedUrl]);
 
-	return { info, player };
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			if (isLoading) {
+				setIsLoading(false);
+			}
+			if (!error) {
+				setError("Something went wrong, try another URL");
+			}
+		}, 10000);
+
+		return () => clearTimeout(timer);
+	}, [isLoading, error]);
+
+	if (!yturl) {
+		return {
+			info: {
+				title: "",
+				thumbnail: "",
+				duration: null,
+			},
+			error: "",
+			setError: () => {},
+			isLoading: false,
+			player: null,
+		};
+	}
+
+	const player =
+		!error &&
+		(!info.duration ? (
+			<ReactPlayer
+				url={yturl}
+				style={{ display: "none" }}
+				onDuration={(duration: number) => {
+					setIsLoading(false);
+					setInfo((prev) => ({
+						...prev,
+						duration,
+					}));
+				}}
+				onReady={(p) => {
+					p.seekTo(1, "seconds");
+				}}
+				onError={(error: any) => {
+					if (error.message) {
+						setError(error.message);
+						setIsLoading(false);
+					}
+					if (error === 150) {
+						setError("video unavailable");
+						setIsLoading(false);
+					}
+				}}
+			/>
+		) : null);
+
+	return { info, error, setError, isLoading, player };
 }

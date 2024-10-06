@@ -221,12 +221,11 @@ const RoomList = ({
 
 const CreateRoom = () => {
 	const [url, setUrl] = useState("");
-	const [isLoading, setIsLoading] = useState(false);
 	const schema = z.object({
 		url: z
 			.string()
-			.min(11, "url or id should me minimum 11 characters")
-			.max(512, "url or id should me maximum 512 characters"),
+			.min(11, "url should me minimum 11 characters")
+			.max(512, "url should me maximum 512 characters"),
 	});
 	type FormData = z.infer<typeof schema>;
 	const {
@@ -236,32 +235,25 @@ const CreateRoom = () => {
 	} = useForm<FormData>({
 		resolver: zodResolver(schema),
 	});
-	const { info, player } = useYoutubeInfo(url);
+	const { info, error, setError, isLoading, player } = useYoutubeInfo(url);
+
 	const {
 		data: room,
 		mutate: makeRoom,
-		isPending: creatingRoom,
-		isError: roomError,
+		isPending: makingRoom,
+		isError: roomMakingError,
 	} = useMakeRoom();
 
 	useEffect(() => {
 		if (info.duration) {
-			console.log("[createRoom] about to makeRoom videoUrl: ", info);
 			makeRoom({ url, duration: info.duration });
 		}
 	}, [info.duration]);
 
-	if (roomError) {
-		console.log("[createRoom] roomError: ", roomError);
-		setIsLoading(false);
-	}
-
 	const onSubmitUrlForm = async (data: FieldValues) => {
 		if (data) {
-			setIsLoading(true);
+			setError("");
 			setUrl(data.url);
-			console.log("[createRoom onsubmit] about to createRoom videoUrl: ", data);
-			// makeRoom({ url: data.url, duration: 60 });
 		}
 	};
 
@@ -289,13 +281,26 @@ const CreateRoom = () => {
 					autoCapitalize="none"
 					autoCorrect="off"
 					autoComplete="off"
-					disabled={creatingRoom}
+					disabled={isLoading || makingRoom}
 				/>
-				<Button disabled={creatingRoom} size={"sm"} type="submit" className="">
+				<Button
+					disabled={isLoading || makingRoom}
+					size={"sm"}
+					type="submit"
+					className=""
+				>
 					{isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
 					<TiPin className="size-6" />
 				</Button>
 			</form>
+			{error && (
+				<p className="my-2 text-center text-red-500 text-sm">{error}</p>
+			)}
+			{errors && (
+				<p className="my-2 text-center text-red-500 text-sm">
+					{errors.url?.message}
+				</p>
+			)}
 			{/* <SearchYt /> */}
 			<div className="mx-4 mt-4 flex flex-wrap justify-center gap-4 overflow-y-hidden md:mx-10">
 				<RecentVideosDialog />

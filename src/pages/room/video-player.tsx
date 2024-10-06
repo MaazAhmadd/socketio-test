@@ -1,13 +1,20 @@
 import { cn } from "@/lib/utils";
-import { usePlayerStore } from "@/store";
+import { useGlobalStore, usePlayerStore } from "@/store";
 import { useEffect, useRef, useState } from "react";
 import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";
 import ReactPlayer from "react-player";
+import RoomJoinDialog from "./room-join-dialog";
 
 const VideoPlayer = ({ screen }: { screen: "mobile" | "desktop" }) => {
 	const [open, setOpen] = useState(true);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const pRef = useRef<ReactPlayer | null>(null);
+	const { roomJoinDialogShown, setRoomJoinDialogShown } = useGlobalStore(
+		(s) => ({
+			roomJoinDialogShown: s.roomJoinDialogShown,
+			setRoomJoinDialogShown: s.setRoomJoinDialogShown,
+		}),
+	);
 	// Extract state values and setter functions from the store as an object
 	const {
 		url,
@@ -60,11 +67,6 @@ const VideoPlayer = ({ screen }: { screen: "mobile" | "desktop" }) => {
 		setPlayerType: s.setPlayerType,
 		setPlayerRef: s.setPlayerRef,
 	}));
-
-	const playerlog = usePlayerStore((s) => s);
-	useEffect(() => {
-		console.log("[videoPlayer] playerlog: ", playerlog);
-	}, []);
 
 	const load = (url: string) => {
 		setUrl(url);
@@ -126,87 +128,94 @@ const VideoPlayer = ({ screen }: { screen: "mobile" | "desktop" }) => {
 	);
 
 	return (
-		<div
-			style={{
-				transform: !open
-					? `translate(0px, -${containerRef.current?.offsetHeight}px)`
-					: "translate(0px, 0px)",
-				transition: "transform .5s cubic-bezier(.32, .72, 0, 1)",
-			}}
-		>
-			<div ref={containerRef} className={cn("w-full bg-red-800")}>
-				<div className="relative pt-[56.25%]">
-					<ReactPlayer
-						ref={pRef}
-						className="absolute top-0 left-0"
-						width="100%"
-						height="100%"
-						url={url}
-						pip={pip}
-						playing={playing}
-						loop={loop}
-						playbackRate={playbackRate}
-						volume={volume}
-						muted={muted}
-						progressInterval={1000}
-						onReady={() => {
-							setPlayerRef(pRef);
-							setPlaying(true);
-							console.log("onReady");
-						}}
-						onStart={() => console.log("onStart")}
-						onPlay={() => {
-							console.log("onplay serverTimeOffset: ", serverTimeOffset);
-							setPlaying(true);
-						}}
-						onPause={() => {
-							console.log("onpause serverTimeOffset: ", serverTimeOffset);
-							setPlaying(false);
-						}}
-						onBuffer={() => console.log("onBuffer")}
-						onPlaybackRateChange={(speed: string) => {
-							console.log("onPlaybackRateChange", speed);
-							setPlaybackRate(Number.parseFloat(speed));
-						}}
-						onSeek={(e) => console.log("onSeek", e)}
-						onEnded={() => setPlaying(loop)}
-						onError={(e) => console.log("onError", e)}
-						onProgress={(state) => {
-							const currentProgress = state.played;
+		<>
+			<RoomJoinDialog />
+			<div
+				style={{
+					transform: !open
+						? `translate(0px, -${containerRef.current?.offsetHeight}px)`
+						: "translate(0px, 0px)",
+					transition: "transform .5s cubic-bezier(.32, .72, 0, 1)",
+				}}
+			>
+				<div ref={containerRef} className={cn("w-full bg-red-800")}>
+					<div className="relative pt-[56.25%]">
+						{!roomJoinDialogShown && (
+							<ReactPlayer
+								ref={pRef}
+								className="absolute top-0 left-0"
+								width="100%"
+								height="100%"
+								url={url}
+								pip={pip}
+								playing={playing}
+								loop={loop}
+								playbackRate={playbackRate}
+								volume={volume}
+								muted={muted}
+								progressInterval={1000}
+								onReady={() => {
+									setPlayerRef(pRef);
+									setPlaying(true);
+									console.log("onReady");
+								}}
+								onStart={() => console.log("onStart")}
+								onPlay={() => {
+									console.log("onplay serverTimeOffset: ", serverTimeOffset);
+									setPlaying(true);
+								}}
+								onPause={() => {
+									console.log("onpause serverTimeOffset: ", serverTimeOffset);
+									setPlaying(false);
+								}}
+								onBuffer={() => console.log("onBuffer")}
+								onPlaybackRateChange={(speed: string) => {
+									console.log("onPlaybackRateChange", speed);
+									setPlaybackRate(Number.parseFloat(speed));
+								}}
+								onSeek={(e) => console.log("onSeek", e)}
+								onEnded={() => setPlaying(loop)}
+								onError={(e) => console.log("onError", e)}
+								onProgress={(state) => {
+									const currentProgress = state.played;
 
-							setProgress(currentProgress);
+									setProgress(currentProgress);
 
-							// if (Math.abs(currentProgress - previousProgress.current) > 5) {
-							// 	setProgress(currentProgress);
-							// 	previousProgress.current = currentProgress;
-							// }
-						}}
-						onDuration={(duration: number) => setDuration(duration)}
-						config={{ youtube: { playerVars: { controls: 1 } } }}
-					/>
+									// if (Math.abs(currentProgress - previousProgress.current) > 5) {
+									// 	setProgress(currentProgress);
+									// 	previousProgress.current = currentProgress;
+									// }
+								}}
+								onDuration={(duration: number) => setDuration(duration)}
+								config={{
+									youtube: { playerVars: { controls: 1, autoplay: 1 } },
+								}}
+							/>
+						)}
+					</div>
 				</div>
+				{screen === "mobile" && (
+					<>
+						{open && (
+							<div
+								onClick={() => setOpen(false)}
+								className="mx-auto flex h-[20px] w-12 cursor-pointer items-center justify-center rounded-b-xl bg-gray-600/50"
+							>
+								<TiArrowSortedUp />
+							</div>
+						)}
+						{!open && (
+							<div
+								onClick={() => setOpen(true)}
+								className="mx-auto flex h-[20px] w-12 cursor-pointer items-center justify-center rounded-b-xl bg-gray-600/50"
+							>
+								<TiArrowSortedDown />
+							</div>
+						)}
+					</>
+				)}
 			</div>
-			{screen === "mobile" && (
-				<>
-					{open && (
-						<div
-							onClick={() => setOpen(false)}
-							className="mx-auto flex h-[20px] w-12 cursor-pointer items-center justify-center rounded-b-xl bg-gray-600/50"
-						>
-							<TiArrowSortedUp />
-						</div>
-					)}
-					{!open && (
-						<div
-							onClick={() => setOpen(true)}
-							className="mx-auto flex h-[20px] w-12 cursor-pointer items-center justify-center rounded-b-xl bg-gray-600/50"
-						>
-							<TiArrowSortedDown />
-						</div>
-					)}
-				</>
-			)}
-		</div>
+		</>
 	);
 };
 

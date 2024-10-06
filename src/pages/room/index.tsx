@@ -8,8 +8,8 @@ import {
 	screenBreakpoints,
 } from "@/hooks/util-hooks";
 import { socket } from "@/socket";
-import { useGlobalStore, useRoomStore } from "@/store";
-import { useEffect, useRef } from "react";
+import { useGlobalStore, usePlayerStore, useRoomStore } from "@/store";
+import { useEffect, useMemo, useRef } from "react";
 import toast from "react-hot-toast";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Message, Room } from "server/src/types";
@@ -62,21 +62,48 @@ const RoomPage = () => {
 		setRoomData,
 		updateActiveMembersList,
 		addMessage,
+		messages,
 		setMessages,
 		setMutedMembers,
 		setMics,
 		loading,
 		setLoading,
+		setPlayerStats,
 	} = useRoomStore((s) => ({
 		roomData: s.roomData,
 		setRoomData: s.setRoomData,
 		updateActiveMembersList: s.updateActiveMembersList,
 		addMessage: s.addMessage,
+		messages: s.messages,
 		setMessages: s.setMessages,
 		setMutedMembers: s.setMutedMembers,
 		setMics: s.setMics,
 		loading: s.loading,
 		setLoading: s.setLoading,
+		setPlayerStats: s.setPlayerStats,
+	}));
+	const {
+		setPlayerType,
+		setUrl,
+		serverTimeOffset,
+		setServerTimeOffset,
+		setDuration,
+		setProgress,
+		setPlaying,
+		playerRef,
+		initialSync,
+		setInitialSync,
+	} = usePlayerStore((s) => ({
+		setPlayerType: s.setPlayerType,
+		setUrl: s.setUrl,
+		serverTimeOffset: s.serverTimeOffset,
+		setServerTimeOffset: s.setServerTimeOffset,
+		setDuration: s.setDuration,
+		setProgress: s.setProgress,
+		setPlaying: s.setPlaying,
+		playerRef: s.playerRef,
+		initialSync: s.initialSync,
+		setInitialSync: s.setInitialSync,
 	}));
 
 	console.log("[Room] roomData: ", roomData);
@@ -94,6 +121,7 @@ const RoomPage = () => {
 
 	useEffect(() => {
 		console.log("[Room] once effect");
+		setInitialSync(false);
 		const token = localStorage.getItem("auth_token");
 		console.log("[Room] token: ", token);
 		socket.io.opts.query = { token };
@@ -103,6 +131,8 @@ const RoomPage = () => {
 		function onConnect() {
 			console.log("[socket connect] connected");
 			socket.emit("joinRoom", id!);
+			socket.emit("sendSyncTimer");
+			socket.emit("sendSyncPlayerStats");
 			setConnected(true);
 			setLoading(false);
 		}
@@ -123,14 +153,9 @@ const RoomPage = () => {
 		}
 
 		function onRoomDesc(data: Room) {
-			console.log("[socket roomDesc] roomDesc before pop: ", data);
 			const mics = data.activeMembersList?.pop();
-			console.log(
-				"[socket roomDesc] roomDesc after pop: ",
-				data,
-				"mics: ",
-				mics,
-			);
+			const url = data.videoUrl;
+			setUrl(url);
 			setMics(mics!);
 			setRoomData(data);
 		}
@@ -159,11 +184,18 @@ const RoomPage = () => {
 		}
 
 		function onSyncPlayerStats(data: number[]) {
+			setPlayerStats(data);
 			const [duration, progress, lastChanged, status, type] = data;
+			const serverTime = getDateInSeconds() + serverTimeOffset;
+			setPlaying(status === 1);
+			setProgress(serverTime - lastChanged + progress);
+			setDuration(duration);
+			setPlayerType(type);
 			console.log("[socket onSyncPlayerStats] onSyncPlayerStats: ", data);
 		}
 
 		function onSyncTimer(data: number) {
+			setServerTimeOffset(getDateInSeconds() - data);
 			console.log("[socket onSyncTimer] onSyncTimer: ", data);
 		}
 
@@ -192,6 +224,33 @@ const RoomPage = () => {
 		};
 	}, []);
 
+	useEffect(() => {
+		if (initialSync) return;
+		if (!roomData) return;
+		if (!roomData.playerStats) return;
+		const [duration, progress, lastChanged, status, type] =
+			roomData.playerStats;
+		const serverTime = getDateInSeconds() + serverTimeOffset;
+		setProgress(serverTime - lastChanged + progress);
+		if (playerRef?.current) {
+			setInitialSync(true);
+			playerRef.current.seekTo(serverTime - lastChanged + progress, "seconds");
+		}
+	}, [playerRef]);
+
+	// mobile videoplayer height 33svh
+	// desktop chat width 30svw
+	// turn to ssvh if caused issue on mobile
+	const mobileView = width <= screenBreakpoints.md;
+	const MobileChat = useMemo(
+		() => <Chat screen={"mobile"} />,
+		[messages.length],
+	);
+	const DesktopChat = useMemo(
+		() => <Chat screen={"desktop"} />,
+		[messages.length],
+	);
+
 	if (!id) {
 		return <Navigate to="/home" />;
 	}
@@ -219,10 +278,6 @@ const RoomPage = () => {
 		navigate("/home");
 	}
 
-	// mobile videoplayer height 33svh
-	// desktop chat width 30svw
-	// turn to ssvh if caused issue on mobile
-	const mobileView = width <= screenBreakpoints.md;
 	return (
 		<>
 			{loading && (
@@ -233,9 +288,7 @@ const RoomPage = () => {
 			<ConnectionStatus />
 			{mobileView ? (
 				<div>
-					<div className="h-[100svh]">
-						<Chat screen={"mobile"} />
-					</div>
+					<div className="h-[100svh]">{MobileChat}</div>
 
 					<div className="fixed top-[40px] w-full">
 						<VideoPlayer screen={"mobile"} />
@@ -259,9 +312,7 @@ const RoomPage = () => {
 								onLeaveRoom={onLeaveRoom}
 							/>
 						</div>
-						<div className="h-[95svh]">
-							<Chat screen={"desktop"} />
-						</div>
+						<div className="h-[95svh]">{DesktopChat}</div>
 					</div>
 				</div>
 			)}
@@ -341,3 +392,6 @@ const KickDialogBox = ({
 		</Dialog>
 	);
 };
+function getDateInSeconds() {
+	return Math.floor(Date.now() / 1000);
+}
