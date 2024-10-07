@@ -10,7 +10,7 @@ import {
 	ClientToServerEvents,
 	InterServerEvents,
 	Room,
-	ServerToClientEvents
+	ServerToClientEvents,
 } from "./types";
 
 // const memberRepository = redisSchemas.member;
@@ -166,10 +166,12 @@ export default function socketServer(io: CustomIO) {
 					type,
 				];
 			}
+			console.log(`[socket] playPauseVideo, playerStats: ${room.playerStats}`);
 			io.in(roomId).emit("syncPlayerStats", room.playerStats);
 			await roomRepository.save(room);
 		});
 		socket.on("sendSyncTimer", () => {
+			console.log(`[socket] sendSyncTimer: ${getDateInSeconds()}`);
 			socket.emit("syncTimer", getDateInSeconds());
 		});
 		socket.on("sendSyncPlayerStats", async () => {
@@ -181,6 +183,9 @@ export default function socketServer(io: CustomIO) {
 			if (!room) {
 				return socket.emit("stateError", "Room not found");
 			}
+			console.log(
+				`[socket] sendSyncPlayerStats, playerStats: ${room.playerStats}`,
+			);
 			socket.emit("syncPlayerStats", room.playerStats);
 		});
 		socket.on("seekVideo", async (seekTo: number) => {
@@ -197,6 +202,7 @@ export default function socketServer(io: CustomIO) {
 			if (seekTo > duration) {
 				return socket.emit("stateError", "Seek to is greater than duration");
 			}
+			console.log(`[socket] seekVideo, seekTo: ${seekTo}`);
 			room.playerStats = [duration, seekTo, getDateInSeconds(), status, type];
 			io.in(roomId).emit("syncPlayerStats", room.playerStats);
 			await roomRepository.save(room);

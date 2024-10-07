@@ -275,6 +275,10 @@ const RoomPage = () => {
 			if (playerRef.current) {
 				setInitialSync(true);
 				setPlayerInSync(true);
+				console.log(
+					"[socket onSyncPlayerStats] status 1 seeking to: ",
+					serverTime - lastChanged + progress,
+				);
 				playerRef.current.seekTo(
 					serverTime - lastChanged + progress,
 					"seconds",
@@ -288,6 +292,10 @@ const RoomPage = () => {
 			if (playerRef.current) {
 				setInitialSync(true);
 				setPlayerInSync(true);
+				console.log(
+					"[socket onSyncPlayerStats] status 0 seeking to: ",
+					progress,
+				);
 				playerRef.current.seekTo(progress, "seconds");
 			}
 		}
@@ -343,7 +351,9 @@ const RoomPage = () => {
 				<div>
 					<div className="h-[100svh]">{MobileChat}</div>
 
-					<div className="fixed top-[40px] w-full">{MobileVideoPlayer}</div>
+					<div className="fixed top-[40px] w-full">
+						<VideoPlayer screen={"mobile"} ref={playerRef} />
+					</div>
 					<div className="fixed top-0 h-[40px] w-full border-muted border-b bg-primary-foreground">
 						<RoomButtons
 							kickDialogRef={kickDialogRef}
@@ -353,7 +363,9 @@ const RoomPage = () => {
 				</div>
 			) : (
 				<div className="flex">
-					<div className="w-[70svw]">{DesktopVideoPlayer}</div>
+					<div className="w-[70svw]">
+						<VideoPlayer screen={"desktop"} ref={playerRef} />
+					</div>
 					<div className="w-[30svw]">
 						<div className=" h-[5svh]">
 							<RoomButtons

@@ -173,6 +173,7 @@ const VideoPlayer = React.forwardRef<
 								}}
 								onStart={() => console.log("[VideoPlayer] onStart")}
 								onPlay={() => {
+									if (playing) return;
 									console.log(
 										"[VideoPlayer] onplay serverTimeOffset: ",
 										serverTimeOffset,
@@ -188,6 +189,7 @@ const VideoPlayer = React.forwardRef<
 									}
 								}}
 								onPause={() => {
+									if (!playing) return;
 									console.log(
 										"[VideoPlayer] onpause serverTimeOffset: ",
 										serverTimeOffset,
@@ -212,23 +214,32 @@ const VideoPlayer = React.forwardRef<
 								onEnded={() => setPlaying(loop)}
 								onError={(e) => console.log("[VideoPlayer] onError", e)}
 								onProgress={(state) => {
-									// console.log("[VideoPlayer] onProgress", state);
 									const currentProgress = state.playedSeconds;
-									if (!isSystemAction) {
-										setIsSystemAction(false);
-										setProgress(currentProgress);
-										return;
-									}
+									// console.log(
+									// 	"[VideoPlayer] onProgress currentProgress, previousProgress",
+									// 	currentProgress,
+									// 	progress,
+									// );
+									// if (!isSystemAction) {
+									// 	setIsSystemAction(false);
+									// 	setProgress(currentProgress);
+									// 	return;
+									// }
 									if (Math.abs(currentProgress - progress) > 5) {
 										if (currentUser?._id === currentLeader) {
+											console.log(
+												"[VideoPlayer] onProgress sending seek to server: ",
+												Math.floor(currentProgress),
+											);
 											socket.emit("seekVideo", Math.floor(currentProgress));
 											setIsSystemAction(false);
-											setProgress(currentProgress);
+											// setProgress(currentProgress);
 										} else {
 											setPlayerInSync(false);
-											setProgress(currentProgress);
+											// setProgress(currentProgress);
 										}
 									}
+									setProgress(currentProgress);
 								}}
 								onDuration={(duration: number) => {
 									console.log("[VideoPlayer] onDuration", duration);
