@@ -26,7 +26,7 @@ import {
 import { cn, getHexColorFromString } from "@/lib/utils";
 import { useRoomStore } from "@/store";
 import { PersonIcon } from "@radix-ui/react-icons";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
 
 import { BsThreeDots } from "react-icons/bs";
@@ -48,8 +48,7 @@ export function RoomMembersDrawer() {
 	const { activeMembersList } = useRoomStore((s) => ({
 		activeMembersList: s.roomData?.activeMembersList,
 	}));
-
-	console.log("[RoomMembersDrawer] activeMembersList: ", activeMembersList);
+	// console.log("[RoomMembersDrawer] activeMembersList: ", activeMembersList);
 
 	return (
 		<>

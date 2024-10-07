@@ -1,21 +1,28 @@
 import { cn } from "@/lib/utils";
-import { useGlobalStore, usePlayerStore } from "@/store";
-import { useEffect, useRef, useState } from "react";
+import { useGlobalStore, usePlayerStore, useRoomStore } from "@/store";
+import React, { useEffect, useRef, useState } from "react";
 import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";
 import ReactPlayer from "react-player";
 import RoomJoinDialog from "./room-join-dialog";
+import { useGetCurrentUser } from "@/hooks/user-hooks";
+import { socket } from "@/socket";
+import { Button } from "@/components/ui/button";
 
-const VideoPlayer = ({ screen }: { screen: "mobile" | "desktop" }) => {
+type Props = {
+	screen: "mobile" | "desktop";
+};
+
+const VideoPlayer = React.forwardRef<
+	React.ElementRef<typeof ReactPlayer>,
+	Props
+>(({ screen }, ref) => {
 	const [open, setOpen] = useState(true);
 	const containerRef = useRef<HTMLDivElement | null>(null);
-	const pRef = useRef<ReactPlayer | null>(null);
-	const { roomJoinDialogShown, setRoomJoinDialogShown } = useGlobalStore(
-		(s) => ({
-			roomJoinDialogShown: s.roomJoinDialogShown,
-			setRoomJoinDialogShown: s.setRoomJoinDialogShown,
-		}),
-	);
-	// Extract state values and setter functions from the store as an object
+	const roomJoinDialogShown = useGlobalStore((s) => s.roomJoinDialogShown);
+	const { currentLeader } = useRoomStore((s) => ({
+		currentLeader: s.roomData?.activeMembersList![0],
+	}));
+
 	const {
 		url,
 		pip,
@@ -28,7 +35,7 @@ const VideoPlayer = ({ screen }: { screen: "mobile" | "desktop" }) => {
 		progress,
 		serverTimeOffset,
 		playerType,
-		playerRef,
+		playerInSync,
 		setUrl,
 		setPip,
 		setPlaying,
@@ -40,7 +47,9 @@ const VideoPlayer = ({ screen }: { screen: "mobile" | "desktop" }) => {
 		setProgress,
 		setServerTimeOffset,
 		setPlayerType,
-		setPlayerRef,
+		setPlayerInSync,
+		isSystemAction,
+		setIsSystemAction,
 	} = usePlayerStore((s) => ({
 		url: s.url,
 		pip: s.pip,
@@ -53,7 +62,8 @@ const VideoPlayer = ({ screen }: { screen: "mobile" | "desktop" }) => {
 		progress: s.progress,
 		serverTimeOffset: s.serverTimeOffset,
 		playerType: s.playerType,
-		playerRef: s.playerRef,
+		playerInSync: s.playerInSync,
+		isSystemAction: s.isSystemAction,
 		setUrl: s.setUrl,
 		setPip: s.setPip,
 		setPlaying: s.setPlaying,
@@ -65,38 +75,42 @@ const VideoPlayer = ({ screen }: { screen: "mobile" | "desktop" }) => {
 		setProgress: s.setProgress,
 		setServerTimeOffset: s.setServerTimeOffset,
 		setPlayerType: s.setPlayerType,
-		setPlayerRef: s.setPlayerRef,
+		setPlayerInSync: s.setPlayerInSync,
+		setIsSystemAction: s.setIsSystemAction,
 	}));
+	const { data: currentUser } = useGetCurrentUser();
 
-	const load = (url: string) => {
-		setUrl(url);
-		setProgress(0);
-		setPip(false);
-	};
+	// const load = (url: string) => {
+	// 	setUrl(url);
+	// 	setProgress(0);
+	// 	setPip(false);
+	// };
 
-	const handlePlayPause = () => setPlaying(!playing);
-	const handleToggleLoop = () => setLoop(!loop);
+	// const handlePlayPause = () => setPlaying(!playing);
+	// const handleToggleLoop = () => setLoop(!loop);
 
-	const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setVolume(Number.parseFloat(e.target.value));
-	};
-	const handleToggleMuted = () => setMuted(!muted);
+	// const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	// 	setVolume(Number.parseFloat(e.target.value));
+	// };
+	// const handleToggleMuted = () => setMuted(!muted);
 
-	const handleSetPlaybackRate = (e: React.MouseEvent<HTMLButtonElement>) => {
-		setPlaybackRate(Number.parseFloat(e.currentTarget.value));
-	};
+	// const handleSetPlaybackRate = (e: React.MouseEvent<HTMLButtonElement>) => {
+	// 	setPlaybackRate(Number.parseFloat(e.currentTarget.value));
+	// };
 
 	// const handleTogglePIP = () => setPip((prev) => !prev);
-	const handlePlay = () => {
-		console.log("onplay serverTimeOffset: ", serverTimeOffset);
-		setPlaying(true);
-	};
+	// const handlePlay = () => {
+	// 	console.log("onplay serverTimeOffset: ", serverTimeOffset);
+	// 	setPlaying(true);
+	// };
 	// const handleEnablePIP = () => setPip(true);
 	// const handleDisablePIP = () => setPip(false);
-	const handlePause = () => {
-		console.log("onpause serverTimeOffset: ", serverTimeOffset);
-		setPlaying(false);
-	};
+
+	// const handlePause = () => {
+	// 	console.log("onpause serverTimeOffset: ", serverTimeOffset);
+	// 	setPlaying(false);
+	// };
+
 	// const handleSeekMouseDown = () => setSeeking(true);
 	// const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 	// 	console.log("onSeekChange: ", e.target.value);
@@ -110,22 +124,22 @@ const VideoPlayer = ({ screen }: { screen: "mobile" | "desktop" }) => {
 	// 	playerRef.current?.seekTo(Number.parseFloat(e.currentTarget.value));
 	// };
 
-	const handleProgress = (state: { played: number }) => {
-		const currentProgress = state.played;
+	// const handleProgress = (state: { played: number }) => {
+	// 	const currentProgress = state.played;
 
-		setProgress(currentProgress);
+	// 	setProgress(currentProgress);
 
-		// if (Math.abs(currentProgress - previousProgress.current) > 5) {
-		// 	setProgress(currentProgress);
-		// 	previousProgress.current = currentProgress;
-		// }
-	};
+	// if (Math.abs(currentProgress - previousProgress.current) > 5) {
+	// 	setProgress(currentProgress);
+	// 	previousProgress.current = currentProgress;
+	// }
+	// };
 
-	const handleEnded = () => setPlaying(loop);
-	const handleDuration = (duration: number) => setDuration(duration);
-	const renderLoadButton = (url: string, label: string) => (
-		<button onClick={() => load(url)}>{label}</button>
-	);
+	// const handleEnded = () => setPlaying(loop);
+	// const handleDuration = (duration: number) => setDuration(duration);
+	// const renderLoadButton = (url: string, label: string) => (
+	// 	<button onClick={() => load(url)}>{label}</button>
+	// );
 
 	return (
 		<>
@@ -142,7 +156,7 @@ const VideoPlayer = ({ screen }: { screen: "mobile" | "desktop" }) => {
 					<div className="relative pt-[56.25%]">
 						{!roomJoinDialogShown && (
 							<ReactPlayer
-								ref={pRef}
+								ref={ref}
 								className="absolute top-0 left-0"
 								width="100%"
 								height="100%"
@@ -155,38 +169,71 @@ const VideoPlayer = ({ screen }: { screen: "mobile" | "desktop" }) => {
 								muted={muted}
 								progressInterval={1000}
 								onReady={() => {
-									setPlayerRef(pRef);
-									setPlaying(true);
-									console.log("onReady");
+									console.log("[VideoPlayer] onReady");
 								}}
-								onStart={() => console.log("onStart")}
+								onStart={() => console.log("[VideoPlayer] onStart")}
 								onPlay={() => {
-									console.log("onplay serverTimeOffset: ", serverTimeOffset);
-									setPlaying(true);
+									console.log(
+										"[VideoPlayer] onplay serverTimeOffset: ",
+										serverTimeOffset,
+									);
+									if (currentUser?._id === currentLeader) {
+										socket.emit("playPauseVideo", 1);
+										setPlaying(true);
+									} else {
+										if (!isSystemAction) {
+											setPlayerInSync(false);
+										}
+										setPlaying(true);
+									}
 								}}
 								onPause={() => {
-									console.log("onpause serverTimeOffset: ", serverTimeOffset);
-									setPlaying(false);
+									console.log(
+										"[VideoPlayer] onpause serverTimeOffset: ",
+										serverTimeOffset,
+									);
+									if (currentUser?._id === currentLeader) {
+										socket.emit("playPauseVideo", 0);
+										setPlaying(false);
+									} else {
+										if (!isSystemAction) {
+											setPlayerInSync(false);
+										}
+										setPlaying(false);
+									}
 								}}
-								onBuffer={() => console.log("onBuffer")}
+								onBuffer={() => console.log("[VideoPlayer] onBuffer")}
 								onPlaybackRateChange={(speed: string) => {
-									console.log("onPlaybackRateChange", speed);
+									console.log("[VideoPlayer] onPlaybackRateChange", speed);
+									setPlayerInSync(false);
 									setPlaybackRate(Number.parseFloat(speed));
 								}}
-								onSeek={(e) => console.log("onSeek", e)}
+								onSeek={(e) => console.log("[VideoPlayer] onSeek", e)}
 								onEnded={() => setPlaying(loop)}
-								onError={(e) => console.log("onError", e)}
+								onError={(e) => console.log("[VideoPlayer] onError", e)}
 								onProgress={(state) => {
-									const currentProgress = state.played;
-
-									setProgress(currentProgress);
-
-									// if (Math.abs(currentProgress - previousProgress.current) > 5) {
-									// 	setProgress(currentProgress);
-									// 	previousProgress.current = currentProgress;
-									// }
+									// console.log("[VideoPlayer] onProgress", state);
+									const currentProgress = state.playedSeconds;
+									if (!isSystemAction) {
+										setIsSystemAction(false);
+										setProgress(currentProgress);
+										return;
+									}
+									if (Math.abs(currentProgress - progress) > 5) {
+										if (currentUser?._id === currentLeader) {
+											socket.emit("seekVideo", Math.floor(currentProgress));
+											setIsSystemAction(false);
+											setProgress(currentProgress);
+										} else {
+											setPlayerInSync(false);
+											setProgress(currentProgress);
+										}
+									}
 								}}
-								onDuration={(duration: number) => setDuration(duration)}
+								onDuration={(duration: number) => {
+									console.log("[VideoPlayer] onDuration", duration);
+									setDuration(duration);
+								}}
 								config={{
 									youtube: { playerVars: { controls: 1, autoplay: 1 } },
 								}}
@@ -197,26 +244,50 @@ const VideoPlayer = ({ screen }: { screen: "mobile" | "desktop" }) => {
 				{screen === "mobile" && (
 					<>
 						{open && (
-							<div
-								onClick={() => setOpen(false)}
-								className="mx-auto flex h-[20px] w-12 cursor-pointer items-center justify-center rounded-b-xl bg-gray-600/50"
-							>
-								<TiArrowSortedUp />
+							<div className="mx-auto flex h-[20px] w-20 cursor-pointer items-center justify-center rounded-b-xl bg-gray-600/50">
+								{!playerInSync && (
+									<Button
+										onClick={() => {
+											socket.emit("sendSyncPlayerStats");
+										}}
+										variant={"outline"}
+									>
+										sync
+									</Button>
+								)}
+								<TiArrowSortedUp onClick={() => setOpen(false)} />
 							</div>
 						)}
 						{!open && (
-							<div
-								onClick={() => setOpen(true)}
-								className="mx-auto flex h-[20px] w-12 cursor-pointer items-center justify-center rounded-b-xl bg-gray-600/50"
-							>
-								<TiArrowSortedDown />
+							<div className="mx-auto flex h-[20px] w-20 cursor-pointer items-center justify-center rounded-b-xl bg-gray-600/50">
+								{!playerInSync && (
+									<Button
+										onClick={() => {
+											socket.emit("sendSyncPlayerStats");
+										}}
+										variant={"outline"}
+									>
+										sync
+									</Button>
+								)}
+								<TiArrowSortedDown onClick={() => setOpen(true)} />
 							</div>
 						)}
 					</>
 				)}
+				{screen === "desktop" && !playerInSync && (
+					<Button
+						onClick={() => {
+							socket.emit("sendSyncPlayerStats");
+						}}
+						variant={"outline"}
+					>
+						sync
+					</Button>
+				)}
 			</div>
 		</>
 	);
-};
+});
 
 export default VideoPlayer;

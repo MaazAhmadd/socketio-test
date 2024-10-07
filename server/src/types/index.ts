@@ -31,6 +31,7 @@ interface ClientToServerEvents {
 	playPauseVideo : (data: number) => void;
 	sendSyncTimer: () => void;
 	sendSyncPlayerStats: () => void;
+	seekVideo: (data: number) => void;
 	// memberJoin: (data: Member) => void;
 	// memberLeave: (data: string) => void;
 

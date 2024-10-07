@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label";
 import VideoPlayer from "./video-player";
 import { HiMiniXMark } from "react-icons/hi2";
 import { Spinner } from "@/components/common/spinner";
+import ReactPlayer from "react-player";
 // const RoomLoading = () => {
 // 	const { loading, } = useRoomStore((s) => ({ loading: s.loading, }));
 // 	return loading ? (
@@ -39,15 +40,16 @@ const RoomPage = () => {
 	const navigate = useNavigate();
 	const { id } = useParams();
 	const kickDialogRef = useRef<HTMLButtonElement | null>(null);
+	const playerRef = useRef<ReactPlayer | null>(null);
 
-	console.log("[Room] render");
-	console.log("[Room] id: ", id);
+	// console.log("[Room] render");
+	// console.log("[Room] id: ", id);
 	// const {
 	// 	data: room,
 	// 	isLoading: isRoomLoading,
 	// 	error: roomError,
 	// } = useGetRoom();
-	// console.log("[Room] room: ", room, isRoomLoading);
+	// // console.log("[Room] room: ", room, isRoomLoading);
 
 	const { width } = useWindowSize();
 	const { isFullscreen, exitFullscreen } = useFullscreen();
@@ -83,47 +85,52 @@ const RoomPage = () => {
 		setPlayerStats: s.setPlayerStats,
 	}));
 	const {
+		url,
+		playing,
+		playbackRate,
+		progress,
+		playerInSync,
+		serverTimeOffset,
+		initialSync,
 		setPlayerType,
 		setUrl,
-		serverTimeOffset,
 		setServerTimeOffset,
 		setDuration,
 		setProgress,
 		setPlaying,
-		playerRef,
-		initialSync,
 		setInitialSync,
+		setPlayerInSync,
+		setIsSystemAction,
 	} = usePlayerStore((s) => ({
+		url: s.url,
+		playing: s.playing,
+		playbackRate: s.playbackRate,
+		progress: s.progress,
+		serverTimeOffset: s.serverTimeOffset,
+		playerInSync: s.playerInSync,
+		initialSync: s.initialSync,
 		setPlayerType: s.setPlayerType,
 		setUrl: s.setUrl,
-		serverTimeOffset: s.serverTimeOffset,
 		setServerTimeOffset: s.setServerTimeOffset,
 		setDuration: s.setDuration,
 		setProgress: s.setProgress,
 		setPlaying: s.setPlaying,
-		playerRef: s.playerRef,
-		initialSync: s.initialSync,
 		setInitialSync: s.setInitialSync,
+		setPlayerInSync: s.setPlayerInSync,
+		setIsSystemAction: s.setIsSystemAction,
 	}));
 
-	console.log("[Room] roomData: ", roomData);
-
 	// useEffect(() => {
-	//   console.log("[Room] loading effect");
-	//   refetchRoom();
-	//   async function fetchRoom() {
-	//     if (roomData) {
-	//       await refetchRoom();
-	//     }
-	//   }
-	//   fetchRoom();
+	// 	console.log("[Room] effect...empty dependency");
 	// }, []);
+	// useEffect(() => {
+	// 	console.log("[Room] effect...no dependency");
+	// });
 
 	useEffect(() => {
-		console.log("[Room] once effect");
 		setInitialSync(false);
 		const token = localStorage.getItem("auth_token");
-		console.log("[Room] token: ", token);
+
 		socket.io.opts.query = { token };
 
 		socket.connect();
@@ -132,13 +139,13 @@ const RoomPage = () => {
 			console.log("[socket connect] connected");
 			socket.emit("joinRoom", id!);
 			socket.emit("sendSyncTimer");
-			socket.emit("sendSyncPlayerStats");
+			// socket.emit("sendSyncPlayerStats");
 			setConnected(true);
 			setLoading(false);
 		}
 
 		function onDisconnect() {
-			console.log("[socket disconnect] disconnected");
+			// console.log("[socket disconnect] disconnected");
 			// setRoomData(null);
 			// setMessages([]);
 			setConnected(false);
@@ -146,7 +153,7 @@ const RoomPage = () => {
 		}
 
 		function onStateError(err: string) {
-			console.log("[socket stateError] stateError: ", err);
+			// console.log("[socket stateError] stateError: ", err);
 			toast.error(err);
 			setConnected(false);
 			// navigate("/home");
@@ -161,42 +168,70 @@ const RoomPage = () => {
 		}
 
 		function onConnectError(err: Error) {
-			console.log("[socket connect_error] connect_error: ", err);
+			// console.log("[socket connect_error] connect_error: ", err);
 			toast.error(err.message);
 			setConnected(false);
 			// navigate("/home");
 		}
 		function onActiveMemberListUpdate(data: string[]) {
-			console.log(
-				"[socket onActiveMemberListUpdate] onActiveMemberListUpdate: ",
-				data,
-			);
+			// console.log(
+			// 	"[socket onActiveMemberListUpdate] onActiveMemberListUpdate: ",
+			// 	data,
+			// );
 			const mics = data.pop();
 			setMics(mics!);
 			updateActiveMembersList(data);
 		}
 		function onMessage(data: Message) {
 			addMessage(data);
-			console.log("[socket message] message: ", data);
+			// console.log("[socket message] message: ", data);
 		}
 		function onGotKicked(data: string) {
 			kickDialogRef.current?.click();
 		}
 
 		function onSyncPlayerStats(data: number[]) {
+			console.log("[Socket onSyncPlayerStats] onSyncPlayerStats: ", data);
+			setIsSystemAction(true);
 			setPlayerStats(data);
+			setPlayerInSync(true);
 			const [duration, progress, lastChanged, status, type] = data;
 			const serverTime = getDateInSeconds() + serverTimeOffset;
-			setPlaying(status === 1);
-			setProgress(serverTime - lastChanged + progress);
-			setDuration(duration);
-			setPlayerType(type);
-			console.log("[socket onSyncPlayerStats] onSyncPlayerStats: ", data);
+			if (status === 1) {
+				setPlaying(true);
+				setProgress(serverTime - lastChanged + progress);
+				setDuration(duration);
+				setPlayerType(type);
+				if (playerRef.current) {
+					console.log(
+						"[socket onSyncPlayerStats] status 1 seeking to: ",
+						serverTime - lastChanged + progress,
+					);
+					playerRef.current.seekTo(
+						serverTime - lastChanged + progress,
+						"seconds",
+					);
+				}
+			}
+			if (status === 0) {
+				setPlaying(false);
+				setProgress(progress);
+				setDuration(duration);
+				setPlayerType(type);
+				if (playerRef.current) {
+					console.log(
+						"[socket onSyncPlayerStats] status 0 seeking to: ",
+						progress,
+					);
+					playerRef.current.seekTo(progress, "seconds");
+				}
+			}
+			// console.log("[socket onSyncPlayerStats] onSyncPlayerStats: ", data);
 		}
 
 		function onSyncTimer(data: number) {
+			console.log("[Socket onSyncTimer] onSyncTimer: ", data);
 			setServerTimeOffset(getDateInSeconds() - data);
-			console.log("[socket onSyncTimer] onSyncTimer: ", data);
 		}
 
 		socket.on("connect", onConnect);
@@ -231,12 +266,32 @@ const RoomPage = () => {
 		const [duration, progress, lastChanged, status, type] =
 			roomData.playerStats;
 		const serverTime = getDateInSeconds() + serverTimeOffset;
-		setProgress(serverTime - lastChanged + progress);
-		if (playerRef?.current) {
-			setInitialSync(true);
-			playerRef.current.seekTo(serverTime - lastChanged + progress, "seconds");
+
+		if (status === 1) {
+			setPlaying(true);
+			setProgress(serverTime - lastChanged + progress);
+			setDuration(duration);
+			setPlayerType(type);
+			if (playerRef.current) {
+				setInitialSync(true);
+				setPlayerInSync(true);
+				playerRef.current.seekTo(
+					serverTime - lastChanged + progress,
+					"seconds",
+				);
+			}
+		} else if (status === 0) {
+			setPlaying(false);
+			setProgress(progress);
+			setDuration(duration);
+			setPlayerType(type);
+			if (playerRef.current) {
+				setInitialSync(true);
+				setPlayerInSync(true);
+				playerRef.current.seekTo(progress, "seconds");
+			}
 		}
-	}, [playerRef]);
+	}, [playerRef.current]);
 
 	// mobile videoplayer height 33svh
 	// desktop chat width 30svw
@@ -250,23 +305,21 @@ const RoomPage = () => {
 		() => <Chat screen={"desktop"} />,
 		[messages.length],
 	);
+	const MobileVideoPlayer = useMemo(
+		() => <VideoPlayer screen={"mobile"} ref={playerRef} />,
+		[url, playing, playbackRate, progress, playerInSync, serverTimeOffset],
+	);
+	const DesktopVideoPlayer = useMemo(
+		() => <VideoPlayer screen={"desktop"} ref={playerRef} />,
+		[url, playing, playbackRate, progress, playerInSync, serverTimeOffset],
+	);
 
 	if (!id) {
 		return <Navigate to="/home" />;
 	}
-	// if (roomError) {
-	// 	toast.error(roomError.message);
-	// 	return <Navigate to="/home" />;
-	// }
-
 	if (!roomData) {
-		// setLoading(true);
 		return <></>;
 	}
-	// if (!connected) {
-	//   socket.connect();
-	// }
-
 	function onLeaveRoom() {
 		socket.emit("leaveRoom");
 		setConnected(false);
@@ -290,9 +343,7 @@ const RoomPage = () => {
 				<div>
 					<div className="h-[100svh]">{MobileChat}</div>
 
-					<div className="fixed top-[40px] w-full">
-						<VideoPlayer screen={"mobile"} />
-					</div>
+					<div className="fixed top-[40px] w-full">{MobileVideoPlayer}</div>
 					<div className="fixed top-0 h-[40px] w-full border-muted border-b bg-primary-foreground">
 						<RoomButtons
 							kickDialogRef={kickDialogRef}
@@ -302,9 +353,7 @@ const RoomPage = () => {
 				</div>
 			) : (
 				<div className="flex">
-					<div className="w-[70svw]">
-						<VideoPlayer screen={"desktop"} />
-					</div>
+					<div className="w-[70svw]">{DesktopVideoPlayer}</div>
 					<div className="w-[30svw]">
 						<div className=" h-[5svh]">
 							<RoomButtons

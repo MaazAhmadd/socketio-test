@@ -20,8 +20,8 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
 		localStorage.removeItem("auth_token");
 		window.location.reload();
 	},
-	setRoomJoinDialogShown: (shown: boolean) => set({ roomJoinDialogShown: shown }),
-
+	setRoomJoinDialogShown: (shown: boolean) =>
+		set({ roomJoinDialogShown: shown }),
 }));
 
 export const useRoomStore = create<RoomStore>((set) => ({
@@ -94,8 +94,9 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
 	progress: 0,
 	serverTimeOffset: 0,
 	playerType: 0,
-	playerRef: null,
 	initialSync: false,
+	playerInSync: false,
+	isSystemAction: false,
 	setUrl: (url: string) => set({ url }),
 	setPip: (pip: boolean) => set({ pip }),
 	setPlaying: (playing: boolean) => set({ playing }),
@@ -107,9 +108,9 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
 	setProgress: (progress: number) => set({ progress }),
 	setServerTimeOffset: (offset: number) => set({ serverTimeOffset: offset }),
 	setPlayerType: (playerType: number) => set({ playerType }),
-	setPlayerRef: (ref: MutableRefObject<ReactPlayer | null>) =>
-		set({ playerRef: ref }),
 	setInitialSync: (sync: boolean) => set({ initialSync: sync }),
+	setPlayerInSync: (sync: boolean) => set({ playerInSync: sync }),
+	setIsSystemAction: (action: boolean) => set({ isSystemAction: action }),
 }));
 
 interface GlobalStore {
@@ -150,8 +151,9 @@ interface PlayerStore {
 	progress: number;
 	serverTimeOffset: number;
 	playerType: number;
-	playerRef: MutableRefObject<ReactPlayer | null> | null;
 	initialSync: boolean;
+	playerInSync: boolean;
+	isSystemAction: boolean;
 	setUrl: (url: string) => void;
 	setPip: (pip: boolean) => void;
 	setPlaying: (playing: boolean) => void;
@@ -163,6 +165,7 @@ interface PlayerStore {
 	setProgress: (progress: number) => void;
 	setServerTimeOffset: (offset: number) => void;
 	setPlayerType: (type: number) => void;
-	setPlayerRef: (ref: MutableRefObject<ReactPlayer | null>) => void;
 	setInitialSync: (sync: boolean) => void;
+	setPlayerInSync: (sync: boolean) => void;
+	setIsSystemAction: (action: boolean) => void;
 }
