@@ -325,7 +325,7 @@ export async function makeRoom(userId: string, url: string, duration: number) {
 	const room = await roomRepository.save({
 		privacy: 0, // public(0), private(1), friends(2)
 		playback: 0, // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
-		roomMic: false,
+		roomMic: 0,
 		membersJoinedList: [userIDandMic],
 		activeMembersList: [userId],
 		activeMembersCount: 1,

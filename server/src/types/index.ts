@@ -3,9 +3,10 @@ interface ServerToClientEvents {
 	message: (data: Message) => void;
 	stateError: (data: string) => void;
 	activeMemberListUpdate: (data: string[]) => void;
-	onKicked: (data: string) => void; 
+	onKicked: (data: string) => void;
 	syncTimer: (data: number) => void;
 	syncPlayerStats: (data: number[]) => void;
+	roomSettings: (data: [number, number, number]) => void;
 
 	// noArg: () => void;
 	// sendMessage: (value: string) => void;
@@ -24,14 +25,15 @@ interface ServerToClientEvents {
 interface ClientToServerEvents {
 	joinRoom: (roomId: string) => void;
 	giveLeader: (targetMember: string) => void;
-	mic: (data: string) => void;
+	mic: (data: [string, number]) => void;
 	sendMessage: (msg: string) => void;
 	kickMember: (data: string) => void;
 	leaveRoom: () => void;
-	playPauseVideo : (data: number) => void;
+	playPauseVideo: (data: number) => void;
 	sendSyncTimer: () => void;
 	sendSyncPlayerStats: () => void;
 	seekVideo: (data: number) => void;
+	updateRoomSettings: (data: [number, number]) => void;
 	// memberJoin: (data: Member) => void;
 	// memberLeave: (data: string) => void;
 
@@ -77,9 +79,9 @@ interface Member {
 
 // Define Room interface
 interface Room {
-	privacy: number;
-	playback: number;
-	roomMic: boolean;
+	privacy: number; // public(0), private(1), friends(2)
+	playback: number; // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
+	roomMic: number; // on(1), off(0)
 	membersJoinedList?: string[];
 	activeMembersList?: string[];
 	invitedMembersList?: string[];

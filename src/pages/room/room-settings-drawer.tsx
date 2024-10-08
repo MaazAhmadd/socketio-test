@@ -22,6 +22,8 @@ import { Switch } from "@/components/ui/switch";
 import { usePlayerStore, useRoomStore } from "@/store";
 import React from "react";
 import ReactPlayer from "react-player";
+import { socket } from "@/socket";
+import { useGetCurrentUser } from "@/hooks/user-hooks";
 
 export function RoomSettingsDrawer() {
 	const {
@@ -125,8 +127,34 @@ export function RoomSettingsDrawer() {
 }
 
 const SelectRoomPrivacy = () => {
+	// type, 0 = privacy, 1 = playback, 2 = roomMic
+	// privacy: number; // public(0), private(1), friends(2)
+	// playback: number; // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
+	// roomMic: number; // on(1), off(0)
+	const _map = ["public", "private", "friends"];
+	const { roomSettings, roomData, setRoomSettings } = useRoomStore((s) => ({
+		roomSettings: [
+			s.roomData!.privacy,
+			s.roomData!.playback,
+			s.roomData!.roomMic,
+		],
+		roomData: s.roomData,
+		setRoomSettings: s.setRoomSettings,
+	}));
+	const { data: currentUser } = useGetCurrentUser();
+	if (!roomData) return null;
+
 	return (
-		<Select defaultValue="public">
+		<Select
+			disabled={currentUser?._id !== roomData.activeMembersList![0]}
+			defaultValue="public"
+			value={_map[roomSettings[0]]}
+			onValueChange={(value) => {
+				const update = _map.indexOf(value);
+				setRoomSettings([update, roomSettings[1], roomSettings[2]]);
+				socket.emit("updateRoomSettings", [0, update]);
+			}}
+		>
 			<SelectTrigger className="w-min">
 				<SelectValue placeholder="Select privacy" />
 			</SelectTrigger>
@@ -142,16 +170,39 @@ const SelectRoomPrivacy = () => {
 };
 
 const SelectPlayback = () => {
+	// playback: number; // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
+	const _playbackMap = ["voting", "justplay", "autoplay", "leaderschoice"];
+	const { roomSettings, roomData, setRoomSettings } = useRoomStore((s) => ({
+		roomSettings: [
+			s.roomData!.privacy,
+			s.roomData!.playback,
+			s.roomData!.roomMic,
+		],
+		roomData: s.roomData,
+		setRoomSettings: s.setRoomSettings,
+	}));
+	const { data: currentUser } = useGetCurrentUser();
+	if (!roomData) return null;
+
 	return (
-		<Select defaultValue="voting">
+		<Select
+			disabled={currentUser?._id !== roomData.activeMembersList![0]}
+			defaultValue="voting"
+			value={_playbackMap[roomSettings[1]]}
+			onValueChange={(value) => {
+				const update = _playbackMap.indexOf(value);
+				setRoomSettings([roomSettings[0], update, roomSettings[2]]);
+				socket.emit("updateRoomSettings", [1, update]);
+			}}
+		>
 			<SelectTrigger className="w-min">
 				<SelectValue placeholder="Select Playback" />
 			</SelectTrigger>
 			<SelectContent>
 				<SelectGroup>
 					<SelectItem value="voting">Voting</SelectItem>
-					<SelectItem value="autoplay">Autoplay</SelectItem>
 					<SelectItem value="justplay">Just Play</SelectItem>
+					<SelectItem value="autoplay">Autoplay</SelectItem>
 					<SelectItem value="leaderschoice">Leader's choice</SelectItem>
 				</SelectGroup>
 			</SelectContent>
@@ -160,8 +211,31 @@ const SelectPlayback = () => {
 };
 
 const SelectMicrophone = () => {
+	// roomMic: number; // on(1), off(0)
+	const _micMap = ["disabled", "enabled"];
+	const { roomSettings, roomData, setRoomSettings } = useRoomStore((s) => ({
+		roomSettings: [
+			s.roomData!.privacy,
+			s.roomData!.playback,
+			s.roomData!.roomMic,
+		],
+		roomData: s.roomData,
+		setRoomSettings: s.setRoomSettings,
+	}));
+	const { data: currentUser } = useGetCurrentUser();
+	if (!roomData) return null;
+
 	return (
-		<Select defaultValue="enabled">
+		<Select
+			disabled={currentUser?._id !== roomData.activeMembersList![0]}
+			defaultValue="enabled"
+			value={_micMap[roomSettings[2]]}
+			onValueChange={(value) => {
+				const update = _micMap.indexOf(value);
+				setRoomSettings([roomSettings[0], roomSettings[1], update]);
+				socket.emit("updateRoomSettings", [2, update]);
+			}}
+		>
 			<SelectTrigger className="w-min">
 				<SelectValue placeholder="Select mic" />
 			</SelectTrigger>

@@ -18,7 +18,7 @@ import { Member, Room } from "../types";
 const roomSchema = new Schema("Room", {
 	privacy: { type: "number" }, // public(0), private(1), friends(2)
 	playback: { type: "number" }, // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
-	roomMic: { type: "boolean" },
+	roomMic: { type: "number" }, // on(1), off(0)
 	membersJoinedList: { type: "string[]" },
 	activeMembersList: { type: "string[]" },
 	invitedMembersList: { type: "string[]" },

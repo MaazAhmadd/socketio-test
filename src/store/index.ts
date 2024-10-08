@@ -10,26 +10,39 @@ export type RoomCreationRequestType = "join" | "create";
 
 // const token = localStorage.getItem("auth_token");
 
-export const useGlobalStore = create<GlobalStore>((set) => ({
+const initialGlobalState: Pick<
+	GlobalStore,
+	"showRoomTab" | "connected" | "roomJoinDialogShown"
+> = {
 	showRoomTab: "public",
 	connected: false,
 	roomJoinDialogShown: true,
+};
+export const useGlobalStore = create<GlobalStore>((set) => ({
+	...initialGlobalState,
 	setShowRoomTab: (tab: Tabs) => set({ showRoomTab: tab }),
 	setConnected: (connected: boolean) => set({ connected }),
 	logout: () => {
 		localStorage.removeItem("auth_token");
 		window.location.reload();
 	},
-	setRoomJoinDialogShown: (shown: boolean) =>
-		set({ roomJoinDialogShown: shown }),
+	setRoomJoinDialogShown: (roomJoinDialogShown: boolean) =>
+		set({ roomJoinDialogShown }),
+	resetGlobalState: () => set({ ...initialGlobalState }),
 }));
 
-export const useRoomStore = create<RoomStore>((set) => ({
+const initialRoomState: Pick<
+	RoomStore,
+	"loading" | "roomData" | "messages" | "mutedMembers" | "mics"
+> = {
 	loading: true,
 	roomData: null,
 	messages: [],
 	mutedMembers: [],
 	mics: [],
+};
+export const useRoomStore = create<RoomStore>((set) => ({
+	...initialRoomState,
 	setMics: (data: string) => set({ mics: data.split("") }),
 	setMutedMembers: (data: string[]) => set({ mutedMembers: data }),
 	mutedMembersPush: (data: string) =>
@@ -80,9 +93,39 @@ export const useRoomStore = create<RoomStore>((set) => ({
 				}
 			}),
 		),
+	setRoomSettings: (data: [number, number, number]) => {
+		// privacy, playback, roomMic
+		set(
+			produce((state: RoomStore) => {
+				if (state.roomData) {
+					state.roomData.privacy = data[0];
+					state.roomData.playback = data[1];
+					state.roomData.roomMic = data[2];
+				}
+			}),
+		);
+	},
+	resetRoomState: () => set({ ...initialRoomState }),
 }));
 
-export const usePlayerStore = create<PlayerStore>((set) => ({
+const initialPlayerState: Pick<
+	PlayerStore,
+	| "url"
+	| "pip"
+	| "controls"
+	| "playing"
+	| "loop"
+	| "playbackRate"
+	| "volume"
+	| "muted"
+	| "duration"
+	| "progress"
+	| "serverTimeOffset"
+	| "playerType"
+	| "initialSync"
+	| "userIntervention"
+	| "isSystemAction"
+> = {
 	url: "",
 	pip: false,
 	controls: true,
@@ -98,6 +141,10 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
 	initialSync: false,
 	userIntervention: false,
 	isSystemAction: false,
+};
+
+export const usePlayerStore = create<PlayerStore>((set) => ({
+	...initialPlayerState,
 	setUrl: (url: string | undefined) => set({ url }),
 	setPip: (pip: boolean) => set({ pip }),
 	setControls: (controls: boolean) => set({ controls }),
@@ -113,6 +160,7 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
 	setInitialSync: (sync: boolean) => set({ initialSync: sync }),
 	setUserIntervention: (userIntervention: boolean) => set({ userIntervention }),
 	setIsSystemAction: (isSystemAction: boolean) => set({ isSystemAction }),
+	resetPlayerState: () => set({ ...initialPlayerState }),
 }));
 
 interface GlobalStore {
@@ -123,6 +171,7 @@ interface GlobalStore {
 	setShowRoomTab: (tab: Tabs) => void;
 	logout: () => void;
 	setRoomJoinDialogShown: (shown: boolean) => void;
+	resetGlobalState: () => void;
 }
 interface RoomStore {
 	loading: boolean;
@@ -140,6 +189,8 @@ interface RoomStore {
 	updateActiveMembersList: (members: string[]) => void;
 	setLoading: (loading: boolean) => void;
 	setPlayerStats: (stats: number[]) => void;
+	setRoomSettings: (data: [number, number, number]) => void;
+	resetRoomState: () => void;
 }
 interface PlayerStore {
 	url: string | undefined;
@@ -172,4 +223,5 @@ interface PlayerStore {
 	setInitialSync: (sync: boolean) => void;
 	setUserIntervention: (sync: boolean) => void;
 	setIsSystemAction: (action: boolean) => void;
+	resetPlayerState: () => void;
 }

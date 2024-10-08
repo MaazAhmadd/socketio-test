@@ -28,35 +28,33 @@ import VideoPlayer from "./video-player";
 import { HiMiniXMark } from "react-icons/hi2";
 import { Spinner } from "@/components/common/spinner";
 import ReactPlayer from "react-player";
-// const RoomLoading = () => {
-// 	const { loading, } = useRoomStore((s) => ({ loading: s.loading, }));
-// 	return loading ? (
-// 		<div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/40 backdrop-blur-sm"></div>
-// 	) : (
-// 		null
-// 	);
-// };
+import { useGetCurrentUser } from "@/hooks/user-hooks";
+const RoomLoading = () => {
+	return (
+		<div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/40 backdrop-blur-sm">
+			<Spinner />
+		</div>
+	);
+};
 const RoomPage = () => {
+	const { data: currentUser } = useGetCurrentUser();
+	if (!currentUser) {
+		return <RoomLoading />;
+	}
+	return <RoomComponent />;
+};
+
+const RoomComponent = () => {
 	const navigate = useNavigate();
 	const { id } = useParams();
 	const kickDialogRef = useRef<HTMLButtonElement | null>(null);
 	const playerRef = useRef<ReactPlayer | null>(null);
-
-	// console.log("[Room] render");
-	// console.log("[Room] id: ", id);
-	// const {
-	// 	data: room,
-	// 	isLoading: isRoomLoading,
-	// 	error: roomError,
-	// } = useGetRoom();
-	// // console.log("[Room] room: ", room, isRoomLoading);
-
 	const { width } = useWindowSize();
 	const { isFullscreen, exitFullscreen } = useFullscreen();
 
-	const { connected, setConnected } = useGlobalStore((s) => ({
-		connected: s.connected,
+	const { setConnected, setRoomJoinDialogShown } = useGlobalStore((s) => ({
 		setConnected: s.setConnected,
+		setRoomJoinDialogShown: s.setRoomJoinDialogShown,
 	}));
 
 	const {
@@ -71,6 +69,8 @@ const RoomPage = () => {
 		loading,
 		setLoading,
 		setPlayerStats,
+		setRoomSettings,
+		resetRoomState,
 	} = useRoomStore((s) => ({
 		roomData: s.roomData,
 		setRoomData: s.setRoomData,
@@ -83,6 +83,8 @@ const RoomPage = () => {
 		loading: s.loading,
 		setLoading: s.setLoading,
 		setPlayerStats: s.setPlayerStats,
+		setRoomSettings: s.setRoomSettings,
+		resetRoomState: s.resetRoomState,
 	}));
 	const {
 		url,
@@ -101,6 +103,8 @@ const RoomPage = () => {
 		setUserIntervention,
 		setIsSystemAction,
 		setPlaybackRate,
+		setControls,
+		resetPlayerState,
 	} = usePlayerStore((s) => ({
 		url: s.url,
 		playing: s.playing,
@@ -118,7 +122,10 @@ const RoomPage = () => {
 		setUserIntervention: s.setUserIntervention,
 		setIsSystemAction: s.setIsSystemAction,
 		setPlaybackRate: s.setPlaybackRate,
+		setControls: s.setControls,
+		resetPlayerState: s.resetPlayerState,
 	}));
+	const { data: currentUser } = useGetCurrentUser();
 
 	// useEffect(() => {
 	// 	console.log("[Room] effect...empty dependency");
@@ -154,8 +161,16 @@ const RoomPage = () => {
 
 	function onRoomDesc(data: Room) {
 		console.log("[socket onRoomDesc] onRoomDesc: ", data);
+		console.log(
+			"[socket onRoomDesc] onRoomDesc isLeader: ",
+			currentUser?._id,
+			data.activeMembersList![0],
+		);
+
 		const mics = data.activeMembersList?.pop();
 		const url = data.videoUrl;
+		const isLeader = currentUser?._id === data.activeMembersList![0];
+		setControls(isLeader);
 		setUrl(url);
 		setMics(mics!);
 		setRoomData(data);
@@ -207,6 +222,9 @@ const RoomPage = () => {
 		console.log("[Socket onSyncTimer] onSyncTimer: ", data);
 		setServerTimeOffset(getDateInSeconds() - data);
 	}
+	function onRoomSettings(data: [number, number, number]) {
+		setRoomSettings(data);
+	}
 
 	useEffect(() => {
 		setInitialSync(false);
@@ -223,6 +241,7 @@ const RoomPage = () => {
 		socket.on("onKicked", onGotKicked);
 		socket.on("syncPlayerStats", onSyncPlayerStats);
 		socket.on("syncTimer", onSyncTimer);
+		socket.on("roomSettings", onRoomSettings);
 		return () => {
 			socket.off("connect", onConnect);
 			socket.off("disconnect", onDisconnect);
@@ -232,6 +251,9 @@ const RoomPage = () => {
 			socket.off("connect_error", onConnectError);
 			socket.off("message", onMessage);
 			socket.off("onKicked", onGotKicked);
+			socket.off("syncPlayerStats", onSyncPlayerStats);
+			socket.off("syncTimer", onSyncTimer);
+			socket.off("roomSettings", onRoomSettings);
 			if (isFullscreen) {
 				exitFullscreen();
 			}
@@ -289,13 +311,12 @@ const RoomPage = () => {
 	}
 	function onLeaveRoom() {
 		socket.emit("leaveRoom");
-		setConnected(false);
-		setRoomData(null);
-		setMessages([]);
-		setMutedMembers([]);
-		setLoading(false);
 		socket.disconnect();
 		navigate("/home");
+		setConnected(false);
+		setRoomJoinDialogShown(true);
+		resetRoomState();
+		resetPlayerState();
 	}
 
 	return (
@@ -317,7 +338,7 @@ const RoomPage = () => {
 							playerRef={playerRef}
 						/>
 					</div>
-					<div className="fixed top-0 h-[40px] w-full border-muted border-b bg-primary-foreground flex justify-center items-center">
+					<div className="fixed top-0 flex h-[40px] w-full items-center justify-center border-muted border-b bg-primary-foreground">
 						<RoomButtons
 							kickDialogRef={kickDialogRef}
 							onLeaveRoom={onLeaveRoom}

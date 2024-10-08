@@ -113,7 +113,7 @@ const DialogWrapperPfpIcon = ({
 								icon={IoMicOffOutline}
 								label="Disable Mic"
 								onClick={() => {
-									socket.emit("mic", _id + ",0");
+									socket.emit("mic", [_id, 0]);
 								}}
 							/>
 						) : (
@@ -121,7 +121,7 @@ const DialogWrapperPfpIcon = ({
 								icon={IoMicOutline}
 								label="Enable Mic"
 								onClick={() => {
-									socket.emit("mic", _id + ",1");
+									socket.emit("mic", [_id, 1]);
 								}}
 							/>
 						))}

@@ -74,7 +74,7 @@ export default function socketServer(io: CustomIO) {
 	});
 
 	io.on("connection", (socket: CustomSocket) => {
-		socket.on("joinRoom", async (roomId) => {
+		socket.on("joinRoom", async (roomId: string) => {
 			if (!roomId) {
 				logger.info("joinRoom, roomId not provided");
 				socket.emit("stateError", "roomId not provided");
@@ -83,14 +83,14 @@ export default function socketServer(io: CustomIO) {
 			socket.roomId = roomId;
 			await joinRoom(roomId);
 		});
-		socket.on("giveLeader", async (targetMember) => {
+		socket.on("giveLeader", async (targetMember: string) => {
 			if (!socket?.roomId) {
 				socket.emit("stateError", "roomId not found on socket");
 				return;
 			}
 			await giveLeader(targetMember);
 		});
-		socket.on("sendMessage", (msg) => {
+		socket.on("sendMessage", (msg: string) => {
 			if (msg.length > 512) {
 				socket.emit("stateError", "message too long");
 				return;
@@ -103,7 +103,7 @@ export default function socketServer(io: CustomIO) {
 			// check types/index.ts for details
 			io.in(roomId).emit("message", [0, socket.user?._id!, Date.now(), msg]);
 		});
-		socket.on("mic", async (micstr) => {
+		socket.on("mic", async (micstr: [string, number]) => {
 			if (!micstr) {
 				socket.emit("stateError", "micstr not provided");
 				return;
@@ -113,7 +113,7 @@ export default function socketServer(io: CustomIO) {
 				return;
 			}
 			// micstr = "targetmember,reqtype"
-			const [targetMember, reqtype] = micstr.split(",");
+			const [targetMember, reqtype] = micstr;
 			await enableDisableMic(targetMember, reqtype);
 		});
 		socket.on("kickMember", async (targetMember) => {
@@ -127,6 +127,41 @@ export default function socketServer(io: CustomIO) {
 			}
 			await kickMember(targetMember);
 		});
+		socket.on("updateRoomSettings", async (data: [number, number]) => {
+			// type, 0 = privacy, 1 = playback, 2 = roomMic
+			// privacy: number; // public(0), private(1), friends(2)
+			// playback: number; // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
+			// roomMic: number; // on(1), off(0)
+			const [reqtype, updatetype] = data;
+			const roomId = socket.roomId;
+			if (!roomId) {
+				return socket.emit("stateError", "roomId not found");
+			}
+			const room = await roomRepository.fetch(roomId);
+			if (!room) {
+				return socket.emit("stateError", "room not found");
+			}
+			if (!room.activeMembersList || room.activeMembersList.length < 1) {
+				return socket.emit("stateError", "Empty room");
+			}
+			if (room.activeMembersList[0] !== socket.user?._id) {
+				return socket.emit("stateError", "You are not the leader");
+			}
+			if (reqtype == 0) {
+				room.privacy = updatetype;
+			} else if (reqtype == 1) {
+				room.playback = updatetype;
+			} else if (reqtype == 2) {
+				room.roomMic = updatetype;
+			}
+			await roomRepository.save(room);
+			io.in(roomId).emit("roomSettings", [
+				room.privacy,
+				room.playback,
+				room.roomMic,
+			]);
+		});
+
 		socket.on("playPauseVideo", async (reqType: number) => {
 			console.log("[socket] playPauseVideo type: ", reqType);
 			// 1 = play, 0 = pause
@@ -385,7 +420,7 @@ export default function socketServer(io: CustomIO) {
 			io.in(roomId).emit("message", [3, socket.user?._id!, Date.now(), ""]);
 		}
 
-		async function enableDisableMic(targetMember: string, reqtype: string) {
+		async function enableDisableMic(targetMember: string, reqtype: number) {
 			const roomId = socket.roomId;
 			if (!roomId) {
 				return socket.emit("stateError", "roomId not found");
@@ -405,14 +440,14 @@ export default function socketServer(io: CustomIO) {
 			if (room.activeMembersList[0] !== socket.user?._id) {
 				return socket.emit("stateError", "You are not the leader");
 			}
-			if (reqtype == "1") {
+			if (reqtype === 1) {
 				room.membersJoinedList!.forEach((id, i) => {
 					const [key, value] = id.split(",");
 					if (key === targetMember) {
 						room.membersJoinedList![i] = `${key},1`;
 					}
 				});
-			} else if (reqtype == "0") {
+			} else if (reqtype === 0) {
 				room.membersJoinedList!.forEach((id, i) => {
 					const [key, value] = id.split(",");
 					if (key === targetMember) {
@@ -425,13 +460,21 @@ export default function socketServer(io: CustomIO) {
 			await roomRepository.save(room);
 			sendActiveMemberListUpdate(room, roomId);
 			if (targetUser?.socketId) {
-				reqtype == "0"
-					? io
-							.to(targetUser.socketId)
-							.emit("message", [6, socket.user?._id!, Date.now(), ""])
-					: io
-							.to(targetUser.socketId)
-							.emit("message", [5, socket.user?._id!, Date.now(), ""]);
+				if (reqtype === 0) {
+					io.to(targetUser.socketId).emit("message", [
+						6,
+						socket.user?._id!,
+						Date.now(),
+						"",
+					]);
+				} else if (reqtype === 1) {
+					io.to(targetUser.socketId).emit("message", [
+						5,
+						socket.user?._id!,
+						Date.now(),
+						"",
+					]);
+				}
 			}
 		}
 
