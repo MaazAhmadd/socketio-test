@@ -42,6 +42,12 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+	BsPersonFillAdd,
+	BsPersonFillCheck,
+	BsPersonFillDash,
+	BsPersonFill,
+} from "react-icons/bs";
 
 export function RoomMembersDrawer() {
 	const scrollAreaRef = useRef<HTMLDivElement | null>(null);
@@ -54,8 +60,8 @@ export function RoomMembersDrawer() {
 		<>
 			<Drawer direction="right">
 				<DrawerTrigger asChild>
-					<Button variant="outline">
-						<PersonIcon className="h-4 w-4 md:h-6 md:w-6" />
+					<Button variant="ghost" size={"sm"}>
+						<BsPersonFill />
 					</Button>
 				</DrawerTrigger>
 				<DrawerContent className="right-0 mr-0 ml-24 max-w-[80svw] bg-background/80">
@@ -189,7 +195,7 @@ export const FriendshipButton = ({
 				renderData={[commandMap.cancelReq]}
 				className={cn(className)}
 			>
-				<FaRegHourglass className="size-6 cursor-pointer" />
+				<BsPersonFillCheck className="size-6 cursor-pointer" />
 			</FriendshipDropdownWrapper>
 		);
 	}
@@ -201,7 +207,7 @@ export const FriendshipButton = ({
 				renderData={[commandMap.acceptReq, commandMap.rejectReq]}
 				className={cn(className)}
 			>
-				<BsThreeDots className="size-6 cursor-pointer" />
+				<BsPersonFillDash className="size-6 cursor-pointer" />
 			</FriendshipDropdownWrapper>
 		);
 	}
@@ -212,7 +218,7 @@ export const FriendshipButton = ({
 			renderData={[commandMap.sendReq]}
 			className={cn(className)}
 		>
-			<GoPersonAdd className="ml-1 size-6 cursor-pointer" />
+			<BsPersonFillAdd className="size-6 cursor-pointer" />
 		</FriendshipDropdownWrapper>
 	);
 };
@@ -235,7 +241,7 @@ const FriendshipDropdownWrapper = ({
 		<DropdownMenu>
 			<DropdownMenuTrigger>
 				<TooktipWrapper label={tooltipLabel}>
-					<Button className={cn(className)} variant={"secondary"}>
+					<Button className={cn(className)} variant={"ghost"}>
 						{children}
 					</Button>
 				</TooktipWrapper>

@@ -89,7 +89,6 @@ const RoomPage = () => {
 		playing,
 		playbackRate,
 		progress,
-		userIntervention,
 		serverTimeOffset,
 		initialSync,
 		setPlayerType,
@@ -108,7 +107,6 @@ const RoomPage = () => {
 		playbackRate: s.playbackRate,
 		progress: s.progress,
 		serverTimeOffset: s.serverTimeOffset,
-		userIntervention: s.userIntervention,
 		initialSync: s.initialSync,
 		setPlayerType: s.setPlayerType,
 		setUrl: s.setUrl,
@@ -129,97 +127,92 @@ const RoomPage = () => {
 	// 	console.log("[Room] effect...no dependency");
 	// });
 
+	function onConnect() {
+		console.log("[socket connect] connected");
+		socket.emit("joinRoom", id!);
+		socket.emit("sendSyncTimer");
+		// socket.emit("sendSyncPlayerStats");
+		setConnected(true);
+		setLoading(false);
+	}
+
+	function onDisconnect() {
+		// console.log("[socket disconnect] disconnected");
+		// setRoomData(null);
+		// setMessages([]);
+		setInitialSync(false);
+		setConnected(false);
+		setLoading(false);
+	}
+
+	function onStateError(err: string) {
+		// console.log("[socket stateError] stateError: ", err);
+		toast.error(err);
+		setConnected(false);
+		// navigate("/home");
+	}
+
+	function onRoomDesc(data: Room) {
+		console.log("[socket onRoomDesc] onRoomDesc: ", data);
+		const mics = data.activeMembersList?.pop();
+		const url = data.videoUrl;
+		setUrl(url);
+		setMics(mics!);
+		setRoomData(data);
+	}
+
+	function onConnectError(err: Error) {
+		// console.log("[socket connect_error] connect_error: ", err);
+		toast.error(err.message);
+		setConnected(false);
+		// navigate("/home");
+	}
+	function onActiveMemberListUpdate(data: string[]) {
+		// console.log(
+		// 	"[socket onActiveMemberListUpdate] onActiveMemberListUpdate: ",
+		// 	data,
+		// );
+		const mics = data.pop();
+		setMics(mics!);
+		updateActiveMembersList(data);
+	}
+	function onMessage(data: Message) {
+		addMessage(data);
+		// console.log("[socket message] message: ", data);
+	}
+	function onGotKicked(data: string) {
+		kickDialogRef.current?.click();
+	}
+
+	function onSyncPlayerStats(data: number[]) {
+		const userIntervention = usePlayerStore.getState().userIntervention;
+		setPlayerStats(data);
+		if (userIntervention) return;
+		const [duration, progress, lastChanged, status, type] = data;
+		setIsSystemAction(true);
+		// setUrl(roomData?.videoUrl!);
+		setDuration(duration);
+		setPlayerType(type);
+		const serverTime = getDateInSeconds() + serverTimeOffset;
+		const toProgress =
+			status === 1 ? serverTime - lastChanged + progress : progress;
+		setPlaybackRate(1);
+		setProgress(toProgress);
+		setPlaying(status === 1);
+		playerRef.current?.seekTo(toProgress, "seconds");
+		console.log("[socket onSyncPlayerStats] status 1 seeking to: ", toProgress);
+	}
+
+	function onSyncTimer(data: number) {
+		console.log("[Socket onSyncTimer] onSyncTimer: ", data);
+		setServerTimeOffset(getDateInSeconds() - data);
+	}
+
 	useEffect(() => {
 		setInitialSync(false);
 		const token = localStorage.getItem("auth_token");
-
 		socket.io.opts.query = { token };
-
 		socket.connect();
-
-		function onConnect() {
-			console.log("[socket connect] connected");
-			socket.emit("joinRoom", id!);
-			socket.emit("sendSyncTimer");
-			// socket.emit("sendSyncPlayerStats");
-			setConnected(true);
-			setLoading(false);
-		}
-
-		function onDisconnect() {
-			// console.log("[socket disconnect] disconnected");
-			// setRoomData(null);
-			// setMessages([]);
-			setInitialSync(false);
-			setConnected(false);
-			setLoading(false);
-		}
-
-		function onStateError(err: string) {
-			// console.log("[socket stateError] stateError: ", err);
-			toast.error(err);
-			setConnected(false);
-			// navigate("/home");
-		}
-
-		function onRoomDesc(data: Room) {
-			const mics = data.activeMembersList?.pop();
-			const url = data.videoUrl;
-			setUrl(url);
-			setMics(mics!);
-			setRoomData(data);
-		}
-
-		function onConnectError(err: Error) {
-			// console.log("[socket connect_error] connect_error: ", err);
-			toast.error(err.message);
-			setConnected(false);
-			// navigate("/home");
-		}
-		function onActiveMemberListUpdate(data: string[]) {
-			// console.log(
-			// 	"[socket onActiveMemberListUpdate] onActiveMemberListUpdate: ",
-			// 	data,
-			// );
-			const mics = data.pop();
-			setMics(mics!);
-			updateActiveMembersList(data);
-		}
-		function onMessage(data: Message) {
-			addMessage(data);
-			// console.log("[socket message] message: ", data);
-		}
-		function onGotKicked(data: string) {
-			kickDialogRef.current?.click();
-		}
-
-		function onSyncPlayerStats(data: number[]) {
-			if (userIntervention) return;
-			const [duration, progress, lastChanged, status, type] = data;
-			setIsSystemAction(true);
-			setPlayerStats(data);
-			setPlaybackRate(1);
-			// setUrl(roomData?.videoUrl!);
-			setDuration(duration);
-			setPlayerType(type);
-			setPlaying(status === 1);
-			const serverTime = getDateInSeconds() + serverTimeOffset;
-			const toProgress =
-				status === 1 ? serverTime - lastChanged + progress : progress;
-			setProgress(toProgress);
-			playerRef.current?.seekTo(toProgress, "seconds");
-			console.log("[Socket onSyncPlayerStats] onSyncPlayerStats: ", data);
-			console.log(
-				"[socket onSyncPlayerStats] status 1 seeking to: ",
-				toProgress,
-			);
-		}
-
-		function onSyncTimer(data: number) {
-			console.log("[Socket onSyncTimer] onSyncTimer: ", data);
-			setServerTimeOffset(getDateInSeconds() - data);
-		}
-
 		socket.on("connect", onConnect);
 		socket.on("disconnect", onDisconnect);
 		socket.on("activeMemberListUpdate", onActiveMemberListUpdate);
@@ -246,7 +239,10 @@ const RoomPage = () => {
 	}, []);
 
 	useEffect(() => {
+		// const userIntervention = usePlayerStore.getState().userIntervention;
+		const initialSync = usePlayerStore.getState().initialSync;
 		if (initialSync) return;
+		// if (userIntervention) return;
 		if (!roomData) return;
 		if (!roomData.playerStats) return;
 		const [duration, progress, lastChanged, status, type] =
@@ -321,7 +317,7 @@ const RoomPage = () => {
 							playerRef={playerRef}
 						/>
 					</div>
-					<div className="fixed top-0 h-[40px] w-full border-muted border-b bg-primary-foreground">
+					<div className="fixed top-0 h-[40px] w-full border-muted border-b bg-primary-foreground flex justify-center items-center">
 						<RoomButtons
 							kickDialogRef={kickDialogRef}
 							onLeaveRoom={onLeaveRoom}
@@ -362,14 +358,14 @@ const RoomButtons = ({
 	return (
 		<>
 			<KickDialogBox kickDialogRef={kickDialogRef} />
-			<div className="flex items-center justify-between px-2">
-				<Button variant={"ghost"} onClick={() => onLeaveRoom()}>
-					<HiMiniXMark className="size-7" />
+			<div className="my-auto flex w-full items-center justify-between px-2">
+				<Button variant={"ghost"} size={"sm"} onClick={() => onLeaveRoom()}>
+					<HiMiniXMark className="size-[20px] md:size-6" />
 				</Button>
 				<RoomSettingsDrawer />
 				<TextGradient
 					onClick={isFullscreen ? exitFullscreen : enterFullscreen}
-					className="cursor-pointer text-2xl md:text-xl"
+					className="cursor-pointer text-lg md:text-2xl"
 				>
 					Gather Groove
 				</TextGradient>

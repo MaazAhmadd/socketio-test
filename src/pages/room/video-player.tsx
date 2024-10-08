@@ -8,7 +8,7 @@ import { useGetCurrentUser } from "@/hooks/user-hooks";
 import { socket } from "@/socket";
 import { Button } from "@/components/ui/button";
 import { FaForward, FaBackward, FaSyncAlt } from "react-icons/fa";
-import { Switch } from "@/components/ui/switch";
+import { BsPersonFillAdd } from "react-icons/bs";
 type Props = {
 	screen: "mobile" | "desktop";
 	playerRef: React.MutableRefObject<ReactPlayer | null>;
@@ -149,7 +149,7 @@ const VideoPlayer = React.forwardRef<
 	// );
 
 	// TODO: player is paused when seeked, wait for 1.1 seconds and then pause otherwise seek
-	// TODO: relaod player on controls change, maybe set url to empty and set back again
+	// TODO: add fullscreen capabilities (add a button) -> screenfull.request(document.querySelector('.react-player'))
 
 	function syncPlayer() {
 		if (!playerStats) return;
@@ -241,12 +241,12 @@ const VideoPlayer = React.forwardRef<
 								onError={(e) => console.log("[VideoPlayer] onError", e)}
 								onProgress={(state) => {
 									const currentProgress = state.playedSeconds;
-									console.log(
-										"[VideoPlayer] onProgress currentProgress, previousProgress, diff",
-										currentProgress,
-										progress,
-										Math.abs(currentProgress - progress),
-									);
+									// console.log(
+									// 	"[VideoPlayer] onProgress currentProgress, previousProgress, diff",
+									// 	currentProgress,
+									// 	progress,
+									// 	Math.abs(currentProgress - progress),
+									// );
 									// if (!isSystemAction) {
 									// 	setIsSystemAction(false);
 									// 	setProgress(currentProgress);
@@ -312,32 +312,17 @@ const VideoPlayer = React.forwardRef<
 						<FaSyncAlt />
 					</Button>
 
-					{open ? (
-						<Button
-							size={"sm"}
-							className="h-6 w-10"
-							variant={"secondary"}
-							onClick={() => setOpen(false)}
-						>
-							<TiArrowSortedUp />
-						</Button>
-					) : (
-						<Button
-							size={"sm"}
-							variant={"secondary"}
-							onClick={() => setOpen(true)}
-						>
-							<TiArrowSortedDown />
-						</Button>
-					)}
-					<Switch
-						checked={controls}
-						onCheckedChange={(e) => {
-							// setUrl("");
-							setControls(e);
-							// socket.emit("sendSyncPlayerStats");
-						}}
-					/>
+					<Button
+						size={"sm"}
+						className="h-6 w-10"
+						variant={"secondary"}
+						onClick={() => setOpen(!open)}
+					>
+						{open ? <TiArrowSortedUp /> : <TiArrowSortedDown />}
+					</Button>
+					<Button variant={"ghost"}>
+						<BsPersonFillAdd />
+					</Button>
 					<Button
 						variant={"ghost"}
 						onClick={() => {

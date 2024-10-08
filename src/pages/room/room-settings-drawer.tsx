@@ -18,13 +18,44 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { GearIcon } from "@radix-ui/react-icons";
+import { Switch } from "@/components/ui/switch";
+import { usePlayerStore, useRoomStore } from "@/store";
+import React from "react";
+import ReactPlayer from "react-player";
 
 export function RoomSettingsDrawer() {
+	const {
+		url,
+		controls,
+		volume,
+		setUrl,
+		setControls,
+		setVolume,
+		setInitialSync,
+	} = usePlayerStore((s) => ({
+		url: s.url,
+		controls: s.controls,
+		volume: s.volume,
+		setUrl: s.setUrl,
+		setControls: s.setControls,
+		setVolume: s.setVolume,
+		setInitialSync: s.setInitialSync,
+	}));
+	const load = (newUrl: string | undefined) => {
+		setUrl(newUrl);
+		setInitialSync(false);
+	};
+	const handleToggleControls = () => {
+		const currentUrl = url;
+		setControls(!controls);
+		setUrl(undefined);
+		setTimeout(() => load(currentUrl), 0);
+	};
 	return (
 		<Drawer direction="top">
 			<DrawerTrigger asChild>
-				<Button variant="outline">
-					<GearIcon className="h-4 w-4 md:h-6 md:w-6" />
+				<Button variant="ghost" size={"sm"}>
+					<GearIcon />
 				</Button>
 			</DrawerTrigger>
 			<DrawerContent className="right-0 mt-0 mb-24 flex h-min max-h-[50svh] w-[100svw] flex-col bg-background/80 md:w-[30svw]">
@@ -51,12 +82,26 @@ export function RoomSettingsDrawer() {
 							<SelectMicrophone />
 						</div>
 						<div className="flex items-center justify-between">
+							<DrawerDescription>Controls</DrawerDescription>
+							<Switch
+								checked={controls}
+								onCheckedChange={(e) => {
+									handleToggleControls();
+									// socket.emit("sendSyncPlayerStats");
+								}}
+							/>
+						</div>
+						<div className="flex items-center justify-between">
 							<DrawerDescription>Video Volume:</DrawerDescription>
 							<Slider
-								defaultValue={[100]}
-								max={100}
-								step={1}
+								defaultValue={[1]}
+								max={1}
+								step={0.01}
 								className={cn("w-[60%]")}
+								value={[volume]}
+								onValueChange={(e) => {
+									setVolume(e[0]);
+								}}
 							/>
 						</div>
 						<div className="flex items-center justify-between">
@@ -129,3 +174,7 @@ const SelectMicrophone = () => {
 		</Select>
 	);
 };
+
+function getDateInSeconds() {
+	return Math.floor(Date.now() / 1000);
+}

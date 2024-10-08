@@ -98,21 +98,21 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
 	initialSync: false,
 	userIntervention: false,
 	isSystemAction: false,
-	setUrl: (url: string) => set({ url }),
+	setUrl: (url: string | undefined) => set({ url }),
 	setPip: (pip: boolean) => set({ pip }),
 	setControls: (controls: boolean) => set({ controls }),
 	setPlaying: (playing: boolean) => set({ playing }),
 	setLoop: (loop: boolean) => set({ loop }),
-	setPlaybackRate: (rate: number) => set({ playbackRate: rate }),
+	setPlaybackRate: (playbackRate: number) => set({ playbackRate }),
 	setVolume: (volume: number) => set({ volume }),
 	setMuted: (muted: boolean) => set({ muted }),
 	setDuration: (duration: number) => set({ duration }),
 	setProgress: (progress: number) => set({ progress }),
-	setServerTimeOffset: (offset: number) => set({ serverTimeOffset: offset }),
+	setServerTimeOffset: (serverTimeOffset: number) => set({ serverTimeOffset }),
 	setPlayerType: (playerType: number) => set({ playerType }),
 	setInitialSync: (sync: boolean) => set({ initialSync: sync }),
-	setUserIntervention: (sync: boolean) => set({ userIntervention: sync }),
-	setIsSystemAction: (action: boolean) => set({ isSystemAction: action }),
+	setUserIntervention: (userIntervention: boolean) => set({ userIntervention }),
+	setIsSystemAction: (isSystemAction: boolean) => set({ isSystemAction }),
 }));
 
 interface GlobalStore {
@@ -142,7 +142,7 @@ interface RoomStore {
 	setPlayerStats: (stats: number[]) => void;
 }
 interface PlayerStore {
-	url: string;
+	url: string | undefined;
 	pip: boolean;
 	controls: boolean;
 	playing: boolean;
@@ -157,7 +157,7 @@ interface PlayerStore {
 	initialSync: boolean;
 	userIntervention: boolean;
 	isSystemAction: boolean;
-	setUrl: (url: string) => void;
+	setUrl: (url: string | undefined) => void;
 	setPip: (pip: boolean) => void;
 	setControls: (controls: boolean) => void;
 	setPlaying: (playing: boolean) => void;

@@ -62,8 +62,8 @@ export function RoomPinDialog() {
 	return (
 		<Dialog>
 			<DialogTrigger asChild>
-				<Button variant="outline" className="">
-					<DrawingPinFilledIcon className="h-4 w-4 md:h-6 md:w-6" />
+				<Button variant="ghost"  size={"sm"}>
+					<DrawingPinFilledIcon />
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-[425px]">
