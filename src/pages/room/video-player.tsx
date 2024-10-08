@@ -150,6 +150,7 @@ const VideoPlayer = React.forwardRef<
 
 	// TODO: player is paused when seeked, wait for 1.1 seconds and then pause otherwise seek
 	// TODO: add fullscreen capabilities (add a button) -> screenfull.request(document.querySelector('.react-player'))
+// TODO: add message to local then emit to server
 
 	function syncPlayer() {
 		if (!playerStats) return;
