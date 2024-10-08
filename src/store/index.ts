@@ -85,6 +85,7 @@ export const useRoomStore = create<RoomStore>((set) => ({
 export const usePlayerStore = create<PlayerStore>((set) => ({
 	url: "",
 	pip: false,
+	controls: true,
 	playing: false,
 	loop: false,
 	playbackRate: 1,
@@ -95,10 +96,11 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
 	serverTimeOffset: 0,
 	playerType: 0,
 	initialSync: false,
-	playerInSync: false,
+	userIntervention: false,
 	isSystemAction: false,
 	setUrl: (url: string) => set({ url }),
 	setPip: (pip: boolean) => set({ pip }),
+	setControls: (controls: boolean) => set({ controls }),
 	setPlaying: (playing: boolean) => set({ playing }),
 	setLoop: (loop: boolean) => set({ loop }),
 	setPlaybackRate: (rate: number) => set({ playbackRate: rate }),
@@ -109,7 +111,7 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
 	setServerTimeOffset: (offset: number) => set({ serverTimeOffset: offset }),
 	setPlayerType: (playerType: number) => set({ playerType }),
 	setInitialSync: (sync: boolean) => set({ initialSync: sync }),
-	setPlayerInSync: (sync: boolean) => set({ playerInSync: sync }),
+	setUserIntervention: (sync: boolean) => set({ userIntervention: sync }),
 	setIsSystemAction: (action: boolean) => set({ isSystemAction: action }),
 }));
 
@@ -142,6 +144,7 @@ interface RoomStore {
 interface PlayerStore {
 	url: string;
 	pip: boolean;
+	controls: boolean;
 	playing: boolean;
 	loop: boolean;
 	playbackRate: number;
@@ -152,10 +155,11 @@ interface PlayerStore {
 	serverTimeOffset: number;
 	playerType: number;
 	initialSync: boolean;
-	playerInSync: boolean;
+	userIntervention: boolean;
 	isSystemAction: boolean;
 	setUrl: (url: string) => void;
 	setPip: (pip: boolean) => void;
+	setControls: (controls: boolean) => void;
 	setPlaying: (playing: boolean) => void;
 	setLoop: (loop: boolean) => void;
 	setPlaybackRate: (rate: number) => void;
@@ -166,6 +170,6 @@ interface PlayerStore {
 	setServerTimeOffset: (offset: number) => void;
 	setPlayerType: (type: number) => void;
 	setInitialSync: (sync: boolean) => void;
-	setPlayerInSync: (sync: boolean) => void;
+	setUserIntervention: (sync: boolean) => void;
 	setIsSystemAction: (action: boolean) => void;
 }

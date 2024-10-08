@@ -128,6 +128,7 @@ export default function socketServer(io: CustomIO) {
 			await kickMember(targetMember);
 		});
 		socket.on("playPauseVideo", async (reqType: number) => {
+			console.log("[socket] playPauseVideo type: ", reqType);
 			// 1 = play, 0 = pause
 			const roomId = socket.roomId;
 			if (!roomId) {
@@ -188,8 +189,9 @@ export default function socketServer(io: CustomIO) {
 			);
 			socket.emit("syncPlayerStats", room.playerStats);
 		});
-		socket.on("seekVideo", async (seekTo: number) => {
-			seekTo = Math.floor(Math.abs(seekTo));
+		socket.on("seekVideo", async (s: number) => {
+			console.log(`[socket] seekVideo, seekTo raw: ${s}`);
+			const seekTo = Math.floor(Math.abs(s));
 			const roomId = socket.roomId;
 			if (!roomId) {
 				return socket.emit("stateError", "roomId not found on socket");
@@ -202,7 +204,7 @@ export default function socketServer(io: CustomIO) {
 			if (seekTo > duration) {
 				return socket.emit("stateError", "Seek to is greater than duration");
 			}
-			console.log(`[socket] seekVideo, seekTo: ${seekTo}`);
+			console.log(`[socket] seekVideo, seekTo rounded: ${seekTo}`);
 			room.playerStats = [duration, seekTo, getDateInSeconds(), status, type];
 			io.in(roomId).emit("syncPlayerStats", room.playerStats);
 			await roomRepository.save(room);

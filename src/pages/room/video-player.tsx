@@ -7,25 +7,29 @@ import RoomJoinDialog from "./room-join-dialog";
 import { useGetCurrentUser } from "@/hooks/user-hooks";
 import { socket } from "@/socket";
 import { Button } from "@/components/ui/button";
-
+import { FaForward, FaBackward, FaSyncAlt } from "react-icons/fa";
+import { Switch } from "@/components/ui/switch";
 type Props = {
 	screen: "mobile" | "desktop";
+	playerRef: React.MutableRefObject<ReactPlayer | null>;
 };
 
 const VideoPlayer = React.forwardRef<
 	React.ElementRef<typeof ReactPlayer>,
 	Props
->(({ screen }, ref) => {
+>(({ screen, playerRef }, ref) => {
 	const [open, setOpen] = useState(true);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const roomJoinDialogShown = useGlobalStore((s) => s.roomJoinDialogShown);
-	const { currentLeader } = useRoomStore((s) => ({
+	const { currentLeader, playerStats } = useRoomStore((s) => ({
 		currentLeader: s.roomData?.activeMembersList![0],
+		playerStats: s.roomData?.playerStats,
 	}));
 
 	const {
 		url,
 		pip,
+		controls,
 		playing,
 		loop,
 		playbackRate,
@@ -35,9 +39,10 @@ const VideoPlayer = React.forwardRef<
 		progress,
 		serverTimeOffset,
 		playerType,
-		playerInSync,
+		userIntervention,
 		setUrl,
 		setPip,
+		setControls,
 		setPlaying,
 		setLoop,
 		setPlaybackRate,
@@ -47,12 +52,13 @@ const VideoPlayer = React.forwardRef<
 		setProgress,
 		setServerTimeOffset,
 		setPlayerType,
-		setPlayerInSync,
+		setUserIntervention,
 		isSystemAction,
 		setIsSystemAction,
 	} = usePlayerStore((s) => ({
 		url: s.url,
 		pip: s.pip,
+		controls: s.controls,
 		playing: s.playing,
 		loop: s.loop,
 		playbackRate: s.playbackRate,
@@ -62,10 +68,11 @@ const VideoPlayer = React.forwardRef<
 		progress: s.progress,
 		serverTimeOffset: s.serverTimeOffset,
 		playerType: s.playerType,
-		playerInSync: s.playerInSync,
+		userIntervention: s.userIntervention,
 		isSystemAction: s.isSystemAction,
 		setUrl: s.setUrl,
 		setPip: s.setPip,
+		setControls: s.setControls,
 		setPlaying: s.setPlaying,
 		setLoop: s.setLoop,
 		setPlaybackRate: s.setPlaybackRate,
@@ -75,7 +82,7 @@ const VideoPlayer = React.forwardRef<
 		setProgress: s.setProgress,
 		setServerTimeOffset: s.setServerTimeOffset,
 		setPlayerType: s.setPlayerType,
-		setPlayerInSync: s.setPlayerInSync,
+		setUserIntervention: s.setUserIntervention,
 		setIsSystemAction: s.setIsSystemAction,
 	}));
 	const { data: currentUser } = useGetCurrentUser();
@@ -141,6 +148,22 @@ const VideoPlayer = React.forwardRef<
 	// 	<button onClick={() => load(url)}>{label}</button>
 	// );
 
+	// TODO: player is paused when seeked, wait for 1.1 seconds and then pause otherwise seek
+	// TODO: relaod player on controls change, maybe set url to empty and set back again
+
+	function syncPlayer() {
+		if (!playerStats) return;
+		setUserIntervention(false);
+		setPlaybackRate(1);
+		const [duration, progress, lastChanged, status, type] = playerStats;
+		const serverTime = getDateInSeconds() + serverTimeOffset;
+		const toProgress =
+			status === 1 ? serverTime - lastChanged + progress : progress;
+		setPlaying(status === 1);
+		setProgress(toProgress);
+		playerRef.current?.seekTo(toProgress, "seconds");
+	}
+
 	return (
 		<>
 			<RoomJoinDialog />
@@ -162,12 +185,13 @@ const VideoPlayer = React.forwardRef<
 								height="100%"
 								url={url}
 								pip={pip}
+								controls={controls}
 								playing={playing}
 								loop={loop}
 								playbackRate={playbackRate}
 								volume={volume}
 								muted={muted}
-								progressInterval={1000}
+								progressInterval={750}
 								onReady={() => {
 									console.log("[VideoPlayer] onReady");
 								}}
@@ -183,8 +207,9 @@ const VideoPlayer = React.forwardRef<
 										setPlaying(true);
 									} else {
 										if (!isSystemAction) {
-											setPlayerInSync(false);
+											setIsSystemAction(false);
 										}
+										setUserIntervention(true);
 										setPlaying(true);
 									}
 								}}
@@ -199,15 +224,16 @@ const VideoPlayer = React.forwardRef<
 										setPlaying(false);
 									} else {
 										if (!isSystemAction) {
-											setPlayerInSync(false);
+											setIsSystemAction(false);
 										}
+										setUserIntervention(true);
 										setPlaying(false);
 									}
 								}}
 								onBuffer={() => console.log("[VideoPlayer] onBuffer")}
 								onPlaybackRateChange={(speed: string) => {
 									console.log("[VideoPlayer] onPlaybackRateChange", speed);
-									setPlayerInSync(false);
+									setUserIntervention(true);
 									setPlaybackRate(Number.parseFloat(speed));
 								}}
 								onSeek={(e) => console.log("[VideoPlayer] onSeek", e)}
@@ -215,17 +241,19 @@ const VideoPlayer = React.forwardRef<
 								onError={(e) => console.log("[VideoPlayer] onError", e)}
 								onProgress={(state) => {
 									const currentProgress = state.playedSeconds;
-									// console.log(
-									// 	"[VideoPlayer] onProgress currentProgress, previousProgress",
-									// 	currentProgress,
-									// 	progress,
-									// );
+									console.log(
+										"[VideoPlayer] onProgress currentProgress, previousProgress, diff",
+										currentProgress,
+										progress,
+										Math.abs(currentProgress - progress),
+									);
 									// if (!isSystemAction) {
 									// 	setIsSystemAction(false);
 									// 	setProgress(currentProgress);
 									// 	return;
 									// }
-									if (Math.abs(currentProgress - progress) > 5) {
+
+									if (Math.abs(currentProgress - progress) > 2) {
 										if (currentUser?._id === currentLeader) {
 											console.log(
 												"[VideoPlayer] onProgress sending seek to server: ",
@@ -235,7 +263,7 @@ const VideoPlayer = React.forwardRef<
 											setIsSystemAction(false);
 											// setProgress(currentProgress);
 										} else {
-											setPlayerInSync(false);
+											setUserIntervention(true);
 											// setProgress(currentProgress);
 										}
 									}
@@ -246,59 +274,94 @@ const VideoPlayer = React.forwardRef<
 									setDuration(duration);
 								}}
 								config={{
-									youtube: { playerVars: { controls: 1, autoplay: 1 } },
+									youtube: { playerVars: { /*controls: 1,*/ autoplay: 1 } },
 								}}
 							/>
 						)}
 					</div>
 				</div>
-				{screen === "mobile" && (
-					<>
-						{open && (
-							<div className="mx-auto flex h-[20px] w-20 cursor-pointer items-center justify-center rounded-b-xl bg-gray-600/50">
-								{!playerInSync && (
-									<Button
-										onClick={() => {
-											socket.emit("sendSyncPlayerStats");
-										}}
-										variant={"outline"}
-									>
-										sync
-									</Button>
-								)}
-								<TiArrowSortedUp onClick={() => setOpen(false)} />
-							</div>
-						)}
-						{!open && (
-							<div className="mx-auto flex h-[20px] w-20 cursor-pointer items-center justify-center rounded-b-xl bg-gray-600/50">
-								{!playerInSync && (
-									<Button
-										onClick={() => {
-											socket.emit("sendSyncPlayerStats");
-										}}
-										variant={"outline"}
-									>
-										sync
-									</Button>
-								)}
-								<TiArrowSortedDown onClick={() => setOpen(true)} />
-							</div>
-						)}
-					</>
-				)}
-				{screen === "desktop" && !playerInSync && (
+
+				<div
+					className={cn(
+						"mx-auto mt-2 flex h-[24px] w-full max-w-[min(400px,90vw)] items-center justify-between rounded-b-xl bg-transparent",
+					)}
+				>
 					<Button
+						variant={"ghost"}
 						onClick={() => {
-							socket.emit("sendSyncPlayerStats");
+							const toProgress = progress - 10 < 0 ? 0 : progress - 10;
+							if (currentUser?._id === currentLeader) {
+								socket.emit("seekVideo", Math.floor(toProgress));
+							} else {
+								setUserIntervention(true);
+								playerRef.current?.seekTo(Math.floor(toProgress), "seconds");
+							}
+							setProgress(toProgress);
 						}}
-						variant={"outline"}
 					>
-						sync
+						<FaBackward />
 					</Button>
-				)}
+					<Button
+						onClick={syncPlayer}
+						variant={"ghost"}
+						disabled={!userIntervention}
+						className={cn(
+							userIntervention ? "text-primary" : "text-muted-foreground",
+						)}
+					>
+						<FaSyncAlt />
+					</Button>
+
+					{open ? (
+						<Button
+							size={"sm"}
+							className="h-6 w-10"
+							variant={"secondary"}
+							onClick={() => setOpen(false)}
+						>
+							<TiArrowSortedUp />
+						</Button>
+					) : (
+						<Button
+							size={"sm"}
+							variant={"secondary"}
+							onClick={() => setOpen(true)}
+						>
+							<TiArrowSortedDown />
+						</Button>
+					)}
+					<Switch
+						checked={controls}
+						onCheckedChange={(e) => {
+							// setUrl("");
+							setControls(e);
+							// socket.emit("sendSyncPlayerStats");
+						}}
+					/>
+					<Button
+						variant={"ghost"}
+						onClick={() => {
+							const toProgress =
+								progress + 10 > duration ? duration : progress + 10;
+							if (currentUser?._id === currentLeader) {
+								socket.emit("seekVideo", Math.floor(toProgress));
+							} else {
+								setUserIntervention(true);
+								playerRef.current?.seekTo(Math.floor(toProgress), "seconds");
+							}
+							setProgress(toProgress);
+						}}
+					>
+						<FaForward />
+					</Button>
+				</div>
 			</div>
 		</>
 	);
 });
 
 export default VideoPlayer;
+
+function getDateInSeconds() {
+	return Math.floor(Date.now() / 1000);
+}

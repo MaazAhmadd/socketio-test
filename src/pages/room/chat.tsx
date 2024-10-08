@@ -34,8 +34,8 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 	const ChatMessage = ({
 		message,
 		prevSender,
-		isLast
-	}: { message: Message; prevSender: string | null, isLast: boolean }) => {
+		isLast,
+	}: { message: Message; prevSender: string | null; isLast: boolean }) => {
 		const type = message[0];
 		const sender = message[1];
 		const time = message[2];
@@ -171,7 +171,7 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 							<ChatText
 								text={"your mic has been enabled"}
 								doLineBreakCheck={false}
-							// textClassName="text-green-500"
+								// textClassName="text-green-500"
 							/>
 						</div>
 					</div>
@@ -183,7 +183,7 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 							<ChatText
 								text={"your mic has been disabled"}
 								doLineBreakCheck={false}
-							// textClassName="text-red-500"
+								// textClassName="text-red-500"
 							/>
 						</div>
 					</div>
@@ -280,14 +280,17 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 				)}
 			>
 				<div className={cn("flex flex-col justify-end")}>
-					<div className="" style={{
-						height: `max(calc(calc(100svh - 60px) - ${messages.length * 50}px), 272px)`,
-					}}></div>
+					<div
+						className=""
+						style={{
+							height: `max(calc(calc(100svh - 60px) - ${messages.length * 50}px), 272px)`,
+						}}
+					></div>
 					{messages.map((m, i, a) => (
 						<ChatMessage
 							message={m}
 							prevSender={i === 0 ? null : String(a[i - 1][1])}
-							key={m[2]}
+							key={String(m[2] + i + Math.random())}
 							isLast={i === a.length - 1}
 						/>
 					))}
@@ -322,7 +325,10 @@ function ChatText({
 		));
 		return (
 			<div>
-				{name} <span className={cn('break-words', textClassName)}>{textWithBreaks}</span>
+				{name}{" "}
+				<span className={cn("break-words", textClassName)}>
+					{textWithBreaks}
+				</span>
 			</div>
 		);
 	}

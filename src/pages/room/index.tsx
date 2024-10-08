@@ -89,7 +89,7 @@ const RoomPage = () => {
 		playing,
 		playbackRate,
 		progress,
-		playerInSync,
+		userIntervention,
 		serverTimeOffset,
 		initialSync,
 		setPlayerType,
@@ -99,15 +99,16 @@ const RoomPage = () => {
 		setProgress,
 		setPlaying,
 		setInitialSync,
-		setPlayerInSync,
+		setUserIntervention,
 		setIsSystemAction,
+		setPlaybackRate,
 	} = usePlayerStore((s) => ({
 		url: s.url,
 		playing: s.playing,
 		playbackRate: s.playbackRate,
 		progress: s.progress,
 		serverTimeOffset: s.serverTimeOffset,
-		playerInSync: s.playerInSync,
+		userIntervention: s.userIntervention,
 		initialSync: s.initialSync,
 		setPlayerType: s.setPlayerType,
 		setUrl: s.setUrl,
@@ -116,8 +117,9 @@ const RoomPage = () => {
 		setProgress: s.setProgress,
 		setPlaying: s.setPlaying,
 		setInitialSync: s.setInitialSync,
-		setPlayerInSync: s.setPlayerInSync,
+		setUserIntervention: s.setUserIntervention,
 		setIsSystemAction: s.setIsSystemAction,
+		setPlaybackRate: s.setPlaybackRate,
 	}));
 
 	// useEffect(() => {
@@ -148,6 +150,7 @@ const RoomPage = () => {
 			// console.log("[socket disconnect] disconnected");
 			// setRoomData(null);
 			// setMessages([]);
+			setInitialSync(false);
 			setConnected(false);
 			setLoading(false);
 		}
@@ -191,42 +194,25 @@ const RoomPage = () => {
 		}
 
 		function onSyncPlayerStats(data: number[]) {
-			console.log("[Socket onSyncPlayerStats] onSyncPlayerStats: ", data);
+			if (userIntervention) return;
+			const [duration, progress, lastChanged, status, type] = data;
 			setIsSystemAction(true);
 			setPlayerStats(data);
-			setPlayerInSync(true);
-			const [duration, progress, lastChanged, status, type] = data;
+			setPlaybackRate(1);
+			// setUrl(roomData?.videoUrl!);
+			setDuration(duration);
+			setPlayerType(type);
+			setPlaying(status === 1);
 			const serverTime = getDateInSeconds() + serverTimeOffset;
-			if (status === 1) {
-				setPlaying(true);
-				setProgress(serverTime - lastChanged + progress);
-				setDuration(duration);
-				setPlayerType(type);
-				if (playerRef.current) {
-					console.log(
-						"[socket onSyncPlayerStats] status 1 seeking to: ",
-						serverTime - lastChanged + progress,
-					);
-					playerRef.current.seekTo(
-						serverTime - lastChanged + progress,
-						"seconds",
-					);
-				}
-			}
-			if (status === 0) {
-				setPlaying(false);
-				setProgress(progress);
-				setDuration(duration);
-				setPlayerType(type);
-				if (playerRef.current) {
-					console.log(
-						"[socket onSyncPlayerStats] status 0 seeking to: ",
-						progress,
-					);
-					playerRef.current.seekTo(progress, "seconds");
-				}
-			}
-			// console.log("[socket onSyncPlayerStats] onSyncPlayerStats: ", data);
+			const toProgress =
+				status === 1 ? serverTime - lastChanged + progress : progress;
+			setProgress(toProgress);
+			playerRef.current?.seekTo(toProgress, "seconds");
+			console.log("[Socket onSyncPlayerStats] onSyncPlayerStats: ", data);
+			console.log(
+				"[socket onSyncPlayerStats] status 1 seeking to: ",
+				toProgress,
+			);
 		}
 
 		function onSyncTimer(data: number) {
@@ -265,41 +251,18 @@ const RoomPage = () => {
 		if (!roomData.playerStats) return;
 		const [duration, progress, lastChanged, status, type] =
 			roomData.playerStats;
+		setPlaybackRate(1);
+		setInitialSync(true);
+		setUserIntervention(false);
+		setDuration(duration);
+		setPlayerType(type);
+		setPlaying(status === 1);
 		const serverTime = getDateInSeconds() + serverTimeOffset;
-
-		if (status === 1) {
-			setPlaying(true);
-			setProgress(serverTime - lastChanged + progress);
-			setDuration(duration);
-			setPlayerType(type);
-			if (playerRef.current) {
-				setInitialSync(true);
-				setPlayerInSync(true);
-				console.log(
-					"[socket onSyncPlayerStats] status 1 seeking to: ",
-					serverTime - lastChanged + progress,
-				);
-				playerRef.current.seekTo(
-					serverTime - lastChanged + progress,
-					"seconds",
-				);
-			}
-		} else if (status === 0) {
-			setPlaying(false);
-			setProgress(progress);
-			setDuration(duration);
-			setPlayerType(type);
-			if (playerRef.current) {
-				setInitialSync(true);
-				setPlayerInSync(true);
-				console.log(
-					"[socket onSyncPlayerStats] status 0 seeking to: ",
-					progress,
-				);
-				playerRef.current.seekTo(progress, "seconds");
-			}
-		}
-	}, [playerRef.current]);
+		const toProgress =
+			status === 1 ? serverTime - lastChanged + progress : progress;
+		setProgress(toProgress);
+		playerRef.current?.seekTo(toProgress, "seconds");
+	}, [playerRef.current, initialSync]);
 
 	// mobile videoplayer height 33svh
 	// desktop chat width 30svw
@@ -313,14 +276,14 @@ const RoomPage = () => {
 		() => <Chat screen={"desktop"} />,
 		[messages.length],
 	);
-	const MobileVideoPlayer = useMemo(
-		() => <VideoPlayer screen={"mobile"} ref={playerRef} />,
-		[url, playing, playbackRate, progress, playerInSync, serverTimeOffset],
-	);
-	const DesktopVideoPlayer = useMemo(
-		() => <VideoPlayer screen={"desktop"} ref={playerRef} />,
-		[url, playing, playbackRate, progress, playerInSync, serverTimeOffset],
-	);
+	// const MobileVideoPlayer = useMemo(
+	// 	() => <VideoPlayer screen={"mobile"} ref={playerRef} />,
+	// 	[url, playing, playbackRate, progress, userIntervention, serverTimeOffset],
+	// );
+	// const DesktopVideoPlayer = useMemo(
+	// 	() => <VideoPlayer screen={"desktop"} ref={playerRef} />,
+	// 	[url, playing, playbackRate, progress, userIntervention, serverTimeOffset],
+	// );
 
 	if (!id) {
 		return <Navigate to="/home" />;
@@ -352,7 +315,11 @@ const RoomPage = () => {
 					<div className="h-[100svh]">{MobileChat}</div>
 
 					<div className="fixed top-[40px] w-full">
-						<VideoPlayer screen={"mobile"} ref={playerRef} />
+						<VideoPlayer
+							screen={"mobile"}
+							ref={playerRef}
+							playerRef={playerRef}
+						/>
 					</div>
 					<div className="fixed top-0 h-[40px] w-full border-muted border-b bg-primary-foreground">
 						<RoomButtons
@@ -364,7 +331,11 @@ const RoomPage = () => {
 			) : (
 				<div className="flex">
 					<div className="w-[70svw]">
-						<VideoPlayer screen={"desktop"} ref={playerRef} />
+						<VideoPlayer
+							screen={"desktop"}
+							ref={playerRef}
+							playerRef={playerRef}
+						/>
 					</div>
 					<div className="w-[30svw]">
 						<div className=" h-[5svh]">
