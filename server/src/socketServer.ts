@@ -127,40 +127,85 @@ export default function socketServer(io: CustomIO) {
 			}
 			await kickMember(targetMember);
 		});
-		socket.on("updateRoomSettings", async (data: [number, number]) => {
-			// type, 0 = privacy, 1 = playback, 2 = roomMic
-			// privacy: number; // public(0), private(1), friends(2)
-			// playback: number; // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
-			// roomMic: number; // on(1), off(0)
-			const [reqtype, updatetype] = data;
-			const roomId = socket.roomId;
-			if (!roomId) {
-				return socket.emit("stateError", "roomId not found");
-			}
-			const room = await roomRepository.fetch(roomId);
-			if (!room) {
-				return socket.emit("stateError", "room not found");
-			}
-			if (!room.activeMembersList || room.activeMembersList.length < 1) {
-				return socket.emit("stateError", "Empty room");
-			}
-			if (room.activeMembersList[0] !== socket.user?._id) {
-				return socket.emit("stateError", "You are not the leader");
-			}
-			if (reqtype == 0) {
-				room.privacy = updatetype;
-			} else if (reqtype == 1) {
-				room.playback = updatetype;
-			} else if (reqtype == 2) {
-				room.roomMic = updatetype;
-			}
-			await roomRepository.save(room);
-			io.in(roomId).emit("roomSettings", [
-				room.privacy,
-				room.playback,
-				room.roomMic,
-			]);
-		});
+		socket.on(
+			"updateRoomSettings",
+			async (data: [0 | 1 | 2, 0 | 1 | 2 | 3]) => {
+				// type, 0 = privacy, 1 = playback, 2 = roomMic
+				// privacy: number; // public(0), private(1), friends(2)
+				// playback: number; // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
+				// roomMic: number; // on(1), off(0)
+				const _map: Record<string, number> = {
+					// refer to chat message types
+					"0,0": 7,
+					"0,1": 8,
+					"0,2": 9,
+					"1,0": 10,
+					"1,1": 11,
+					"1,2": -1,
+					"1,3": 12,
+					"2,0": 15,
+					"2,1": 14,
+				};
+				const [reqtype, updatetype] = data;
+				const roomId = socket.roomId;
+				if (!roomId) {
+					return socket.emit("stateError", "roomId not found");
+				}
+				const room = await roomRepository.fetch(roomId);
+				if (!room) {
+					return socket.emit("stateError", "room not found");
+				}
+				if (!room.activeMembersList || room.activeMembersList.length < 1) {
+					return socket.emit("stateError", "Empty room");
+				}
+				if (room.activeMembersList[0] !== socket.user?._id) {
+					return socket.emit("stateError", "You are not the leader");
+				}
+				if (reqtype === 0) {
+					// 0 = privacy
+					room.privacy = updatetype;
+				} else if (reqtype === 1) {
+					// 1 = playback
+					room.playback = updatetype;
+				} else if (reqtype === 2) {
+					// 2 = roomMic
+					room.roomMic = updatetype;
+					if (updatetype === 1) {
+						room.membersJoinedList!.forEach((id, i) => {
+							if (i === 0) {
+								room.membersJoinedList![i] = `${id},1`;
+								return;
+							}
+							const [key, value] = id.split(",");
+							room.membersJoinedList![i] = `${key},1`;
+						});
+					} else if (updatetype === 0) {
+						room.membersJoinedList!.forEach((id, i) => {
+							if (i === 0) {
+								room.membersJoinedList![i] = `${id},1`;
+								return;
+							}
+							const [key, value] = id.split(",");
+							room.membersJoinedList![i] = `${key},0`;
+						});
+					}
+				}
+
+				await roomRepository.save(room);
+				sendActiveMemberListUpdate(room, roomId);
+				io.in(roomId).emit("roomSettings", [
+					room.privacy,
+					room.playback,
+					room.roomMic,
+				]);
+				io.in(roomId).emit("message", [
+					_map[String(data)],
+					"system",
+					Date.now(),
+					"",
+				]);
+			},
+		);
 
 		socket.on("playPauseVideo", async (reqType: number) => {
 			console.log("[socket] playPauseVideo type: ", reqType);
@@ -330,7 +375,7 @@ export default function socketServer(io: CustomIO) {
 				const newLeader = await User.findById(room?.activeMembersList[0]);
 				const socketId = newLeader?.socketId;
 				if (socketId) {
-					io.to(socketId).emit("message", [4, newLeader._id, Date.now(), ""]);
+					io.to(socketId).emit("message", [4, "system", Date.now(), ""]);
 				}
 				io.in(roomId).emit("message", [2, socket.user?._id!, Date.now(), ""]);
 			}
@@ -383,7 +428,7 @@ export default function socketServer(io: CustomIO) {
 			const newLeader = await User.findById(room?.activeMembersList![0]);
 			const socketId = newLeader?.socketId;
 			if (socketId) {
-				io.to(socketId).emit("message", [4, newLeader._id, Date.now(), ""]);
+				io.to(socketId).emit("message", [4, "system", Date.now(), ""]);
 			}
 		}
 
@@ -416,8 +461,8 @@ export default function socketServer(io: CustomIO) {
 			const targetUser = await User.findById(targetMemberMongoId);
 			io.to(targetUser?.socketId!).emit("onKicked", "You have been kicked");
 			sendActiveMemberListUpdate(room, roomId);
-			io.in(roomId).emit("message", [1, socket.user?._id!, Date.now(), ""]);
-			io.in(roomId).emit("message", [3, socket.user?._id!, Date.now(), ""]);
+			// io.in(roomId).emit("message", [1, socket.user?._id!, Date.now(), ""]);
+			io.in(roomId).emit("message", [3, "system", Date.now(), ""]);
 		}
 
 		async function enableDisableMic(targetMember: string, reqtype: number) {
@@ -460,20 +505,11 @@ export default function socketServer(io: CustomIO) {
 			await roomRepository.save(room);
 			sendActiveMemberListUpdate(room, roomId);
 			if (targetUser?.socketId) {
+				const sId = targetUser.socketId;
 				if (reqtype === 0) {
-					io.to(targetUser.socketId).emit("message", [
-						6,
-						socket.user?._id!,
-						Date.now(),
-						"",
-					]);
+					io.to(sId).emit("message", [6, "system", Date.now(), ""]);
 				} else if (reqtype === 1) {
-					io.to(targetUser.socketId).emit("message", [
-						5,
-						socket.user?._id!,
-						Date.now(),
-						"",
-					]);
+					io.to(sId).emit("message", [5, "system", Date.now(), ""]);
 				}
 			}
 		}

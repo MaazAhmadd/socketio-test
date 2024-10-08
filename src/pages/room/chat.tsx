@@ -43,20 +43,22 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 		/*
 			[type,sender,time,msg]
 			type: 
-				chat-----------------(0)
-				join-----------------(1)
-				leave----------------(2)
-				kick-----------------(3)
-				leadership-----------(4)
-				micenable------------(5)
-				micdisable-----------(6)
-				roompublic-----------(7)
-				roomprivate----------(8)
-				roomfriends----------(9)
-				videovote-----------(10)
-				videojustplay-------(11)
-				videoleaderschoice--(12) 
-				playingvideochanged-(13)
+				chat------------------(0)
+				join------------------(1)
+				leave-----------------(2)
+				kick------------------(3)
+				leadership------------(4)
+				micenable-------------(5)
+				micdisable------------(6)
+				roompublic------------(7)
+				roomprivate-----------(8)
+				roomfriends-----------(9)
+				videovote------------(10)
+				videojustplay--------(11)
+				videoleaderschoice---(12)
+				playingvideochanged--(13)
+				roommicenable--------(14)
+				roommicdisable-------(15)
 */
 
 		const isSystemMsg = type !== 0;
@@ -88,6 +90,15 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 			_message.length < 100 && "mt-[7px]",
 			isSystemMsg && "border-muted-foreground/60",
 		);
+		function renderSystemMsg(msg: string) {
+			return (
+				<div className={messageClasses}>
+					<div className={bubbleClasses}>
+						<ChatText text={msg} doLineBreakCheck={false} />
+					</div>
+				</div>
+			);
+		}
 		switch (type) {
 			case 0: // chat
 				return (
@@ -142,128 +153,35 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 					</div>
 				);
 			case 3: // kick
-				return (
-					<div className={messageClasses}>
-						<div className={bubbleClasses}>
-							<ChatText
-								text={"has been kicked 🦶"}
-								doLineBreakCheck={false}
-								name={<Name sender={sender} isSystemMsg />}
-							/>
-						</div>
-					</div>
-				);
+				return renderSystemMsg("has been kicked 🦶");
 			case 4: // leadership
-				return (
-					<div className={messageClasses}>
-						<div className={bubbleClasses}>
-							<ChatText
-								text={"you're the leader now 👑"}
-								doLineBreakCheck={false}
-							/>
-						</div>
-					</div>
-				);
+				return renderSystemMsg("you're the leader now 👑");
 			case 5: // micenable
-				return (
-					<div className={messageClasses}>
-						<div className={bubbleClasses}>
-							<ChatText
-								text={"your mic has been enabled"}
-								doLineBreakCheck={false}
-								// textClassName="text-green-500"
-							/>
-						</div>
-					</div>
-				);
+				return renderSystemMsg("your mic has been enabled");
 			case 6: // micdisable
-				return (
-					<div className={messageClasses}>
-						<div className={bubbleClasses}>
-							<ChatText
-								text={"your mic has been disabled"}
-								doLineBreakCheck={false}
-								// textClassName="text-red-500"
-							/>
-						</div>
-					</div>
-				);
+				return renderSystemMsg("your mic has been disabled");
 			case 7: // roompublic
-				return (
-					<div className={messageClasses}>
-						<div className={bubbleClasses}>
-							<ChatText
-								text={"room is public, anyone can join this room"}
-								doLineBreakCheck={false}
-							/>
-						</div>
-					</div>
-				);
+				return renderSystemMsg("room is public, anyone can join this room");
 			case 8: // roomprivate
-				return (
-					<div className={messageClasses}>
-						<div className={bubbleClasses}>
-							<ChatText
-								text={"room is private, invited people can join"}
-								doLineBreakCheck={false}
-							/>
-						</div>
-					</div>
-				);
+				return renderSystemMsg("room is private, invited people can join");
 			case 9: // roomfriends
-				return (
-					<div className={messageClasses}>
-						<div className={bubbleClasses}>
-							<ChatText
-								text={
-									"room is friends only, friends or invited people can join"
-								}
-								doLineBreakCheck={false}
-							/>
-						</div>
-					</div>
+				return renderSystemMsg(
+					"room is friends only, friends or invited people can join",
 				);
 			case 10: // videovote
-				return (
-					<div className={messageClasses}>
-						<div className={bubbleClasses}>
-							<ChatText text={"video voting is on"} doLineBreakCheck={false} />
-						</div>
-					</div>
-				);
+				return renderSystemMsg("video voting is on");
 			case 11: // videojustplay
-				return (
-					<div className={messageClasses}>
-						<div className={bubbleClasses}>
-							<ChatText
-								text={"videos will just play without waiting for votes"}
-								doLineBreakCheck={false}
-							/>
-						</div>
-					</div>
+				return renderSystemMsg(
+					"videos will just play without waiting for votes",
 				);
 			case 12: // videoleaderschoice
-				return (
-					<div className={messageClasses}>
-						<div className={bubbleClasses}>
-							<ChatText
-								text={"video selection set to leader's choice only"}
-								doLineBreakCheck={false}
-							/>
-						</div>
-					</div>
-				);
+				return renderSystemMsg("video selection set to leader's choice only");
 			case 13: // playingvideochanged
-				return (
-					<div className={messageClasses}>
-						<div className={bubbleClasses}>
-							<ChatText
-								text={"Now playing: " + _message}
-								doLineBreakCheck={false}
-							/>
-						</div>
-					</div>
-				);
+				return renderSystemMsg("Now playing: " + _message);
+			case 14: // roommicenable
+				return renderSystemMsg("room mic has been enabled");
+			case 15: // roommicdisable
+				return renderSystemMsg("room mic has been disabled");
 			default: // chat
 				return <></>;
 		}

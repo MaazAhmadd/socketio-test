@@ -110,20 +110,22 @@ type Message = [number, string, number, string];
 	message:
 	[type,sender,time,msg]
 	type: 
-		chat-----------------(0)
-		join-----------------(1)
-		leave----------------(2)
-		kick-----------------(3)
-		leadership-----------(4)
-		micenable------------(5)
-		micdisable-----------(6)
-		roompublic-----------(7)
-		roomprivate----------(8)
-		roomfriends----------(9)
-		videovote-----------(10)
-		videojustplay-------(11)
-		videoleaderschoice--(12) 
-		playingvideochanged-(13)
+		chat------------------(0)
+		join------------------(1)
+		leave-----------------(2)
+		kick------------------(3)
+		leadership------------(4)
+		micenable-------------(5)
+		micdisable------------(6)
+		roompublic------------(7)
+		roomprivate-----------(8)
+		roomfriends-----------(9)
+		videovote------------(10)
+		videojustplay--------(11)
+		videoleaderschoice---(12) 
+		playingvideochanged--(13)
+		roommicenable--------(14)
+		roommicdisable-------(15)
 */
 
 type CurrentUser = {
