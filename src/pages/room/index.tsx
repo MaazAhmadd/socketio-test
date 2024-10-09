@@ -234,7 +234,10 @@ const RoomComponent = () => {
 		console.log("[Socket onSyncTimer] onSyncTimer: ", data);
 		setServerTimeOffset(
 			getDateInSeconds() -
-				(data + Math.floor((Date.now() - timeReceivedDelay) / 1000)),
+				(data +
+					(timeReceivedDelay > 0
+						? Math.floor((Date.now() - timeReceivedDelay) / 1000)
+						: 0)),
 		);
 	}
 	function onRoomSettings(data: [number, number, number]) {
