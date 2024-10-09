@@ -16,6 +16,7 @@ interface RoomCardProps {
 const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 	const { data: currentUser } = useGetCurrentUser();
 	const { width } = useWindowSize();
+	const { info } = useYoutubeInfo(room.videoUrl);
 	if (!currentUser) return <></>;
 	if (!room || !room.activeMembersList || !room.activeMembersList?.length) {
 		return <></>;
@@ -33,7 +34,6 @@ const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 			return 0;
 		});
 	}
-	const { info } = useYoutubeInfo(room.videoUrl);
 
 	return (
 		<li

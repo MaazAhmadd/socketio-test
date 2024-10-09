@@ -6,21 +6,21 @@ import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { AxiosError } from "axios";
 
+export type AllRoomsObject = {
+	publicRooms: Room[];
+	friendsRooms: Room[];
+	invitedRooms: Room[];
+};
 export const useGetUserRooms = () => {
-	type ReturnObj = {
-		publicRooms: Room[];
-		friendsRooms: Room[];
-		invitedRooms: Room[];
-	};
 	async function getUserRooms() {
 		const response = await api.get("/room/userrooms");
 		console.log("[useGetUserRooms] all rooms: ", response.data);
 		return response.data;
 	}
-	return useQuery<ReturnObj>({
+	return useQuery<AllRoomsObject>({
 		queryKey: ["rooms"],
 		queryFn: getUserRooms,
-		staleTime: 1000 * 5, // 5 seconds
+		staleTime: 60 * 1000 * 5, // 5 minutes
 	});
 };
 

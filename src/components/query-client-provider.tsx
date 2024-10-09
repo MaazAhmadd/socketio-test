@@ -6,7 +6,7 @@ import {
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
-			staleTime: 1000 * 5, // 2 seconds
+			staleTime: 1000 * 5, // 5 seconds
 			refetchOnWindowFocus: false,
 			refetchOnMount: false,
 			refetchOnReconnect: false,

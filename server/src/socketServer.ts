@@ -101,7 +101,10 @@ export default function socketServer(io: CustomIO) {
 				return;
 			}
 			// check types/index.ts for details
-			io.in(roomId).emit("message", [0, socket.user?._id!, Date.now(), msg]);
+			socket
+				.to(roomId)
+				.emit("message", [0, socket.user?._id!, Date.now(), msg]);
+			// io.in(roomId).emit("message", [0, socket.user?._id!, Date.now(), msg]);
 		});
 		socket.on("mic", async (micstr: [string, number]) => {
 			if (!micstr) {
@@ -164,6 +167,9 @@ export default function socketServer(io: CustomIO) {
 				if (reqtype === 0) {
 					// 0 = privacy
 					room.privacy = updatetype;
+					if (updatetype === 1) {
+						room.invitedMembersList = room.activeMembersList;
+					}
 				} else if (reqtype === 1) {
 					// 1 = playback
 					room.playback = updatetype;
@@ -460,8 +466,9 @@ export default function socketServer(io: CustomIO) {
 			await roomRepository.save(room);
 			const targetUser = await User.findById(targetMemberMongoId);
 			io.to(targetUser?.socketId!).emit("onKicked", "You have been kicked");
+			io.sockets.sockets.get(targetUser?.socketId!)?.disconnect(true);
 			sendActiveMemberListUpdate(room, roomId);
-			// io.in(roomId).emit("message", [1, socket.user?._id!, Date.now(), ""]);
+
 			io.in(roomId).emit("message", [3, "system", Date.now(), ""]);
 		}
 

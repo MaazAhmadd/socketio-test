@@ -40,6 +40,7 @@ const VideoPlayer = React.forwardRef<
 		serverTimeOffset,
 		playerType,
 		userIntervention,
+		manualSync,
 		setUrl,
 		setPip,
 		setControls,
@@ -55,6 +56,7 @@ const VideoPlayer = React.forwardRef<
 		setUserIntervention,
 		isSystemAction,
 		setIsSystemAction,
+		setManualSync,
 	} = usePlayerStore((s) => ({
 		url: s.url,
 		pip: s.pip,
@@ -70,6 +72,7 @@ const VideoPlayer = React.forwardRef<
 		playerType: s.playerType,
 		userIntervention: s.userIntervention,
 		isSystemAction: s.isSystemAction,
+		manualSync: s.manualSync,
 		setUrl: s.setUrl,
 		setPip: s.setPip,
 		setControls: s.setControls,
@@ -84,6 +87,7 @@ const VideoPlayer = React.forwardRef<
 		setPlayerType: s.setPlayerType,
 		setUserIntervention: s.setUserIntervention,
 		setIsSystemAction: s.setIsSystemAction,
+		setManualSync: s.setManualSync,
 	}));
 	const { data: currentUser } = useGetCurrentUser();
 
@@ -150,7 +154,12 @@ const VideoPlayer = React.forwardRef<
 
 	// TODO: player is paused when seeked, wait for 1.1 seconds and then pause otherwise seek
 	// TODO: add fullscreen capabilities (add a button) -> screenfull.request(document.querySelector('.react-player'))
-// TODO: add message to local then emit to server
+
+	useEffect(() => {
+		if (manualSync) return;
+		if (currentUser?._id === currentLeader) return;
+		syncPlayer();
+	}, [userIntervention, manualSync]);
 
 	function syncPlayer() {
 		if (!playerStats) return;
@@ -160,7 +169,10 @@ const VideoPlayer = React.forwardRef<
 		const serverTime = getDateInSeconds() + serverTimeOffset;
 		const toProgress =
 			status === 1 ? serverTime - lastChanged + progress : progress;
+		console.log("[socket syncPlayer] status: ", status, playing);
+
 		setPlaying(status === 1);
+
 		setProgress(toProgress);
 		playerRef.current?.seekTo(toProgress, "seconds");
 	}
@@ -210,8 +222,12 @@ const VideoPlayer = React.forwardRef<
 										if (!isSystemAction) {
 											setIsSystemAction(false);
 										}
-										setUserIntervention(true);
-										setPlaying(true);
+										if (manualSync) {
+											setUserIntervention(true);
+											setPlaying(true);
+										} else {
+											syncPlayer();
+										}
 									}
 								}}
 								onPause={() => {
@@ -227,15 +243,24 @@ const VideoPlayer = React.forwardRef<
 										if (!isSystemAction) {
 											setIsSystemAction(false);
 										}
+										// if (manualSync) {
 										setUserIntervention(true);
 										setPlaying(false);
+										// } else {
+										// 	console.log("[VideoPlayer] onpause syncing Player...");
+										// 	syncPlayer();
+										// }
 									}
 								}}
 								onBuffer={() => console.log("[VideoPlayer] onBuffer")}
 								onPlaybackRateChange={(speed: string) => {
 									console.log("[VideoPlayer] onPlaybackRateChange", speed);
+									// if (manualSync) {
 									setUserIntervention(true);
 									setPlaybackRate(Number.parseFloat(speed));
+									// } else {
+									// 	syncPlayer();
+									// }
 								}}
 								onSeek={(e) => console.log("[VideoPlayer] onSeek", e)}
 								onEnded={() => setPlaying(loop)}
@@ -254,7 +279,7 @@ const VideoPlayer = React.forwardRef<
 									// 	return;
 									// }
 
-									if (Math.abs(currentProgress - progress) > 2) {
+									if (Math.abs(currentProgress - progress) > 5) {
 										if (currentUser?._id === currentLeader) {
 											console.log(
 												"[VideoPlayer] onProgress sending seek to server: ",
@@ -264,7 +289,11 @@ const VideoPlayer = React.forwardRef<
 											setIsSystemAction(false);
 											// setProgress(currentProgress);
 										} else {
+											// if (manualSync) {
 											setUserIntervention(true);
+											// } else {
+											// 	syncPlayer();
+											// }
 											// setProgress(currentProgress);
 										}
 									}
@@ -282,64 +311,76 @@ const VideoPlayer = React.forwardRef<
 					</div>
 				</div>
 
-				<div
-					className={cn(
-						"mx-auto mt-2 flex h-[24px] w-full max-w-[min(400px,90vw)] items-center justify-between rounded-b-xl bg-transparent",
-					)}
-				>
-					<Button
-						variant={"ghost"}
-						onClick={() => {
-							const toProgress = progress - 10 < 0 ? 0 : progress - 10;
-							if (currentUser?._id === currentLeader) {
-								socket.emit("seekVideo", Math.floor(toProgress));
-							} else {
-								setUserIntervention(true);
-								playerRef.current?.seekTo(Math.floor(toProgress), "seconds");
-							}
-							setProgress(toProgress);
-						}}
-					>
-						<FaBackward />
-					</Button>
-					<Button
-						onClick={syncPlayer}
-						variant={"ghost"}
-						disabled={!userIntervention}
+				<div className="mt-1 flex items-center justify-center rounded-sm bg-background/80 py-1.5">
+					<div
 						className={cn(
-							userIntervention ? "text-primary" : "text-muted-foreground",
+							"flex h-[24px] w-full max-w-[min(400px,90vw)] items-center justify-between rounded-b-xl bg-transparent",
 						)}
 					>
-						<FaSyncAlt />
-					</Button>
+						<Button
+							variant={"ghost"}
+							disabled={!controls}
+							onClick={() => {
+								const toProgress = progress - 10 < 0 ? 0 : progress - 10;
+								if (currentUser?._id === currentLeader) {
+									socket.emit("seekVideo", Math.floor(toProgress));
+								} else {
+									// if (manualSync) {
+									setUserIntervention(true);
+									playerRef.current?.seekTo(Math.floor(toProgress), "seconds");
+									// } else {
+									// 	syncPlayer();
+									// }
+								}
+								setProgress(toProgress);
+							}}
+						>
+							<FaBackward />
+						</Button>
+						<Button
+							onClick={syncPlayer}
+							variant={"ghost"}
+							disabled={!userIntervention}
+							className={cn(
+								userIntervention ? "text-primary" : "text-muted-foreground",
+							)}
+						>
+							<FaSyncAlt />
+						</Button>
 
-					<Button
-						size={"sm"}
-						className="h-6 w-10"
-						variant={"secondary"}
-						onClick={() => setOpen(!open)}
-					>
-						{open ? <TiArrowSortedUp /> : <TiArrowSortedDown />}
-					</Button>
-					<Button variant={"ghost"}>
-						<BsPersonFillAdd />
-					</Button>
-					<Button
-						variant={"ghost"}
-						onClick={() => {
-							const toProgress =
-								progress + 10 > duration ? duration : progress + 10;
-							if (currentUser?._id === currentLeader) {
-								socket.emit("seekVideo", Math.floor(toProgress));
-							} else {
-								setUserIntervention(true);
-								playerRef.current?.seekTo(Math.floor(toProgress), "seconds");
-							}
-							setProgress(toProgress);
-						}}
-					>
-						<FaForward />
-					</Button>
+						<Button
+							size={"sm"}
+							className="h-6 w-10"
+							variant={"secondary"}
+							onClick={() => setOpen(!open)}
+						>
+							{open ? <TiArrowSortedUp /> : <TiArrowSortedDown />}
+						</Button>
+						<Button variant={"ghost"}>
+							<BsPersonFillAdd />
+						</Button>
+						<Button
+							disabled={!controls}
+							variant={"ghost"}
+							onClick={() => {
+								const toProgress =
+									progress + 10 > duration ? duration : progress + 10;
+								if (currentUser?._id === currentLeader) {
+									socket.emit("seekVideo", Math.floor(toProgress));
+								} else {
+									// if (manualSync) {
+									setUserIntervention(true);
+									playerRef.current?.seekTo(Math.floor(toProgress), "seconds");
+									// } else {
+									// 	syncPlayer();
+									// }
+								}
+								setProgress(toProgress);
+							}}
+						>
+							<FaForward />
+						</Button>
+					</div>
 				</div>
 			</div>
 		</>

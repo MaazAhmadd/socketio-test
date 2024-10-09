@@ -30,18 +30,22 @@ export function RoomSettingsDrawer() {
 		url,
 		controls,
 		volume,
+		manualSync,
 		setUrl,
 		setControls,
 		setVolume,
 		setInitialSync,
+		setManualSync,
 	} = usePlayerStore((s) => ({
 		url: s.url,
 		controls: s.controls,
 		volume: s.volume,
+		manualSync: s.manualSync,
 		setUrl: s.setUrl,
 		setControls: s.setControls,
 		setVolume: s.setVolume,
 		setInitialSync: s.setInitialSync,
+		setManualSync: s.setManualSync,
 	}));
 	const load = (newUrl: string | undefined) => {
 		setUrl(newUrl);
@@ -90,6 +94,15 @@ export function RoomSettingsDrawer() {
 								onCheckedChange={(e) => {
 									handleToggleControls();
 									// socket.emit("sendSyncPlayerStats");
+								}}
+							/>
+						</div>
+						<div className="flex items-center justify-between">
+							<DrawerDescription>Manual Sync</DrawerDescription>
+							<Switch
+								checked={manualSync}
+								onCheckedChange={(e) => {
+									setManualSync(!manualSync);
 								}}
 							/>
 						</div>

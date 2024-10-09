@@ -9,7 +9,7 @@ import {
 } from "@/hooks/util-hooks";
 import { socket } from "@/socket";
 import { useGlobalStore, usePlayerStore, useRoomStore } from "@/store";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Message, Room } from "server/src/types";
@@ -45,6 +45,7 @@ const RoomPage = () => {
 };
 
 const RoomComponent = () => {
+	const [timeReceivedDelay, setTimeReceivedDelay] = useState(0);
 	const navigate = useNavigate();
 	const { id } = useParams();
 	const kickDialogRef = useRef<HTMLButtonElement | null>(null);
@@ -134,10 +135,16 @@ const RoomComponent = () => {
 	// 	console.log("[Room] effect...no dependency");
 	// });
 
+	const load = (newUrl: string | undefined) => {
+		setUrl(newUrl);
+		setInitialSync(false);
+	};
+
 	function onConnect() {
 		console.log("[socket connect] connected");
 		socket.emit("joinRoom", id!);
 		socket.emit("sendSyncTimer");
+		setTimeReceivedDelay(Date.now());
 		// socket.emit("sendSyncPlayerStats");
 		setConnected(true);
 		setLoading(false);
@@ -174,6 +181,11 @@ const RoomComponent = () => {
 		setUrl(url);
 		setMics(mics!);
 		setRoomData(data);
+		if (isLeader) {
+			const currentUrl = url;
+			setUrl(undefined);
+			setTimeout(() => load(currentUrl), 0);
+		}
 	}
 
 	function onConnectError(err: Error) {
@@ -220,7 +232,10 @@ const RoomComponent = () => {
 
 	function onSyncTimer(data: number) {
 		console.log("[Socket onSyncTimer] onSyncTimer: ", data);
-		setServerTimeOffset(getDateInSeconds() - data);
+		setServerTimeOffset(
+			getDateInSeconds() -
+				(data + Math.floor((Date.now() - timeReceivedDelay) / 1000)),
+		);
 	}
 	function onRoomSettings(data: [number, number, number]) {
 		setRoomSettings(data);

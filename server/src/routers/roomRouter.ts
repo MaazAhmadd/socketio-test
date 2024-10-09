@@ -85,7 +85,7 @@ router.get(
 				.and("activeMembersCount")
 				.gte(1)
 				.and("createdByMongoId")
-				.containsOneOf(...friendIds)
+				.containsOneOf(...friendIds, req.user!._id)
 				.return.all();
 		}
 		// Query invited rooms

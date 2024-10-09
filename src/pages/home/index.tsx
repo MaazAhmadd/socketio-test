@@ -21,6 +21,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import {
+	AllRoomsObject,
 	useGetSearchResults,
 	useGetUserRooms,
 	useMakeRoom,
@@ -49,6 +50,7 @@ const HomePage = () => {
 		showRoomTab: state.showRoomTab,
 		setShowRoomTab: state.setShowRoomTab,
 	}));
+	const { data: allRooms, isFetching: roomsFetching } = useGetUserRooms();
 	// let { refetch: getPublicRooms } = useGetUserRooms();
 
 	return (
@@ -75,7 +77,7 @@ const HomePage = () => {
 						<div className="flex justify-between">
 							<div className="flex gap-1">
 								<TabButton
-									setBg={showRoomTab == "public" && "bg-muted"}
+									setBg={showRoomTab == "public" ? "bg-muted" : ""}
 									onClick={() => {
 										// getPublicRooms();
 										setShowRoomTab("public");
@@ -84,30 +86,38 @@ const HomePage = () => {
 									Public
 								</TabButton>
 								<TabButton
-									setBg={showRoomTab == "invited" && "bg-muted"}
+									setBg={showRoomTab == "invited" ? "bg-muted" : ""}
 									onClick={() => setShowRoomTab("invited")}
+									showIndicator={allRooms?.invitedRooms?.length}
 								>
 									Invited
 								</TabButton>
 								<TabButton
-									setBg={showRoomTab == "friends" && "bg-muted"}
+									setBg={showRoomTab == "friends" ? "bg-muted" : ""}
 									onClick={() => setShowRoomTab("friends")}
+									showIndicator={allRooms?.friendsRooms?.length}
 								>
 									Friends
 								</TabButton>
 							</div>
 
 							<TabButton
-								setBg={showRoomTab == "createRoom" && "bg-muted"}
+								setBg={showRoomTab == "createRoom" ? "bg-muted" : ""}
 								onClick={() => setShowRoomTab("createRoom")}
 							>
 								Create Room
 							</TabButton>
 						</div>
 						<div>
-							{showRoomTab == "public" && <RoomList roomType="public" />}
-							{showRoomTab == "invited" && <RoomList roomType="invited" />}
-							{showRoomTab == "friends" && <RoomList roomType="friends" />}
+							{showRoomTab == "public" && (
+								<RoomList allRooms={allRooms} roomType="public" />
+							)}
+							{showRoomTab == "invited" && (
+								<RoomList allRooms={allRooms} roomType="invited" />
+							)}
+							{showRoomTab == "friends" && (
+								<RoomList allRooms={allRooms} roomType="friends" />
+							)}
 							{showRoomTab == "createRoom" && <CreateRoom />}
 						</div>
 					</div>
@@ -119,16 +129,33 @@ const HomePage = () => {
 
 export default HomePage;
 
-const TabButton = ({ className, setBg, ...props }: any) => {
+const TabButton = ({
+	className,
+	setBg,
+	onClick,
+	showIndicator = 0,
+	children,
+}: {
+	className?: string;
+	setBg: string;
+	onClick: () => void;
+	showIndicator?: number;
+	children: React.ReactNode | string;
+}) => {
 	return (
 		<button
+			onClick={onClick}
 			className={cn(
-				"scroll-m-20 whitespace-nowrap rounded-t-lg border-2 border-muted bg-primary-foreground px-2 py-1 font-extrabold text-muted-foreground text-sm tracking-tight md:px-4 md:text-base lg:text-lg",
+				"relative scroll-m-20 whitespace-nowrap rounded-t-lg border-2 border-muted bg-primary-foreground px-2 py-1 font-extrabold text-muted-foreground text-sm tracking-tight md:px-4 md:text-base lg:text-lg",
 				setBg,
 				className,
 			)}
-			{...props}
-		></button>
+		>
+			{showIndicator ? (
+				<span className="-top-1 -right-1 absolute size-2 rounded-full bg-red-600"></span>
+			) : null}
+			{children}
+		</button>
 	);
 };
 
@@ -147,19 +174,20 @@ const LeftText = () => {
 
 const RoomList = ({
 	roomType,
+	allRooms,
 }: {
 	roomType: "public" | "invited" | "friends";
+	allRooms: AllRoomsObject | undefined;
 }) => {
 	const scrollAreaRef = useRef<HTMLDivElement | null>(null);
 	const navigate = useNavigate();
-	const { data: allRooms, isFetching: roomsFetching } = useGetUserRooms();
 	const rooms =
 		roomType == "public"
 			? allRooms?.publicRooms
 			: roomType == "invited"
 				? allRooms?.invitedRooms
 				: allRooms?.friendsRooms;
-	const loading = roomsFetching;
+	const loading = !allRooms;
 	const { setLoading } = useRoomStore((s) => ({
 		setLoading: s.setLoading,
 	}));

@@ -261,10 +261,13 @@ const ChatInput = ({ screen }: { screen: "mobile" | "desktop" }) => {
 	const enterButtonRef = useRef<HTMLButtonElement | null>(null);
 	const [input, setInput] = useState("");
 	const { width } = useWindowSize();
+	const { data: currentUser } = useGetCurrentUser();
+	const addMessage = useRoomStore((s) => s.addMessage);
 
 	const handleSendMessage = (e: FormEvent) => {
 		e.preventDefault();
 		if (input.trim().length === 0) return;
+		addMessage([0, currentUser?._id!, Date.now(), input]);
 		socket.emit("sendMessage", input);
 		setInput("");
 		if (textAreaRef.current) {

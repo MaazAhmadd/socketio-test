@@ -125,6 +125,7 @@ const initialPlayerState: Pick<
 	| "initialSync"
 	| "userIntervention"
 	| "isSystemAction"
+	| "manualSync"
 > = {
 	url: "",
 	pip: false,
@@ -141,6 +142,7 @@ const initialPlayerState: Pick<
 	initialSync: false,
 	userIntervention: false,
 	isSystemAction: false,
+	manualSync: false,
 };
 
 export const usePlayerStore = create<PlayerStore>((set) => ({
@@ -160,6 +162,7 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
 	setInitialSync: (sync: boolean) => set({ initialSync: sync }),
 	setUserIntervention: (userIntervention: boolean) => set({ userIntervention }),
 	setIsSystemAction: (isSystemAction: boolean) => set({ isSystemAction }),
+	setManualSync: (manualSync: boolean) => set({ manualSync }),
 	resetPlayerState: () => set({ ...initialPlayerState }),
 }));
 
@@ -208,6 +211,7 @@ interface PlayerStore {
 	initialSync: boolean;
 	userIntervention: boolean;
 	isSystemAction: boolean;
+	manualSync: boolean;
 	setUrl: (url: string | undefined) => void;
 	setPip: (pip: boolean) => void;
 	setControls: (controls: boolean) => void;
@@ -223,5 +227,6 @@ interface PlayerStore {
 	setInitialSync: (sync: boolean) => void;
 	setUserIntervention: (sync: boolean) => void;
 	setIsSystemAction: (action: boolean) => void;
+	setManualSync: (manualSync: boolean) => void;
 	resetPlayerState: () => void;
 }
