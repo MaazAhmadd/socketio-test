@@ -213,6 +213,7 @@ const RoomComponent = () => {
 
 	function onSyncPlayerStats(data: number[]) {
 		const userIntervention = usePlayerStore.getState().userIntervention;
+		const serverTimeOffset = usePlayerStore.getState().serverTimeOffset;
 		setPlayerStats(data);
 		if (userIntervention) return;
 		const [duration, progress, lastChanged, status, type] = data;
@@ -220,7 +221,7 @@ const RoomComponent = () => {
 		// setUrl(roomData?.videoUrl!);
 		setDuration(duration);
 		setPlayerType(type);
-		const serverTime = getDateInSeconds() + serverTimeOffset;
+		const serverTime = getDateInSeconds(); // + serverTimeOffset;
 		const toProgress =
 			status === 1 ? serverTime - lastChanged + progress : progress;
 		setPlaybackRate(1);
