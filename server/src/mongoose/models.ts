@@ -1,6 +1,33 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
 import jwt from "jsonwebtoken";
-import { MongooseUser, VideoInfo, WebVideo as WebVideoType } from "../types";
+import { VideoInfo } from "../types";
+
+interface IMongooseArray<T> extends Types.Array<T> {
+	pull(...args: any[]): this;
+}
+
+interface MongooseUser {
+	name: string;
+	handle: string;
+	pfp: string;
+	profilePicId: string;
+	country: string;
+	socketId?: string;
+	password?: string;
+	friends: IMongooseArray<Types.ObjectId>;
+	friendReqsSent: IMongooseArray<Types.ObjectId>;
+	friendReqsReceived: IMongooseArray<Types.ObjectId>;
+	recentUsers: IMongooseArray<Types.ObjectId>;
+	recentVideos: { yt: string[]; web: IMongooseArray<Types.ObjectId> };
+	likedVideos: { yt: string[]; web: IMongooseArray<Types.ObjectId> };
+}
+
+interface WebVideoType {
+	t: string;
+	tn: string;
+	url: string;
+	by: Types.ObjectId;
+}
 
 interface IUser extends Document, MongooseUser {
 	toJSON(): any;

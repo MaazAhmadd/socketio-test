@@ -1,5 +1,3 @@
-import { Types } from "mongoose";
-
 interface ServerToClientEvents {
 	roomDesc: (data: Room) => void;
 	message: (data: Message) => void;
@@ -79,10 +77,8 @@ type Message = [number, string, number, string];
 		roommicdisable-------(15)
 */
 
-interface IMongooseArray<T> extends Types.Array<T> {
-	pull(...args: any[]): this;
-}
-interface MongooseUser {
+interface CurrentUser {
+	_id: string;
 	name: string;
 	handle: string;
 	pfp: string;
@@ -90,25 +86,6 @@ interface MongooseUser {
 	country: string;
 	socketId?: string;
 	password?: string;
-	friends: IMongooseArray<Types.ObjectId>;
-	friendReqsSent: IMongooseArray<Types.ObjectId>;
-	friendReqsReceived: IMongooseArray<Types.ObjectId>;
-	recentUsers: IMongooseArray<Types.ObjectId>;
-	recentVideos: { yt: string[]; web: IMongooseArray<Types.ObjectId> };
-	likedVideos: { yt: string[]; web: IMongooseArray<Types.ObjectId> };
-}
-
-interface CurrentUser
-	extends Omit<
-		MongooseUser,
-		| "friends"
-		| "friendReqsSent"
-		| "friendReqsReceived"
-		| "recentUsers"
-		| "recentVideos"
-		| "likedVideos"
-	> {
-	_id: string;
 	friends: string[];
 	friendReqsSent: string[];
 	friendReqsReceived: string[];
@@ -133,7 +110,7 @@ interface WebVideo {
 	t: string;
 	tn: string;
 	url: string;
-	by: Types.ObjectId;
+	by: string;
 }
 
 type SupportedPlatforms = "youtube" | "netflix" | "prime";
@@ -149,5 +126,4 @@ export type {
 	SupportedPlatforms,
 	CurrentUser,
 	WebVideo,
-	MongooseUser,
 };
