@@ -9,6 +9,10 @@ import { socket } from "@/socket";
 import { Button } from "@/components/ui/button";
 import { FaForward, FaBackward, FaSyncAlt } from "react-icons/fa";
 import { BsPersonFillAdd } from "react-icons/bs";
+import { FaHeart, FaRegHeart } from "react-icons/fa6";
+import { IoPlaySkipForward, IoPlaySkipForwardOutline } from "react-icons/io5";
+import { RiFullscreenFill, RiFullscreenExitFill } from "react-icons/ri";
+import { FaShareAlt } from "react-icons/fa";
 type Props = {
 	screen: "mobile" | "desktop";
 	playerRef: React.MutableRefObject<ReactPlayer | null>;
@@ -18,6 +22,8 @@ const VideoPlayer = React.forwardRef<
 	React.ElementRef<typeof ReactPlayer>,
 	Props
 >(({ screen, playerRef }, ref) => {
+	const [pauseDelayTimeout, setPauseDelayTimeout] =
+		useState<NodeJS.Timeout | null>(null);
 	const [open, setOpen] = useState(true);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const roomJoinDialogShown = useGlobalStore((s) => s.roomJoinDialogShown);
@@ -177,6 +183,42 @@ const VideoPlayer = React.forwardRef<
 		playerRef.current?.seekTo(toProgress, "seconds");
 	}
 
+	function onPlay() {
+		if (playing) return;
+		console.log("[VideoPlayer] onplay serverTimeOffset: ", serverTimeOffset);
+		if (currentUser?._id === currentLeader) {
+			socket.emit("playPauseVideo", 1);
+			setPlaying(true);
+		} else {
+			if (!isSystemAction) {
+				setIsSystemAction(false);
+			}
+			if (manualSync) {
+				setUserIntervention(true);
+				setPlaying(true);
+			} else {
+				syncPlayer();
+			}
+		}
+	}
+
+	function onPause() {
+		const timerId = setTimeout(() => {
+			if (!playing) return;
+			console.log("[VideoPlayer] onpause serverTimeOffset: ", serverTimeOffset);
+			if (currentUser?._id === currentLeader) {
+				socket.emit("playPauseVideo", 0);
+				setPlaying(false);
+			} else {
+				if (!isSystemAction) {
+					setIsSystemAction(false);
+				}
+				setUserIntervention(true);
+				setPlaying(false);
+			}
+		}, 1000);
+		setPauseDelayTimeout(timerId);
+	}
 	return (
 		<>
 			<RoomJoinDialog />
@@ -209,77 +251,24 @@ const VideoPlayer = React.forwardRef<
 									console.log("[VideoPlayer] onReady");
 								}}
 								onStart={() => console.log("[VideoPlayer] onStart")}
-								onPlay={() => {
-									if (playing) return;
-									console.log(
-										"[VideoPlayer] onplay serverTimeOffset: ",
-										serverTimeOffset,
-									);
-									if (currentUser?._id === currentLeader) {
-										socket.emit("playPauseVideo", 1);
-										setPlaying(true);
-									} else {
-										if (!isSystemAction) {
-											setIsSystemAction(false);
-										}
-										if (manualSync) {
-											setUserIntervention(true);
-											setPlaying(true);
-										} else {
-											syncPlayer();
-										}
-									}
-								}}
-								onPause={() => {
-									if (!playing) return;
-									console.log(
-										"[VideoPlayer] onpause serverTimeOffset: ",
-										serverTimeOffset,
-									);
-									if (currentUser?._id === currentLeader) {
-										socket.emit("playPauseVideo", 0);
-										setPlaying(false);
-									} else {
-										if (!isSystemAction) {
-											setIsSystemAction(false);
-										}
-										// if (manualSync) {
-										setUserIntervention(true);
-										setPlaying(false);
-										// } else {
-										// 	console.log("[VideoPlayer] onpause syncing Player...");
-										// 	syncPlayer();
-										// }
-									}
-								}}
+								onPlay={onPlay}
+								onPause={onPause}
 								onBuffer={() => console.log("[VideoPlayer] onBuffer")}
 								onPlaybackRateChange={(speed: string) => {
 									console.log("[VideoPlayer] onPlaybackRateChange", speed);
-									// if (manualSync) {
+
 									setUserIntervention(true);
 									setPlaybackRate(Number.parseFloat(speed));
-									// } else {
-									// 	syncPlayer();
-									// }
 								}}
 								onSeek={(e) => console.log("[VideoPlayer] onSeek", e)}
 								onEnded={() => setPlaying(loop)}
 								onError={(e) => console.log("[VideoPlayer] onError", e)}
 								onProgress={(state) => {
 									const currentProgress = state.playedSeconds;
-									// console.log(
-									// 	"[VideoPlayer] onProgress currentProgress, previousProgress, diff",
-									// 	currentProgress,
-									// 	progress,
-									// 	Math.abs(currentProgress - progress),
-									// );
-									// if (!isSystemAction) {
-									// 	setIsSystemAction(false);
-									// 	setProgress(currentProgress);
-									// 	return;
-									// }
-
 									if (Math.abs(currentProgress - progress) > 5) {
+										if (pauseDelayTimeout) {
+											clearTimeout(pauseDelayTimeout);
+										}
 										if (currentUser?._id === currentLeader) {
 											console.log(
 												"[VideoPlayer] onProgress sending seek to server: ",
@@ -287,14 +276,8 @@ const VideoPlayer = React.forwardRef<
 											);
 											socket.emit("seekVideo", Math.floor(currentProgress));
 											setIsSystemAction(false);
-											// setProgress(currentProgress);
 										} else {
-											// if (manualSync) {
 											setUserIntervention(true);
-											// } else {
-											// 	syncPlayer();
-											// }
-											// setProgress(currentProgress);
 										}
 									}
 									setProgress(currentProgress);
@@ -314,28 +297,30 @@ const VideoPlayer = React.forwardRef<
 				<div className="mt-1 flex items-center justify-center rounded-sm bg-background/80 py-1.5">
 					<div
 						className={cn(
-							"flex h-[24px] w-full max-w-[min(400px,90vw)] items-center justify-between rounded-b-xl bg-transparent",
+							"flex h-[24px] w-full max-w-[min(450px,90vw)] items-center justify-between rounded-b-xl bg-transparent",
 						)}
 					>
+						<Button variant={"ghost"}>
+							<FaShareAlt />
+						</Button>
+						<Button variant={"ghost"}>
+							<BsPersonFillAdd />
+						</Button>
+						<Button variant={"ghost"}>
+							{/* <FaHeart /> */}
+							<FaRegHeart />
+						</Button>
+						<Button variant={"ghost"}>
+							{/* <IoPlaySkipForward /> */}
+							<IoPlaySkipForwardOutline />
+						</Button>
 						<Button
-							variant={"ghost"}
-							disabled={!controls}
-							onClick={() => {
-								const toProgress = progress - 10 < 0 ? 0 : progress - 10;
-								if (currentUser?._id === currentLeader) {
-									socket.emit("seekVideo", Math.floor(toProgress));
-								} else {
-									// if (manualSync) {
-									setUserIntervention(true);
-									playerRef.current?.seekTo(Math.floor(toProgress), "seconds");
-									// } else {
-									// 	syncPlayer();
-									// }
-								}
-								setProgress(toProgress);
-							}}
+							size={"sm"}
+							className="mx-6 h-6 w-10"
+							variant={"secondary"}
+							onClick={() => setOpen(!open)}
 						>
-							<FaBackward />
+							{open ? <TiArrowSortedUp /> : <TiArrowSortedDown />}
 						</Button>
 						<Button
 							onClick={syncPlayer}
@@ -347,18 +332,23 @@ const VideoPlayer = React.forwardRef<
 						>
 							<FaSyncAlt />
 						</Button>
-
 						<Button
-							size={"sm"}
-							className="h-6 w-10"
-							variant={"secondary"}
-							onClick={() => setOpen(!open)}
+							variant={"ghost"}
+							disabled={!controls}
+							onClick={() => {
+								const toProgress = progress - 10 < 0 ? 0 : progress - 10;
+								if (currentUser?._id === currentLeader) {
+									socket.emit("seekVideo", Math.floor(toProgress));
+								} else {
+									setUserIntervention(true);
+									playerRef.current?.seekTo(Math.floor(toProgress), "seconds");
+								}
+								setProgress(toProgress);
+							}}
 						>
-							{open ? <TiArrowSortedUp /> : <TiArrowSortedDown />}
+							<FaBackward />
 						</Button>
-						<Button variant={"ghost"}>
-							<BsPersonFillAdd />
-						</Button>
+
 						<Button
 							disabled={!controls}
 							variant={"ghost"}
@@ -368,17 +358,17 @@ const VideoPlayer = React.forwardRef<
 								if (currentUser?._id === currentLeader) {
 									socket.emit("seekVideo", Math.floor(toProgress));
 								} else {
-									// if (manualSync) {
 									setUserIntervention(true);
 									playerRef.current?.seekTo(Math.floor(toProgress), "seconds");
-									// } else {
-									// 	syncPlayer();
-									// }
 								}
 								setProgress(toProgress);
 							}}
 						>
 							<FaForward />
+						</Button>
+						<Button variant={"ghost"}>
+							{/* <RiFullscreenExitFill /> */}
+							<RiFullscreenFill />
 						</Button>
 					</div>
 				</div>

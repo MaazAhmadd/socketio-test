@@ -1,18 +1,18 @@
 import { Schema, Repository } from "redis-om";
 import redis from "./client";
-import { Member, Room } from "../types";
+import { Room } from "../types";
 
 // const memberSchema = new Schema("Member", {
-	// mongoId: { type: "string" },
-	// name: { type: "string" },
-	// handle: { type: "string" },
-	// pfp: { type: "string" },
-	// isConnected: { type: "boolean" },
-	// isLeader: { type: "boolean" },
-	// mic: { type: "boolean" },
-	// leaderPC: { type: "number", sortable: true },
-	// roomId: { type: "string" },
-	// country: { type: "string" },
+// mongoId: { type: "string" },
+// name: { type: "string" },
+// handle: { type: "string" },
+// pfp: { type: "string" },
+// isConnected: { type: "boolean" },
+// isLeader: { type: "boolean" },
+// mic: { type: "boolean" },
+// leaderPC: { type: "number", sortable: true },
+// roomId: { type: "string" },
+// country: { type: "string" },
 // });
 
 const roomSchema = new Schema("Room", {
@@ -43,7 +43,6 @@ const redisSchemas = {
 roomRepository.save;
 
 export type RedisSchemas = {
-	member: Repository<Member>;
 	room: Repository<Room>;
 };
 export default redisSchemas;

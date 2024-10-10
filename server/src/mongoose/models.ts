@@ -1,25 +1,14 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
 import jwt from "jsonwebtoken";
+import { MongooseUser, VideoInfo, WebVideo as WebVideoType } from "../types";
 
-// user model
-interface IMongooseArray<T> extends Types.Array<T> {
-	pull(...args: any[]): this;
-}
-interface IUser extends Document {
-	name: string;
-	handle: string;
-	pfp: string;
-	profilePicId: string;
-	country: string;
-	socketId?: string;
-	password?: string;
-	friends: IMongooseArray<Types.ObjectId>;
-	friendReqsSent: IMongooseArray<Types.ObjectId>;
-	friendReqsReceived: IMongooseArray<Types.ObjectId>;
+interface IUser extends Document, MongooseUser {
 	toJSON(): any;
 	comparePassword(password: string): Promise<boolean>;
 	generateAuthToken(): string;
 }
+interface IYtVideo extends Document, VideoInfo {}
+interface IWebVideo extends Document, WebVideoType {}
 
 const UserSchema: Schema = new Schema({
 	name: { type: String, index: true },
@@ -29,43 +18,31 @@ const UserSchema: Schema = new Schema({
 	country: { type: String },
 	socketId: { type: String },
 	password: { type: String, required: true },
-	friends: [{ type: Types.ObjectId, ref: "User", unique: true }],
-	friendReqsSent: [{ type: Types.ObjectId, ref: "User", unique: true }],
-	friendReqsReceived: [{ type: Types.ObjectId, ref: "User", unique: true }],
-	recentsUsers: [{ type: Types.ObjectId, ref: "User", unique: true }],
-	recentsVideos: [{ type: String, unique: true }],
+	friends: [{ type: Types.ObjectId, ref: "User" }],
+	friendReqsSent: [{ type: Types.ObjectId, ref: "User" }],
+	friendReqsReceived: [{ type: Types.ObjectId, ref: "User" }],
+	recentUsers: [{ type: Types.ObjectId, ref: "User" }],
+	recentVideos: {
+		yt: [{ type: String }],
+		web: [{ type: Types.ObjectId, ref: "WebVideo" }],
+	},
+	likedVideos: {
+		yt: [{ type: String }],
+		web: [{ type: Types.ObjectId, ref: "WebVideo" }],
+	},
 });
 UserSchema.methods.toJSON = function () {
-	const userObject = this.toObject(); // this refers to user
+	const userObject = this.toObject();
 	userObject.password = "";
 	return userObject;
 };
-UserSchema.methods.comparePassword = async function (
-	candidatePassword: string,
-) {
-	return this.password === candidatePassword; // this refers to user
+UserSchema.methods.comparePassword = function (candidatePassword: string) {
+	return this.password === candidatePassword;
 };
 UserSchema.methods.generateAuthToken = function () {
-	const token = jwt.sign(
-		{
-			_id: this._id,
-			// country: this.country,
-			// pfp: this.pfp,
-			// handle: this.handle,
-		},
-		process.env.JWT_PRIVATE_KEY || "",
-	);
-	return token;
+	return jwt.sign({ _id: this._id }, process.env.JWT_PRIVATE_KEY || "");
 };
 
-interface YtVideoType {
-	ytId: string;
-	thumbnail: string;
-	title: string;
-	duration: string;
-	updatedAt: Date;
-}
-interface IYtVideo extends Document, YtVideoType {}
 const YtVideoSchema: Schema = new Schema({
 	ytId: { type: String, required: true },
 	thumbnail: { type: String },
@@ -73,9 +50,16 @@ const YtVideoSchema: Schema = new Schema({
 	duration: { type: String },
 	updatedAt: { type: Date },
 });
+
+const WebVideoSchema: Schema = new Schema({
+	url: { type: String, required: true, unique: true },
+	t: { type: String },
+	tn: { type: String },
+	by: { type: Types.ObjectId, ref: "User" },
+});
+
 const User = mongoose.model<IUser>("User", UserSchema);
 const YtVideo = mongoose.model<IYtVideo>("YtVideo", YtVideoSchema);
+const WebVideo = mongoose.model<IWebVideo>("WebVideo", WebVideoSchema);
 
-export type { IUser, YtVideoType };
-const mongooseModels = { User, YtVideo };
-export default mongooseModels;
+export default { User, YtVideo, WebVideo };

@@ -144,7 +144,7 @@ const RoomComponent = () => {
 		console.log("[socket connect] connected");
 		socket.emit("joinRoom", id!);
 		socket.emit("sendSyncTimer");
-		setTimeReceivedDelay(Date.now());
+		setTimeReceivedDelay(getDateInSeconds());
 		// socket.emit("sendSyncPlayerStats");
 		setConnected(true);
 		setLoading(false);
@@ -233,12 +233,16 @@ const RoomComponent = () => {
 
 	function onSyncTimer(data: number) {
 		console.log("[Socket onSyncTimer] onSyncTimer: ", data);
+		console.log(
+			"[Socket onSyncTimer] offset: ",
+			getDateInSeconds() -
+				(data +
+					(timeReceivedDelay > 0 ? getDateInSeconds() - timeReceivedDelay : 0)),
+		);
 		setServerTimeOffset(
 			getDateInSeconds() -
 				(data +
-					(timeReceivedDelay > 0
-						? Math.floor((Date.now() - timeReceivedDelay) / 1000)
-						: 0)),
+					(timeReceivedDelay > 0 ? getDateInSeconds() - timeReceivedDelay : 0)),
 		);
 	}
 	function onRoomSettings(data: [number, number, number]) {

@@ -53,6 +53,7 @@ export function useYoutubeInfo(yturl: string) {
 	}, [yturl, noembedUrl]);
 
 	useEffect(() => {
+		if (!yturl) return
 		const timer = setTimeout(() => {
 			if (isLoading) {
 				setIsLoading(false);

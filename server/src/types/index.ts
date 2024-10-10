@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 interface ServerToClientEvents {
 	roomDesc: (data: Room) => void;
 	message: (data: Message) => void;
@@ -7,19 +9,6 @@ interface ServerToClientEvents {
 	syncTimer: (data: number) => void;
 	syncPlayerStats: (data: number[]) => void;
 	roomSettings: (data: [number, number, number]) => void;
-
-	// noArg: () => void;
-	// sendMessage: (value: string) => void;
-	// basicEmit: (a: number, b: string, c: Buffer) => void;
-	// withAck: (d: string, callback: (e: number) => void) => void;
-	// joinRoom: (data: { roomId: string }) => void;
-	// leaveRoom: () => void;
-	// hello: (d: String, callback: (a: String) => void) => void;
-	// getRooms: () => void;
-	// getRoomsResponse: (data: string[]) => void;
-	// giveLeader: (targetMember: string) => void;
-	// roomCreated: (data: Room) => void;
-	// roomJoined: (data: Room) => void;
 }
 
 interface ClientToServerEvents {
@@ -34,47 +23,10 @@ interface ClientToServerEvents {
 	sendSyncPlayerStats: () => void;
 	seekVideo: (data: number) => void;
 	updateRoomSettings: (data: [number, number]) => void;
-	// memberJoin: (data: Member) => void;
-	// memberLeave: (data: string) => void;
-
-	// message: (data: string, userId: string) => void;
-	// getRooms: () => void;
-	// roomJoined: (data: Room) => void;
-	// roomDesc: (data: Room) => void;
 }
 
 interface InterServerEvents {
 	ping: () => void;
-}
-
-interface SocketData {
-	name: string;
-	age: number;
-}
-
-// type Rooms = Record<string, Room>;
-type Rooms = {
-	[key: string]: Room;
-};
-type RoomCreationData = {
-	videoUrl: string;
-};
-type RoomJoinData = {
-	roomId: string;
-};
-// Define Member interface
-interface Member {
-	mongoId: string;
-	// isConnected: boolean;
-	name?: string;
-	handle: string;
-	pfp?: string;
-	mic: boolean;
-	country?: string;
-	// roomId?: string;
-	// isLeader: boolean;
-	// leaderPC: number;
-	[key: string]: any;
 }
 
 // Define Room interface
@@ -94,7 +46,6 @@ interface Room {
 	videoUrl: string;
 	playerStats: number[];
 	entityId?: string;
-	// members?: Member[];
 	[key: string]: any;
 }
 /*
@@ -128,34 +79,62 @@ type Message = [number, string, number, string];
 		roommicdisable-------(15)
 */
 
-type CurrentUser = {
-	_id: string;
+interface IMongooseArray<T> extends Types.Array<T> {
+	pull(...args: any[]): this;
+}
+interface MongooseUser {
 	name: string;
 	handle: string;
 	pfp: string;
+	profilePicId: string;
 	country: string;
-	socketId: string;
+	socketId?: string;
+	password?: string;
+	friends: IMongooseArray<Types.ObjectId>;
+	friendReqsSent: IMongooseArray<Types.ObjectId>;
+	friendReqsReceived: IMongooseArray<Types.ObjectId>;
+	recentUsers: IMongooseArray<Types.ObjectId>;
+	recentVideos: { yt: string[]; web: IMongooseArray<Types.ObjectId> };
+	likedVideos: { yt: string[]; web: IMongooseArray<Types.ObjectId> };
+}
+
+interface CurrentUser
+	extends Omit<
+		MongooseUser,
+		| "friends"
+		| "friendReqsSent"
+		| "friendReqsReceived"
+		| "recentUsers"
+		| "recentVideos"
+		| "likedVideos"
+	> {
+	_id: string;
 	friends: string[];
 	friendReqsSent: string[];
 	friendReqsReceived: string[];
-	recentsUsers: string[];
-	recentsVideos: string[];
-};
-
-interface NormalUser {
-	_id: string;
-	name: string;
-	handle: string;
-	pfp: string;
-	country: string;
+	recentUsers: string[];
+	recentVideos: { yt: string[]; web: string[] };
+	likedVideos: { yt: string[]; web: string[] };
 }
+
+type NormalUser = Pick<
+	CurrentUser,
+	"_id" | "name" | "handle" | "pfp" | "profilePicId" | "country"
+>;
 
 type VideoInfo = {
 	title: string;
 	thumbnail: string;
 	ytId: string;
 	duration: string;
+	updatedAt: Date;
 };
+interface WebVideo {
+	t: string;
+	tn: string;
+	url: string;
+	by: Types.ObjectId;
+}
 
 type SupportedPlatforms = "youtube" | "netflix" | "prime";
 
@@ -163,15 +142,12 @@ export type {
 	ServerToClientEvents,
 	ClientToServerEvents,
 	InterServerEvents,
-	SocketData,
-	Rooms,
 	Message,
-	Member,
 	Room,
 	NormalUser,
-	RoomCreationData,
-	RoomJoinData,
 	VideoInfo,
 	SupportedPlatforms,
 	CurrentUser,
+	WebVideo,
+	MongooseUser,
 };

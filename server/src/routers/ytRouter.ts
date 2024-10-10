@@ -1,9 +1,10 @@
 import axios from "axios";
 import express from "express";
-import mongooseModels, { YtVideoType } from "../mongoose/models";
+import mongooseModels from "../mongoose/models";
 import { authUser } from "../middlewares";
 import { forwardError } from "./asyncWrapper";
 import { logger } from "../logger";
+import { VideoInfo as YtVideoType } from "../types";
 
 const YtVideo = mongooseModels.YtVideo;
 const router = express.Router();
@@ -188,5 +189,3 @@ async function getVideoInfo(videoId: string): Promise<YtVideoType | null> {
 
 // 	return hours + minutes + seconds;
 // }
-
-

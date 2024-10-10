@@ -98,9 +98,9 @@ export function RoomSettingsDrawer() {
 							/>
 						</div>
 						<div className="flex items-center justify-between">
-							<DrawerDescription>Manual Sync</DrawerDescription>
+							<DrawerDescription>Auto Sync</DrawerDescription>
 							<Switch
-								checked={manualSync}
+								checked={!manualSync}
 								onCheckedChange={(e) => {
 									setManualSync(!manualSync);
 								}}
