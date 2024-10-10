@@ -297,28 +297,40 @@ const VideoPlayer = React.forwardRef<
 				<div className="mt-1 flex items-center justify-center rounded-sm bg-background/80 py-1.5">
 					<div
 						className={cn(
-							"flex h-[24px] w-full max-w-[min(450px,90vw)] items-center justify-between rounded-b-xl bg-transparent",
+							"flex h-[24px] w-full max-w-[min(550px,100vw)] items-center justify-between rounded-b-xl bg-transparent",
 						)}
 					>
-						<Button variant={"ghost"}>
+						<Button
+							size={screen === "mobile" ? "sm" : "default"}
+							variant={"ghost"}
+						>
 							<FaShareAlt />
 						</Button>
-						<Button variant={"ghost"}>
+						<Button
+							variant={"ghost"}
+							size={screen === "mobile" ? "sm" : "default"}
+						>
 							<BsPersonFillAdd />
 						</Button>
-						<Button variant={"ghost"}>
+						<Button
+							variant={"ghost"}
+							size={screen === "mobile" ? "sm" : "default"}
+						>
 							{/* <FaHeart /> */}
 							<FaRegHeart />
 						</Button>
-						<Button variant={"ghost"}>
+						<Button
+							variant={"ghost"}
+							size={screen === "mobile" ? "sm" : "default"}
+						>
 							{/* <IoPlaySkipForward /> */}
 							<IoPlaySkipForwardOutline />
 						</Button>
 						<Button
-							size={"sm"}
-							className="mx-6 h-6 w-10"
+							className="h-6 w-10"
 							variant={"secondary"}
 							onClick={() => setOpen(!open)}
+							size={screen === "mobile" ? "sm" : "default"}
 						>
 							{open ? <TiArrowSortedUp /> : <TiArrowSortedDown />}
 						</Button>
@@ -329,12 +341,14 @@ const VideoPlayer = React.forwardRef<
 							className={cn(
 								userIntervention ? "text-primary" : "text-muted-foreground",
 							)}
+							size={screen === "mobile" ? "sm" : "default"}
 						>
 							<FaSyncAlt />
 						</Button>
 						<Button
 							variant={"ghost"}
 							disabled={!controls}
+							size={screen === "mobile" ? "sm" : "default"}
 							onClick={() => {
 								const toProgress = progress - 10 < 0 ? 0 : progress - 10;
 								if (currentUser?._id === currentLeader) {
@@ -351,6 +365,7 @@ const VideoPlayer = React.forwardRef<
 
 						<Button
 							disabled={!controls}
+							size={screen === "mobile" ? "sm" : "default"}
 							variant={"ghost"}
 							onClick={() => {
 								const toProgress =
@@ -366,7 +381,10 @@ const VideoPlayer = React.forwardRef<
 						>
 							<FaForward />
 						</Button>
-						<Button variant={"ghost"}>
+						<Button
+							variant={"ghost"}
+							size={screen === "mobile" ? "sm" : "default"}
+						>
 							{/* <RiFullscreenExitFill /> */}
 							<RiFullscreenFill />
 						</Button>
