@@ -1,14 +1,14 @@
 export const SOCKET_URL =
 	process.env.NODE_ENV == "development"
 		? // ? "http://localhost:3000/"
-			"http://192.168.8.105:3000/"
+			"http://192.168.8.106:3000/"
 		: "https://api.codingwebninja.site/";
 // : "https://socketiotest.adaptable.app/";
 
 export const API_URL =
 	process.env.NODE_ENV == "development"
 		? // ? "http://localhost:3000/"
-			"http://192.168.8.105:3000/"
+			"http://192.168.8.106:3000/"
 		: "https://api.codingwebninja.site/";
 // : "https://socketiotest.adaptable.app/api/",
 // baseURL: "https://socketio-test-rzgz.onrender.com/api/",

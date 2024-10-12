@@ -1,19 +1,11 @@
 import { produce } from "immer";
-import { MutableRefObject } from "react";
-import ReactPlayer from "react-player";
 import { Message, Room } from "server/src/types";
 import { create } from "zustand";
 
 export type Tabs = "public" | "createRoom" | "invited" | "friends";
-// export type Routes = "authPage" | "homePage" | "roomPage";
 export type RoomCreationRequestType = "join" | "create";
 
-// const token = localStorage.getItem("auth_token");
-
-const initialGlobalState: Pick<
-	GlobalStore,
-	"showRoomTab" | "connected" | "roomJoinDialogShown"
-> = {
+const initialGlobalState: GlobalStoreInitialState = {
 	showRoomTab: "public",
 	connected: false,
 	roomJoinDialogShown: true,
@@ -31,10 +23,7 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
 	resetGlobalState: () => set({ ...initialGlobalState }),
 }));
 
-const initialRoomState: Pick<
-	RoomStore,
-	"loading" | "roomData" | "messages" | "mutedMembers" | "mics"
-> = {
+const initialRoomState: RoomStoreInitialState = {
 	loading: true,
 	roomData: null,
 	messages: [],
@@ -108,25 +97,7 @@ export const useRoomStore = create<RoomStore>((set) => ({
 	resetRoomState: () => set({ ...initialRoomState }),
 }));
 
-const initialPlayerState: Pick<
-	PlayerStore,
-	| "url"
-	| "pip"
-	| "controls"
-	| "playing"
-	| "loop"
-	| "playbackRate"
-	| "volume"
-	| "muted"
-	| "duration"
-	| "progress"
-	| "serverTimeOffset"
-	| "playerType"
-	| "initialSync"
-	| "userIntervention"
-	| "isSystemAction"
-	| "manualSync"
-> = {
+const initialPlayerState: PlayerStoreInitialState = {
 	url: "",
 	pip: false,
 	controls: true,
@@ -142,7 +113,9 @@ const initialPlayerState: Pick<
 	initialSync: false,
 	userIntervention: false,
 	isSystemAction: false,
-	manualSync: false,
+	autoSync: true,
+	pauseDelayTimeout: null,
+	playerModalOpen: true,
 };
 
 export const usePlayerStore = create<PlayerStore>((set) => ({
@@ -162,26 +135,33 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
 	setInitialSync: (sync: boolean) => set({ initialSync: sync }),
 	setUserIntervention: (userIntervention: boolean) => set({ userIntervention }),
 	setIsSystemAction: (isSystemAction: boolean) => set({ isSystemAction }),
-	setManualSync: (manualSync: boolean) => set({ manualSync }),
+	setAutoSync: (autoSync: boolean) => set({ autoSync }),
+	setPauseDelayTimeout: (pauseDelayTimeout: NodeJS.Timeout | null) =>
+		set({ pauseDelayTimeout }),
+	setPlayerModalOpen: (playerModalOpen: boolean) => set({ playerModalOpen }),
 	resetPlayerState: () => set({ ...initialPlayerState }),
 }));
 
-interface GlobalStore {
+interface GlobalStoreInitialState {
 	connected: boolean;
 	showRoomTab: Tabs;
 	roomJoinDialogShown: boolean;
+}
+interface GlobalStore extends GlobalStoreInitialState {
 	setConnected: (connected: boolean) => void;
 	setShowRoomTab: (tab: Tabs) => void;
 	logout: () => void;
 	setRoomJoinDialogShown: (shown: boolean) => void;
 	resetGlobalState: () => void;
 }
-interface RoomStore {
+interface RoomStoreInitialState {
 	loading: boolean;
 	roomData: Room | null;
 	messages: Message[];
 	mutedMembers: string[];
 	mics: string[];
+}
+interface RoomStore extends RoomStoreInitialState {
 	setMics: (data: string) => void;
 	setMutedMembers: (data: string[]) => void;
 	mutedMembersPush: (id: string) => void;
@@ -195,7 +175,7 @@ interface RoomStore {
 	setRoomSettings: (data: [number, number, number]) => void;
 	resetRoomState: () => void;
 }
-interface PlayerStore {
+interface PlayerStoreInitialState {
 	url: string | undefined;
 	pip: boolean;
 	controls: boolean;
@@ -211,7 +191,11 @@ interface PlayerStore {
 	initialSync: boolean;
 	userIntervention: boolean;
 	isSystemAction: boolean;
-	manualSync: boolean;
+	autoSync: boolean;
+	pauseDelayTimeout: NodeJS.Timeout | null;
+	playerModalOpen: boolean;
+}
+interface PlayerStore extends PlayerStoreInitialState {
 	setUrl: (url: string | undefined) => void;
 	setPip: (pip: boolean) => void;
 	setControls: (controls: boolean) => void;
@@ -227,6 +211,8 @@ interface PlayerStore {
 	setInitialSync: (sync: boolean) => void;
 	setUserIntervention: (sync: boolean) => void;
 	setIsSystemAction: (action: boolean) => void;
-	setManualSync: (manualSync: boolean) => void;
+	setAutoSync: (autoSync: boolean) => void;
+	setPauseDelayTimeout: (pauseDelayTimeout: NodeJS.Timeout | null) => void;
+	setPlayerModalOpen: (playerModalOpen: boolean) => void;
 	resetPlayerState: () => void;
 }

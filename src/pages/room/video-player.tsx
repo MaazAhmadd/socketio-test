@@ -13,6 +13,7 @@ import { FaHeart, FaRegHeart } from "react-icons/fa6";
 import { IoPlaySkipForward, IoPlaySkipForwardOutline } from "react-icons/io5";
 import { RiFullscreenFill, RiFullscreenExitFill } from "react-icons/ri";
 import { FaShareAlt } from "react-icons/fa";
+import { OnProgressProps } from "react-player/base";
 type Props = {
 	screen: "mobile" | "desktop";
 	playerRef: React.MutableRefObject<ReactPlayer | null>;
@@ -22,9 +23,7 @@ const VideoPlayer = React.forwardRef<
 	React.ElementRef<typeof ReactPlayer>,
 	Props
 >(({ screen, playerRef }, ref) => {
-	const [pauseDelayTimeout, setPauseDelayTimeout] =
-		useState<NodeJS.Timeout | null>(null);
-	const [open, setOpen] = useState(true);
+	const [playerSync, setPlayerSync] = useState(false);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const roomJoinDialogShown = useGlobalStore((s) => s.roomJoinDialogShown);
 	const { currentLeader, playerStats } = useRoomStore((s) => ({
@@ -46,7 +45,9 @@ const VideoPlayer = React.forwardRef<
 		serverTimeOffset,
 		playerType,
 		userIntervention,
-		manualSync,
+		autoSync,
+		pauseDelayTimeout,
+		playerModalOpen,
 		setUrl,
 		setPip,
 		setControls,
@@ -62,7 +63,9 @@ const VideoPlayer = React.forwardRef<
 		setUserIntervention,
 		isSystemAction,
 		setIsSystemAction,
-		setManualSync,
+		setAutoSync,
+		setPauseDelayTimeout,
+		setPlayerModalOpen,
 	} = usePlayerStore((s) => ({
 		url: s.url,
 		pip: s.pip,
@@ -78,7 +81,9 @@ const VideoPlayer = React.forwardRef<
 		playerType: s.playerType,
 		userIntervention: s.userIntervention,
 		isSystemAction: s.isSystemAction,
-		manualSync: s.manualSync,
+		autoSync: s.autoSync,
+		pauseDelayTimeout: s.pauseDelayTimeout,
+		playerModalOpen: s.playerModalOpen,
 		setUrl: s.setUrl,
 		setPip: s.setPip,
 		setControls: s.setControls,
@@ -93,7 +98,9 @@ const VideoPlayer = React.forwardRef<
 		setPlayerType: s.setPlayerType,
 		setUserIntervention: s.setUserIntervention,
 		setIsSystemAction: s.setIsSystemAction,
-		setManualSync: s.setManualSync,
+		setAutoSync: s.setAutoSync,
+		setPauseDelayTimeout: s.setPauseDelayTimeout,
+		setPlayerModalOpen: s.setPlayerModalOpen,
 	}));
 	const { data: currentUser } = useGetCurrentUser();
 
@@ -162,13 +169,17 @@ const VideoPlayer = React.forwardRef<
 	// TODO: add fullscreen capabilities (add a button) -> screenfull.request(document.querySelector('.react-player'))
 
 	useEffect(() => {
-		if (manualSync) return;
+		if (!autoSync) return;
 		if (currentUser?._id === currentLeader) return;
 		syncPlayer();
-	}, [userIntervention, manualSync]);
+	}, [userIntervention, autoSync]);
 
 	function syncPlayer() {
 		if (!playerStats) return;
+		// if (pauseDelayTimeout) {
+		// 	clearTimeout(pauseDelayTimeout);
+		// }
+		setPlayerSync(true);
 		setUserIntervention(false);
 		setPlaybackRate(1);
 		const [duration, progress, lastChanged, status, type] = playerStats;
@@ -185,6 +196,10 @@ const VideoPlayer = React.forwardRef<
 
 	function onPlay() {
 		if (playing) return;
+		if (!autoSync) {
+			setPlaying(true);
+			return;
+		}
 		console.log("[VideoPlayer] onplay serverTimeOffset: ", serverTimeOffset);
 		if (currentUser?._id === currentLeader) {
 			socket.emit("playPauseVideo", 1);
@@ -193,18 +208,32 @@ const VideoPlayer = React.forwardRef<
 			if (!isSystemAction) {
 				setIsSystemAction(false);
 			}
-			if (manualSync) {
-				setUserIntervention(true);
-				setPlaying(true);
-			} else {
-				syncPlayer();
-			}
+			setUserIntervention(true);
+			setPlaying(true);
+			// if (!autoSync) {
+			// } else {
+			// 	syncPlayer();
+			// }
 		}
 	}
 
 	function onPause() {
+		if (!playing) return;
+		if (playerSync) {
+			setPlayerSync(false);
+			if (currentUser?._id === currentLeader) {
+				socket.emit("playPauseVideo", 0);
+				setPlaying(false);
+			} else {
+				if (!isSystemAction) {
+					setIsSystemAction(false);
+				}
+				setUserIntervention(true);
+				setPlaying(false);
+			}
+			return;
+		}
 		const timerId = setTimeout(() => {
-			if (!playing) return;
 			console.log("[VideoPlayer] onpause serverTimeOffset: ", serverTimeOffset);
 			if (currentUser?._id === currentLeader) {
 				socket.emit("playPauseVideo", 0);
@@ -219,12 +248,35 @@ const VideoPlayer = React.forwardRef<
 		}, 1000);
 		setPauseDelayTimeout(timerId);
 	}
+	function onProgress(state: OnProgressProps) {
+		const currentProgress = state.playedSeconds;
+		if (!autoSync) {
+			setProgress(currentProgress);
+			return;
+		}
+		if (Math.abs(currentProgress - progress) > 5) {
+			if (pauseDelayTimeout) {
+				clearTimeout(pauseDelayTimeout);
+			}
+			if (currentUser?._id === currentLeader) {
+				console.log(
+					"[VideoPlayer] onProgress sending seek to server: ",
+					Math.floor(currentProgress),
+				);
+				socket.emit("seekVideo", Math.floor(currentProgress));
+				setIsSystemAction(false);
+			} else {
+				setUserIntervention(true);
+			}
+		}
+		setProgress(currentProgress);
+	}
 	return (
 		<>
 			<RoomJoinDialog />
 			<div
 				style={{
-					transform: !open
+					transform: !playerModalOpen
 						? `translate(0px, -${containerRef.current?.offsetHeight}px)`
 						: "translate(0px, 0px)",
 					transition: "transform .5s cubic-bezier(.32, .72, 0, 1)",
@@ -263,25 +315,7 @@ const VideoPlayer = React.forwardRef<
 								onSeek={(e) => console.log("[VideoPlayer] onSeek", e)}
 								onEnded={() => setPlaying(loop)}
 								onError={(e) => console.log("[VideoPlayer] onError", e)}
-								onProgress={(state) => {
-									const currentProgress = state.playedSeconds;
-									if (Math.abs(currentProgress - progress) > 5) {
-										if (pauseDelayTimeout) {
-											clearTimeout(pauseDelayTimeout);
-										}
-										if (currentUser?._id === currentLeader) {
-											console.log(
-												"[VideoPlayer] onProgress sending seek to server: ",
-												Math.floor(currentProgress),
-											);
-											socket.emit("seekVideo", Math.floor(currentProgress));
-											setIsSystemAction(false);
-										} else {
-											setUserIntervention(true);
-										}
-									}
-									setProgress(currentProgress);
-								}}
+								onProgress={onProgress}
 								onDuration={(duration: number) => {
 									console.log("[VideoPlayer] onDuration", duration);
 									setDuration(duration);
@@ -329,10 +363,10 @@ const VideoPlayer = React.forwardRef<
 						<Button
 							className="h-6 w-10"
 							variant={"secondary"}
-							onClick={() => setOpen(!open)}
+							onClick={() => setPlayerModalOpen(!playerModalOpen)}
 							size={screen === "mobile" ? "sm" : "default"}
 						>
-							{open ? <TiArrowSortedUp /> : <TiArrowSortedDown />}
+							{playerModalOpen ? <TiArrowSortedUp /> : <TiArrowSortedDown />}
 						</Button>
 						<Button
 							onClick={syncPlayer}
