@@ -228,20 +228,20 @@ const RoomComponent = () => {
 	function onRoomSettings(data: [number, number, number]) {
 		setRoomSettings(data);
 	}
-	useEffect(() => {
-		if (playerRef.current) {
-			const internalPlayer = playerRef.current.getInternalPlayer();
-			if (internalPlayer) {
-				const iframe = internalPlayer.getIframe();
-				if (iframe) {
-					iframe.addEventListener("dblclick", (e: any) => {
-						e.stopPropagation();
-						e.preventDefault();
-					});
-				}
-			}
-		}
-	}, [playerRef.current]);
+	// useEffect(() => {
+	// 	if (playerRef.current) {
+	// 		const internalPlayer = playerRef.current.getInternalPlayer();
+	// 		if (internalPlayer) {
+	// 			const iframe = internalPlayer.getIframe();
+	// 			if (iframe) {
+	// 				iframe.addEventListener("dblclick", (e: any) => {
+	// 					e.stopPropagation();
+	// 					e.preventDefault();
+	// 				});
+	// 			}
+	// 		}
+	// 	}
+	// }, [playerRef.current]);
 
 	useEffect(() => {
 		console.log("[Room] id: ", id);
