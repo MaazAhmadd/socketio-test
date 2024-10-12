@@ -215,7 +215,7 @@ export default function socketServer(io: CustomIO) {
 		);
 
 		socket.on("playPauseVideo", async (reqType: number) => {
-			console.log("[socket] playPauseVideo type: ", reqType);
+			logger.info(`[socket] playPauseVideo type: ${reqType}`);
 			// 1 = play, 0 = pause
 			const roomId = socket.roomId;
 			if (!roomId) {
@@ -254,12 +254,12 @@ export default function socketServer(io: CustomIO) {
 					type,
 				];
 			}
-			console.log(`[socket] playPauseVideo, playerStats: ${room.playerStats}`);
+			logger.info(`[socket] playPauseVideo, playerStats: ${room.playerStats}`);
 			io.in(roomId).emit("syncPlayerStats", room.playerStats);
 			await roomRepository.save(room);
 		});
 		socket.on("sendSyncTimer", () => {
-			console.log(`[socket] sendSyncTimer: ${getDateInSeconds()}`);
+			logger.info(`[socket] sendSyncTimer: ${getDateInSeconds()}`);
 			socket.emit("syncTimer", getDateInSeconds());
 		});
 		socket.on("sendSyncPlayerStats", async () => {
@@ -271,13 +271,13 @@ export default function socketServer(io: CustomIO) {
 			if (!room) {
 				return socket.emit("stateError", "Room not found");
 			}
-			console.log(
+			logger.info(
 				`[socket] sendSyncPlayerStats, playerStats: ${room.playerStats}`,
 			);
 			socket.emit("syncPlayerStats", room.playerStats);
 		});
 		socket.on("seekVideo", async (s: number) => {
-			console.log(`[socket] seekVideo, seekTo raw: ${s}`);
+			logger.info(`[socket] seekVideo, seekTo raw: ${s}`);
 			const seekTo = Math.floor(Math.abs(s));
 			const roomId = socket.roomId;
 			if (!roomId) {
@@ -291,7 +291,7 @@ export default function socketServer(io: CustomIO) {
 			if (seekTo > duration) {
 				return socket.emit("stateError", "Seek to is greater than duration");
 			}
-			console.log(`[socket] seekVideo, seekTo rounded: ${seekTo}`);
+			logger.info(`[socket] seekVideo, seekTo rounded: ${seekTo}`);
 			room.playerStats = [duration, seekTo, getDateInSeconds(), status, type];
 			io.in(roomId).emit("syncPlayerStats", room.playerStats);
 			await roomRepository.save(room);
@@ -673,10 +673,7 @@ const addOrUpdateRecentUsers = async (
 	} catch (err) {
 		if (err instanceof Error) {
 			logger.info(
-				"[socket] addOrUpdateRecentUsers: ",
-				err.name,
-				err.message,
-				err.stack,
+				`[socket] addOrUpdateRecentUsers: ${err.name} ${err.message} ${err.stack}`,
 			);
 		}
 	}
@@ -699,10 +696,7 @@ const addOrUpdateRecentVideos = async (
 	} catch (err) {
 		if (err instanceof Error) {
 			logger.info(
-				"[socket] addOrUpdateRecentVideos: ",
-				err.name,
-				err.message,
-				err.stack,
+				`[socket] addOrUpdateRecentVideos: ${err.name} ${err.message} ${err.stack}`,
 			);
 		}
 	}
@@ -717,7 +711,9 @@ const addLikedVideo = async (userId: string, likedVideoId: string) => {
 		});
 	} catch (err) {
 		if (err instanceof Error) {
-			logger.info("[socket] addLikedVideo: ", err.name, err.message, err.stack);
+			logger.info(
+				`[socket] addLikedVideo: ${err.name} ${err.message} ${err.stack}`,
+			);
 		}
 	}
 };

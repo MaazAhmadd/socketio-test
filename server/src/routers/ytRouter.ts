@@ -156,13 +156,15 @@ async function getVideoInfo(videoId: string): Promise<YtVideoType | null> {
 			},
 		);
 
-		console.log("getVideoInfo youtube data api, info fetching response:", {
-			title: response.data.items[0].snippet.title as string,
-			thumbnail: response.data.items[0].snippet.thumbnails.high.url as string,
-			duration: response.data.items[0].contentDetails.duration,
-			ytId: videoId as string,
-			updatedAt: new Date(),
-		});
+		logger.info(
+			`getVideoInfo youtube data api, info fetching response: ${{
+				title: response.data.items[0].snippet.title as string,
+				thumbnail: response.data.items[0].snippet.thumbnails.high.url as string,
+				duration: response.data.items[0].contentDetails.duration,
+				ytId: videoId as string,
+				updatedAt: new Date(),
+			}}`,
+		);
 		return {
 			title: response.data.items[0].snippet.title as string,
 			thumbnail: response.data.items[0].snippet.thumbnails.high.url as string,
