@@ -41,17 +41,7 @@ export function RoomPinDialog() {
 		useGetSearchResults(searchQuery, debouncedSearchQuery, selectedPlatform);
 
 	const onSubmitUrlForm = async (e: React.FormEvent) => {
-		e.preventDefault();
 		setDisableBtn(true);
-		if (videoUrl) {
-			console.log(
-				"[createRoom onsubmit] about to createRoom videoUrl: ",
-				videoUrl,
-			);
-			// setRoomCreationData_VideoUrl(videoUrl);
-			// setRoomCreationRequestType("create");
-			// navigate("/room/" + videoUrl);
-		}
 	};
 	useEffect(() => {
 		setTimeout(() => {
@@ -62,7 +52,7 @@ export function RoomPinDialog() {
 	return (
 		<Dialog>
 			<DialogTrigger asChild>
-				<Button variant="ghost"  size={"sm"}>
+				<Button variant="ghost" size={"sm"}>
 					<DrawingPinFilledIcon />
 				</Button>
 			</DialogTrigger>

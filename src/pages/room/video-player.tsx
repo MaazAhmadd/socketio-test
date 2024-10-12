@@ -167,8 +167,10 @@ const VideoPlayer = React.forwardRef<
 
 	// TODO: player is paused when seeked, wait for 1.1 seconds and then pause otherwise seek
 	// TODO: add fullscreen capabilities (add a button) -> screenfull.request(document.querySelector('.react-player'))
+ 
 
 	useEffect(() => {
+		console.log("[socket syncPlayer] effect autoSync: ", autoSync);
 		if (!autoSync) return;
 		if (currentUser?._id === currentLeader) return;
 		syncPlayer();
@@ -186,7 +188,7 @@ const VideoPlayer = React.forwardRef<
 		const serverTime = getDateInSeconds() + serverTimeOffset;
 		const toProgress =
 			status === 1 ? serverTime - lastChanged + progress : progress;
-		console.log("[socket syncPlayer] status: ", status, playing);
+		// console.log("[socket syncPlayer] status: ", status, playing);
 
 		setPlaying(status === 1);
 
@@ -200,7 +202,7 @@ const VideoPlayer = React.forwardRef<
 			setPlaying(true);
 			return;
 		}
-		console.log("[VideoPlayer] onplay serverTimeOffset: ", serverTimeOffset);
+		// console.log("[VideoPlayer] onplay serverTimeOffset: ", serverTimeOffset);
 		if (currentUser?._id === currentLeader) {
 			socket.emit("playPauseVideo", 1);
 			setPlaying(true);
@@ -234,7 +236,7 @@ const VideoPlayer = React.forwardRef<
 			return;
 		}
 		const timerId = setTimeout(() => {
-			console.log("[VideoPlayer] onpause serverTimeOffset: ", serverTimeOffset);
+			// console.log("[VideoPlayer] onpause serverTimeOffset: ", serverTimeOffset);
 			if (currentUser?._id === currentLeader) {
 				socket.emit("playPauseVideo", 0);
 				setPlaying(false);
@@ -259,10 +261,6 @@ const VideoPlayer = React.forwardRef<
 				clearTimeout(pauseDelayTimeout);
 			}
 			if (currentUser?._id === currentLeader) {
-				console.log(
-					"[VideoPlayer] onProgress sending seek to server: ",
-					Math.floor(currentProgress),
-				);
 				socket.emit("seekVideo", Math.floor(currentProgress));
 				setIsSystemAction(false);
 			} else {
@@ -321,7 +319,14 @@ const VideoPlayer = React.forwardRef<
 									setDuration(duration);
 								}}
 								config={{
-									youtube: { playerVars: { /*controls: 1,*/ autoplay: 1 } },
+									youtube: {
+										playerVars: {
+											/*controls: 1,*/ autoplay: 1,
+											// fs: 0,
+											playsinline: 1,
+											disablekb: 1,
+										},
+									},
 								}}
 							/>
 						)}

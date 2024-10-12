@@ -26,6 +26,7 @@ export function useYoutubeInfo(yturl: string) {
 	const noembedUrl = `https://noembed.com/embed?url=${yturl}`;
 
 	useEffect(() => {
+		console.log("[useYoutubeInfo] effect yturl: ", yturl);
 		if (!yturl) return;
 		const fetchData = async () => {
 			setIsLoading(true);
@@ -53,6 +54,7 @@ export function useYoutubeInfo(yturl: string) {
 	}, [yturl, noembedUrl]);
 
 	useEffect(() => {
+		console.log("[useYoutubeInfo] effect isLoading: ", isLoading);
 		if (!yturl) return
 		const timer = setTimeout(() => {
 			if (isLoading) {

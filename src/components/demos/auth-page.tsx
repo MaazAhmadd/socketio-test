@@ -62,12 +62,6 @@ export default function AuthenticationPage() {
 			password: passwordState,
 		};
 		if (passwordStateError.length > 0 || registerStateError.length > 0) {
-			console.log(
-				"loginStateError: ",
-				passwordStateError,
-				" | ",
-				registerStateError,
-			);
 			toast.error("error check console");
 			return;
 		}

@@ -254,7 +254,6 @@ const UpdateProfilePic: React.FC = () => {
 				setLoadingState(false);
 				setSuccessState("Profile picture updated successfully");
 				queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-				console.log(response.data);
 			} catch (error) {
 				setLoadingState(false);
 				if ((error as ResError).response?.data.error == "File is too large") {
@@ -318,7 +317,7 @@ const UpdateProfilePic: React.FC = () => {
 	//       setLoadingState(false);
 	//       setSuccessState("Profile picture updated successfully");
 	//       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-	//       console.log(response.data);
+	//
 	//     } catch (error) {
 	//       setLoadingState(false);
 	//       if ((error as AxiosError).response?.data == "File is too large") {

@@ -13,8 +13,7 @@ export type AllRoomsObject = {
 };
 export const useGetUserRooms = () => {
 	async function getUserRooms() {
-		const response = await api.get("/room/userrooms");
-		console.log("[useGetUserRooms] all rooms: ", response.data);
+		const response = await api.get("/room/userrooms"); 
 		return response.data;
 	}
 	return useQuery<AllRoomsObject>({

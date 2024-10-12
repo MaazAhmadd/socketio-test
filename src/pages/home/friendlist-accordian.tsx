@@ -105,9 +105,6 @@ const Friend = ({
 	const { data: targetUser } = useGetNormalUser(_id);
 	const { mutate: removeFriend, isPending } = useRemoveFriend();
 
-	useEffect(() => {
-		console.log("Friend render");
-	});
 	if (!targetUser) return;
 	return (
 		<div className=" relative flex w-[120px] flex-col justify-center gap-1 rounded border border-muted bg-muted/50 p-2 text-center transition-all duration-150 hover:border-muted-foreground/40">

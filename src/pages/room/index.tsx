@@ -128,20 +128,13 @@ const RoomComponent = () => {
 	}));
 	const { data: currentUser } = useGetCurrentUser();
 
-	// useEffect(() => {
-	// 	console.log("[Room] effect...empty dependency");
-	// }, []);
-	// useEffect(() => {
-	// 	console.log("[Room] effect...no dependency");
-	// });
-
 	const load = (newUrl: string | undefined) => {
 		setUrl(newUrl);
 		setInitialSync(false);
 	};
 
 	function onConnect() {
-		console.log("[socket connect] connected");
+		// console.log("[socket connect] connected");
 		socket.emit("joinRoom", id!);
 		socket.emit("sendSyncTimer");
 		setTimeReceivedDelay(getDateInSeconds());
@@ -167,12 +160,7 @@ const RoomComponent = () => {
 	}
 
 	function onRoomDesc(data: Room) {
-		console.log("[socket onRoomDesc] onRoomDesc: ", data);
-		console.log(
-			"[socket onRoomDesc] onRoomDesc isLeader: ",
-			currentUser?._id,
-			data.activeMembersList![0],
-		);
+		// console.log("[socket onRoomDesc] onRoomDesc: ", data);
 
 		const mics = data.activeMembersList?.pop();
 		const url = data.videoUrl;
@@ -228,17 +216,9 @@ const RoomComponent = () => {
 		setProgress(toProgress);
 		setPlaying(status === 1);
 		playerRef.current?.seekTo(toProgress, "seconds");
-		console.log("[socket onSyncPlayerStats] status 1 seeking to: ", toProgress);
 	}
 
 	function onSyncTimer(data: number) {
-		console.log("[Socket onSyncTimer] onSyncTimer: ", data);
-		console.log(
-			"[Socket onSyncTimer] offset: ",
-			getDateInSeconds() -
-				(data +
-					(timeReceivedDelay > 0 ? getDateInSeconds() - timeReceivedDelay : 0)),
-		);
 		setServerTimeOffset(
 			getDateInSeconds() -
 				(data +
@@ -248,8 +228,23 @@ const RoomComponent = () => {
 	function onRoomSettings(data: [number, number, number]) {
 		setRoomSettings(data);
 	}
+	useEffect(() => {
+		if (playerRef.current) {
+			const internalPlayer = playerRef.current.getInternalPlayer();
+			if (internalPlayer) {
+				const iframe = internalPlayer.getIframe();
+				if (iframe) {
+					iframe.addEventListener("dblclick", (e: any) => {
+						e.stopPropagation();
+						e.preventDefault();
+					});
+				}
+			}
+		}
+	}, [playerRef.current]);
 
 	useEffect(() => {
+		console.log("[Room] id: ", id);
 		setInitialSync(false);
 		const token = localStorage.getItem("auth_token");
 		socket.io.opts.query = { token };
@@ -284,8 +279,9 @@ const RoomComponent = () => {
 	}, []);
 
 	useEffect(() => {
-		// const userIntervention = usePlayerStore.getState().userIntervention;
 		const initialSync = usePlayerStore.getState().initialSync;
+		console.log("[useEffect] initialSync: ", initialSync);
+		// const userIntervention = usePlayerStore.getState().userIntervention;
 		if (initialSync) return;
 		// if (userIntervention) return;
 		if (!roomData) return;

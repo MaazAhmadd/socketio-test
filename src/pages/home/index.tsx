@@ -226,8 +226,7 @@ const RoomList = ({
 					{rooms &&
 						rooms.length > 0 &&
 						// [...new Array(20).fill(0).map((_, i) => rooms[0])].map((room) => {
-						rooms.map((room) => {
-							console.log("[publicRooms] room: ", room);
+						rooms.map((room) => { 
 							return (
 								<RoomCard
 									key={room.entityId}
