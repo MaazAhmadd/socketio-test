@@ -36,22 +36,22 @@ const RoomLoading = () => {
 		</div>
 	);
 };
-const RoomPage = () => {
-	const { data: currentUser } = useGetCurrentUser();
-	if (!currentUser) {
-		return <RoomLoading />;
-	}
-	return <RoomComponent />;
-};
+// const RoomPage = () => {
+// 	const { data: currentUser } = useGetCurrentUser();
+// 	if (!currentUser) {
+// 		return <RoomLoading />;
+// 	}
+// 	return <RoomComponent />;
+// };
 
-const RoomComponent = () => {
+const RoomPage = () => {
 	const [timeReceivedDelay, setTimeReceivedDelay] = useState(0);
 	const navigate = useNavigate();
 	const { id } = useParams();
 	const kickDialogRef = useRef<HTMLButtonElement | null>(null);
 	const playerRef = useRef<ReactPlayer | null>(null);
-	const { width } = useWindowSize();
 	const { isFullscreen, exitFullscreen } = useFullscreen();
+	const { data: currentUser } = useGetCurrentUser();
 
 	const { setConnected, setRoomJoinDialogShown } = useGlobalStore((s) => ({
 		setConnected: s.setConnected,
@@ -126,7 +126,6 @@ const RoomComponent = () => {
 		setControls: s.setControls,
 		resetPlayerState: s.resetPlayerState,
 	}));
-	const { data: currentUser } = useGetCurrentUser();
 
 	const load = (newUrl: string | undefined) => {
 		setUrl(newUrl);
@@ -150,6 +149,16 @@ const RoomComponent = () => {
 		setInitialSync(false);
 		setConnected(false);
 		setLoading(false);
+	}
+
+	function onLeaveRoom() {
+		socket.emit("leaveRoom");
+		socket.disconnect();
+		navigate("/home");
+		setConnected(false);
+		setRoomJoinDialogShown(true);
+		resetRoomState();
+		resetPlayerState();
 	}
 
 	function onStateError(err: string) {
@@ -304,35 +313,14 @@ const RoomComponent = () => {
 	// mobile videoplayer height 33svh
 	// desktop chat width 30svw
 	// turn to ssvh if caused issue on mobile
-	const mobileView = width <= screenBreakpoints.lg;
-	const MemoizedChat = useMemo(
-		() => <Chat screen={mobileView ? "mobile" : "desktop"} />,
-		[messages.length,mobileView],
-	);
-
-	// const MobileVideoPlayer = useMemo(
-	// 	() => <VideoPlayer screen={"mobile"} ref={playerRef} />,
-	// 	[url, playing, playbackRate, progress, userIntervention, serverTimeOffset],
-	// );
-	// const DesktopVideoPlayer = useMemo(
-	// 	() => <VideoPlayer screen={"desktop"} ref={playerRef} />,
-	// 	[url, playing, playbackRate, progress, userIntervention, serverTimeOffset],
-	// );
+	// const mobileView = width <= screenBreakpoints.lg;
+	const MemoizedChat = useMemo(() => <Chat />, [messages.length]);
 
 	if (!id) {
 		return <Navigate to="/home" />;
 	}
-	if (!roomData) {
-		return <></>;
-	}
-	function onLeaveRoom() {
-		socket.emit("leaveRoom");
-		socket.disconnect();
-		navigate("/home");
-		setConnected(false);
-		setRoomJoinDialogShown(true);
-		resetRoomState();
-		resetPlayerState();
+	if (!currentUser || !roomData) {
+		return <RoomLoading />;
 	}
 
 	return (
@@ -344,28 +332,15 @@ const RoomComponent = () => {
 			)}
 			<ConnectionStatus />
 			<div className="lg:flex lg:flex-row-reverse">
-					<div className="w-auto lg:w-[30svw]">
-						<div className="h-[100svh]">{MemoizedChat}</div>
-						<div className="fixed z-10 top-0 flex h-[40px] lg:h-[45px] w-full lg:w-[30svw] border-muted border-b bg-primary-foreground">
-							<RoomButtons
-								kickDialogRef={kickDialogRef}
-								onLeaveRoom={onLeaveRoom}
-							/>
-						</div>
+				<div className="w-auto lg:w-[30svw]">
+					<div className="h-[100svh]">{MemoizedChat}</div>
+					<div className="fixed top-0 z-10 flex h-[40px] w-full border-muted border-b bg-primary-foreground lg:h-[45px] lg:w-[30svw]">
+						<RoomButtons
+							kickDialogRef={kickDialogRef}
+							onLeaveRoom={onLeaveRoom}
+						/>
 					</div>
-				
-				{/* {mobileView && (
-					<div>
-						<div className="h-[100svh]">{MemoizedChat}</div>
-						<div className="fixed top-0 z-10 flex h-[40px] w-full  border-muted border-b bg-primary-foreground">
-							<RoomButtons
-								kickDialogRef={kickDialogRef}
-								onLeaveRoom={onLeaveRoom}
-							/>
-						</div>
-					</div>
-				)} */}
-
+				</div>
 				<div className="fixed top-[40px] w-full lg:static lg:top-0 lg:w-[70svw]">
 					<VideoPlayer
 						screen={"mobile"}
@@ -373,55 +348,7 @@ const RoomComponent = () => {
 						playerRef={playerRef}
 					/>
 				</div>
-				{/* {!mobileView && (
-					<div className="w-[30svw]">
-						<div className="h-[100svh]">{MemoizedChat}</div>
-						<div className="fixed top-0 right-0 flex h-[5svh] w-[30svw] border-muted border-b bg-primary-foreground">
-							<RoomButtons
-								kickDialogRef={kickDialogRef}
-								onLeaveRoom={onLeaveRoom}
-							/>
-						</div>
-					</div>
-				)} */}
 			</div>
-			{/* {mobileView ? (
-				<div>
-					<div className="h-[100svh]">{MobileChat}</div>
-					<div className="fixed top-[40px] w-full">
-						<VideoPlayer
-							screen={"mobile"}
-							ref={playerRef}
-							playerRef={playerRef}
-						/>
-					</div>
-					<div className="fixed top-0 flex h-[40px] w-full items-center justify-center border-muted border-b bg-primary-foreground">
-						<RoomButtons
-							kickDialogRef={kickDialogRef}
-							onLeaveRoom={onLeaveRoom}
-						/>
-					</div>
-				</div>
-			) : (
-				<div className="flex">
-					<div className="w-[70svw]">
-						<VideoPlayer
-							screen={"desktop"}
-							ref={playerRef}
-							playerRef={playerRef}
-						/>
-					</div>
-					<div className="w-[30svw]">
-						<div className="h-[100svh]">{DesktopChat}</div>
-						<div className="fixed top-0 right-0 flex h-[5svh] w-[30svw] border-muted border-b bg-primary-foreground">
-							<RoomButtons
-								kickDialogRef={kickDialogRef}
-								onLeaveRoom={onLeaveRoom}
-							/>
-						</div>
-					</div>
-				</div>
-			)} */}
 		</>
 	);
 };
@@ -443,7 +370,7 @@ const RoomButtons = ({
 				<RoomSettingsDrawer />
 				<TextGradient
 					onClick={isFullscreen ? exitFullscreen : enterFullscreen}
-					className="w-full max-w-40 cursor-pointer text-lg lg:text-2xl"
+					className="w-full max-w-40 cursor-pointer text-center text-lg"
 				>
 					Gather Groove
 				</TextGradient>

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { useGetCurrentUser, useGetNormalUser } from "@/hooks/user-hooks";
-import { useWindowSize } from "@/hooks/util-hooks";
+import { screenBreakpoints, useWindowSize } from "@/hooks/util-hooks";
 import { cn } from "@/lib/utils";
 import { socket } from "@/socket";
 import { useRoomStore } from "@/store";
@@ -18,7 +18,7 @@ import React, {
 import { Message } from "server/src/types";
 import DialogWrapperPfpIcon from "./dialog-wrapper-pfp-icon";
 
-export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
+export function Chat() {
 	const scrollAreaRef = useRef<HTMLDivElement | null>(null);
 	const { messages } = useRoomStore((s) => ({ messages: s.messages }));
 	const { data: user } = useGetCurrentUser();
@@ -81,12 +81,8 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 		);
 
 		const bubbleClasses = cn(
-			"rounded-md border border-muted bg-background/20 px-2 py-1",
-			screen === "mobile"
-				? isMe
-					? "max-w-[75svw]"
-					: "max-w-[80svw]"
-				: "max-w-[24svw]",
+			"rounded-md border border-muted bg-background/20 px-2 py-1 max-w-[80svw] lg:max-w-[24svw]",
+			isMe && "max-w-[75svw]",
 			_message.length < 100 && "mt-[7px]",
 			isSystemMsg && "border-muted-foreground/60",
 		);
@@ -211,7 +207,7 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 					))}
 				</div>
 			</ScrollArea>
-			<ChatInput screen={screen} />
+			<ChatInput />
 		</>
 	);
 }
@@ -253,13 +249,14 @@ function ChatText({
 		</div>
 	);
 }
-const ChatInput = ({ screen }: { screen: "mobile" | "desktop" }) => {
+const ChatInput = () => {
 	const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
 	const enterButtonRef = useRef<HTMLButtonElement | null>(null);
 	const [input, setInput] = useState("");
 	const { width } = useWindowSize();
 	const { data: currentUser } = useGetCurrentUser();
 	const addMessage = useRoomStore((s) => s.addMessage);
+	const mobileView = width <= screenBreakpoints.lg;
 
 	const handleSendMessage = (e: FormEvent) => {
 		e.preventDefault();
@@ -273,10 +270,10 @@ const ChatInput = ({ screen }: { screen: "mobile" | "desktop" }) => {
 		}
 	};
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-		if (screen === "mobile" && e.shiftKey && e.key === "Enter") {
+		if (mobileView && e.shiftKey && e.key === "Enter") {
 			handleSendMessage(e);
-		} else if (screen === "desktop" && e.shiftKey && e.key === "Enter") {
-		} else if (screen === "desktop" && e.key === "Enter") {
+		} else if (!mobileView && e.shiftKey && e.key === "Enter") {
+		} else if (!mobileView && e.key === "Enter") {
 			handleSendMessage(e);
 		}
 	};
