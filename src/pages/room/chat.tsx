@@ -192,10 +192,7 @@ export function Chat({ screen }: { screen: "mobile" | "desktop" }) {
 			<ScrollArea
 				hideScrollBar
 				viewportRef={scrollAreaRef}
-				className={cn(
-					"bg-primary-foreground",
-					screen === "mobile" ? "h-[100svh]" : "h-[89svh]",
-				)}
+				className={cn("h-[100svh] bg-primary-foreground")}
 			>
 				<div className={cn("flex flex-col justify-end")}>
 					<div

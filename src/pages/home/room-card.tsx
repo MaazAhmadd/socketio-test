@@ -38,7 +38,7 @@ const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 	return (
 		<li
 			className={cn(
-				"mx-auto mt-2 max-w-[95svw] cursor-pointer overflow-hidden rounded-xl border border-background bg-background/50 hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground",
+				"mx-auto max-w-[95svw] cursor-pointer overflow-hidden rounded-xl border border-background bg-background/50 hover:border-muted-foreground focus:border-muted-foreground active:border-muted-foreground",
 				className,
 			)}
 			onClick={onClick}

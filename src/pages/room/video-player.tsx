@@ -14,6 +14,9 @@ import { IoPlaySkipForward, IoPlaySkipForwardOutline } from "react-icons/io5";
 import { RiFullscreenFill, RiFullscreenExitFill } from "react-icons/ri";
 import { FaShareAlt } from "react-icons/fa";
 import { OnProgressProps } from "react-player/base";
+import { RoomInviteDialog } from "./room-invite-dialog";
+import screenfull from "screenfull";
+
 type Props = {
 	screen: "mobile" | "desktop";
 	playerRef: React.MutableRefObject<ReactPlayer | null>;
@@ -23,7 +26,7 @@ const VideoPlayer = React.forwardRef<
 	React.ElementRef<typeof ReactPlayer>,
 	Props
 >(({ screen, playerRef }, ref) => {
-	const [playerSync, setPlayerSync] = useState(false);
+	const [isPlayerSyncing, setIsPlayerSyncing] = useState(false);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const roomJoinDialogShown = useGlobalStore((s) => s.roomJoinDialogShown);
 	const { currentLeader, playerStats } = useRoomStore((s) => ({
@@ -104,73 +107,9 @@ const VideoPlayer = React.forwardRef<
 	}));
 	const { data: currentUser } = useGetCurrentUser();
 
-	// const load = (url: string) => {
-	// 	setUrl(url);
-	// 	setProgress(0);
-	// 	setPip(false);
-	// };
-
-	// const handlePlayPause = () => setPlaying(!playing);
-	// const handleToggleLoop = () => setLoop(!loop);
-
-	// const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-	// 	setVolume(Number.parseFloat(e.target.value));
-	// };
-	// const handleToggleMuted = () => setMuted(!muted);
-
-	// const handleSetPlaybackRate = (e: React.MouseEvent<HTMLButtonElement>) => {
-	// 	setPlaybackRate(Number.parseFloat(e.currentTarget.value));
-	// };
-
-	// const handleTogglePIP = () => setPip((prev) => !prev);
-	// const handlePlay = () => {
-	// 	console.log("onplay serverTimeOffset: ", serverTimeOffset);
-	// 	setPlaying(true);
-	// };
-	// const handleEnablePIP = () => setPip(true);
-	// const handleDisablePIP = () => setPip(false);
-
-	// const handlePause = () => {
-	// 	console.log("onpause serverTimeOffset: ", serverTimeOffset);
-	// 	setPlaying(false);
-	// };
-
-	// const handleSeekMouseDown = () => setSeeking(true);
-	// const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-	// 	console.log("onSeekChange: ", e.target.value);
-	// 	setProgress(parseFloat(e.target.value));
-	// };
-
-	// const handleSeekMouseUp = (
-	// 	e: React.MouseEvent<HTMLInputElement, MouseEvent>,
-	// ) => {
-	// 	setSeeking(false);
-	// 	playerRef.current?.seekTo(Number.parseFloat(e.currentTarget.value));
-	// };
-
-	// const handleProgress = (state: { played: number }) => {
-	// 	const currentProgress = state.played;
-
-	// 	setProgress(currentProgress);
-
-	// if (Math.abs(currentProgress - previousProgress.current) > 5) {
-	// 	setProgress(currentProgress);
-	// 	previousProgress.current = currentProgress;
-	// }
-	// };
-
-	// const handleEnded = () => setPlaying(loop);
-	// const handleDuration = (duration: number) => setDuration(duration);
-	// const renderLoadButton = (url: string, label: string) => (
-	// 	<button onClick={() => load(url)}>{label}</button>
-	// );
-
-	// TODO: player is paused when seeked, wait for 1.1 seconds and then pause otherwise seek
 	// TODO: add fullscreen capabilities (add a button) -> screenfull.request(document.querySelector('.react-player'))
- 
 
 	useEffect(() => {
-		console.log("[socket syncPlayer] effect autoSync: ", autoSync);
 		if (!autoSync) return;
 		if (currentUser?._id === currentLeader) return;
 		syncPlayer();
@@ -178,20 +117,14 @@ const VideoPlayer = React.forwardRef<
 
 	function syncPlayer() {
 		if (!playerStats) return;
-		// if (pauseDelayTimeout) {
-		// 	clearTimeout(pauseDelayTimeout);
-		// }
-		setPlayerSync(true);
+		setIsPlayerSyncing(true);
 		setUserIntervention(false);
 		setPlaybackRate(1);
 		const [duration, progress, lastChanged, status, type] = playerStats;
 		const serverTime = getDateInSeconds() + serverTimeOffset;
 		const toProgress =
 			status === 1 ? serverTime - lastChanged + progress : progress;
-		// console.log("[socket syncPlayer] status: ", status, playing);
-
 		setPlaying(status === 1);
-
 		setProgress(toProgress);
 		playerRef.current?.seekTo(toProgress, "seconds");
 	}
@@ -212,17 +145,13 @@ const VideoPlayer = React.forwardRef<
 			}
 			setUserIntervention(true);
 			setPlaying(true);
-			// if (!autoSync) {
-			// } else {
-			// 	syncPlayer();
-			// }
 		}
 	}
 
 	function onPause() {
 		if (!playing) return;
-		if (playerSync) {
-			setPlayerSync(false);
+		if (isPlayerSyncing) {
+			setIsPlayerSyncing(false);
 			if (currentUser?._id === currentLeader) {
 				socket.emit("playPauseVideo", 0);
 				setPlaying(false);
@@ -281,7 +210,7 @@ const VideoPlayer = React.forwardRef<
 				}}
 			>
 				<div ref={containerRef} className={cn("w-full bg-red-800")}>
-					<div className="relative pt-[56.25%]">
+					<div className="react-player relative pt-[56.25%]">
 						{!roomJoinDialogShown && (
 							<ReactPlayer
 								ref={ref}
@@ -306,7 +235,6 @@ const VideoPlayer = React.forwardRef<
 								onBuffer={() => console.log("[VideoPlayer] onBuffer")}
 								onPlaybackRateChange={(speed: string) => {
 									console.log("[VideoPlayer] onPlaybackRateChange", speed);
-
 									setUserIntervention(true);
 									setPlaybackRate(Number.parseFloat(speed));
 								}}
@@ -322,7 +250,7 @@ const VideoPlayer = React.forwardRef<
 									youtube: {
 										playerVars: {
 											/*controls: 1,*/ autoplay: 1,
-											// fs: 0,
+											fs: 0,
 											playsinline: 1,
 											disablekb: 1,
 										},
@@ -345,12 +273,7 @@ const VideoPlayer = React.forwardRef<
 						>
 							<FaShareAlt />
 						</Button>
-						<Button
-							variant={"ghost"}
-							size={screen === "mobile" ? "sm" : "default"}
-						>
-							<BsPersonFillAdd />
-						</Button>
+						<RoomInviteDialog screen={screen} />
 						<Button
 							variant={"ghost"}
 							size={screen === "mobile" ? "sm" : "default"}
@@ -423,6 +346,13 @@ const VideoPlayer = React.forwardRef<
 						<Button
 							variant={"ghost"}
 							size={screen === "mobile" ? "sm" : "default"}
+							onClick={() => {
+								// document.querySelector(".react-player")?.requestFullscreen();
+								const player = document.querySelector(".react-player");
+								if (player) {
+									screenfull.request(player);
+								}
+							}}
 						>
 							{/* <RiFullscreenExitFill /> */}
 							<RiFullscreenFill />

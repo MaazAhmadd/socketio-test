@@ -169,7 +169,12 @@ export default function socketServer(io: CustomIO) {
 					// 0 = privacy
 					room.privacy = updatetype;
 					if (updatetype === 1) {
-						room.invitedMembersList = room.activeMembersList;
+						room.invitedMembersList = [
+							...new Set([
+								...room.invitedMembersList!,
+								...room.activeMembersList!,
+							]),
+						];
 					}
 				} else if (reqtype === 1) {
 					// 1 = playback
@@ -213,7 +218,35 @@ export default function socketServer(io: CustomIO) {
 				]);
 			},
 		);
-
+		socket.on("sendInvites", async (invitees: string[]) => {
+			if (!invitees) {
+				socket.emit("stateError", "invitees not provided");
+				return;
+			}
+			if (invitees.length > 100) {
+				socket.emit("stateError", "Too many invitees");
+				return;
+			}
+			invitees = [...new Set(invitees)];
+			logger.info(`[socket] sendInvites: ${invitees}`);
+			const roomId = socket.roomId;
+			if (!roomId) {
+				return socket.emit("stateError", "roomId not found");
+			}
+			const room = await roomRepository.fetch(roomId);
+			if (!room) {
+				return socket.emit("stateError", "room not found");
+			}
+			if (!room.activeMembersList || room.activeMembersList.length < 1) {
+				return socket.emit("stateError", "Empty room");
+			}
+			room.invitedMembersList = room.invitedMembersList || [];
+			room.invitedMembersList = [
+				...new Set([...room.invitedMembersList!, ...invitees!]),
+			];
+			room.kicked = room.kicked.filter((id) => !invitees.includes(id));
+			await roomRepository.save(room);
+		});
 		socket.on("playPauseVideo", async (reqType: number) => {
 			logger.info(`[socket] playPauseVideo type: ${reqType}`);
 			// 1 = play, 0 = pause
@@ -346,10 +379,11 @@ export default function socketServer(io: CustomIO) {
 					room.membersJoinedList = [];
 					socket.emit("roomDesc", room);
 				}
-				addOrUpdateRecentUsers(socket.user?._id!, room?.activeMembersList!);
-				for (const member of room?.activeMembersList!) {
-					addOrUpdateRecentUsers(member, [socket.user?._id!]);
-				}
+				room?.activeMembersList!.pop(); // remove mic array
+				const recentUsers = room?.activeMembersList!.filter(
+					(m) => m !== socket.user?._id,
+				);
+				updateAllRecentUsersInRoom(socket.user?._id!, recentUsers);
 			} catch (error) {
 				logger.info(`joinRoom error while joining room ${error}`);
 				socket.emit("stateError", "couldn't join room");
@@ -657,19 +691,24 @@ function getDateInSeconds() {
 }
 
 const addOrUpdateRecentUsers = async (
-	userId: string,
+	userIds: string[],
 	recentUserIds: string[],
 ) => {
 	try {
-		await User.findByIdAndUpdate(userId, {
-			$pull: { recentUsers: { $in: recentUserIds } },
-		});
-
-		await User.findByIdAndUpdate(userId, {
-			$push: {
-				recentUsers: { $each: recentUserIds, $position: 0, $slice: 500 },
+		await User.updateMany(
+			{ _id: { $in: userIds } },
+			{
+				$pull: { recentUsers: { $in: recentUserIds } },
 			},
-		});
+		);
+		await User.updateMany(
+			{ _id: { $in: userIds } },
+			{
+				$push: {
+					recentUsers: { $each: recentUserIds, $position: 0, $slice: 500 },
+				},
+			},
+		);
 	} catch (err) {
 		if (err instanceof Error) {
 			logger.info(
@@ -677,6 +716,14 @@ const addOrUpdateRecentUsers = async (
 			);
 		}
 	}
+};
+
+const updateAllRecentUsersInRoom = async (
+	currentUserId: string,
+	activeMembersList: string[],
+) => {
+	await addOrUpdateRecentUsers([currentUserId], activeMembersList);
+	await addOrUpdateRecentUsers(activeMembersList, [currentUserId]);
 };
 
 const addOrUpdateRecentVideos = async (

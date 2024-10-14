@@ -304,15 +304,12 @@ const RoomComponent = () => {
 	// mobile videoplayer height 33svh
 	// desktop chat width 30svw
 	// turn to ssvh if caused issue on mobile
-	const mobileView = width <= screenBreakpoints.md;
-	const MobileChat = useMemo(
-		() => <Chat screen={"mobile"} />,
-		[messages.length],
+	const mobileView = width <= screenBreakpoints.lg;
+	const MemoizedChat = useMemo(
+		() => <Chat screen={mobileView ? "mobile" : "desktop"} />,
+		[messages.length,mobileView],
 	);
-	const DesktopChat = useMemo(
-		() => <Chat screen={"desktop"} />,
-		[messages.length],
-	);
+
 	// const MobileVideoPlayer = useMemo(
 	// 	() => <VideoPlayer screen={"mobile"} ref={playerRef} />,
 	// 	[url, playing, playbackRate, progress, userIntervention, serverTimeOffset],
@@ -346,10 +343,51 @@ const RoomComponent = () => {
 				</div>
 			)}
 			<ConnectionStatus />
-			{mobileView ? (
+			<div className="lg:flex lg:flex-row-reverse">
+					<div className="w-auto lg:w-[30svw]">
+						<div className="h-[100svh]">{MemoizedChat}</div>
+						<div className="fixed z-10 top-0 flex h-[40px] lg:h-[45px] w-full lg:w-[30svw] border-muted border-b bg-primary-foreground">
+							<RoomButtons
+								kickDialogRef={kickDialogRef}
+								onLeaveRoom={onLeaveRoom}
+							/>
+						</div>
+					</div>
+				
+				{/* {mobileView && (
+					<div>
+						<div className="h-[100svh]">{MemoizedChat}</div>
+						<div className="fixed top-0 z-10 flex h-[40px] w-full  border-muted border-b bg-primary-foreground">
+							<RoomButtons
+								kickDialogRef={kickDialogRef}
+								onLeaveRoom={onLeaveRoom}
+							/>
+						</div>
+					</div>
+				)} */}
+
+				<div className="fixed top-[40px] w-full lg:static lg:top-0 lg:w-[70svw]">
+					<VideoPlayer
+						screen={"mobile"}
+						ref={playerRef}
+						playerRef={playerRef}
+					/>
+				</div>
+				{/* {!mobileView && (
+					<div className="w-[30svw]">
+						<div className="h-[100svh]">{MemoizedChat}</div>
+						<div className="fixed top-0 right-0 flex h-[5svh] w-[30svw] border-muted border-b bg-primary-foreground">
+							<RoomButtons
+								kickDialogRef={kickDialogRef}
+								onLeaveRoom={onLeaveRoom}
+							/>
+						</div>
+					</div>
+				)} */}
+			</div>
+			{/* {mobileView ? (
 				<div>
 					<div className="h-[100svh]">{MobileChat}</div>
-
 					<div className="fixed top-[40px] w-full">
 						<VideoPlayer
 							screen={"mobile"}
@@ -374,16 +412,16 @@ const RoomComponent = () => {
 						/>
 					</div>
 					<div className="w-[30svw]">
-						<div className=" h-[5svh]">
+						<div className="h-[100svh]">{DesktopChat}</div>
+						<div className="fixed top-0 right-0 flex h-[5svh] w-[30svw] border-muted border-b bg-primary-foreground">
 							<RoomButtons
 								kickDialogRef={kickDialogRef}
 								onLeaveRoom={onLeaveRoom}
 							/>
 						</div>
-						<div className="h-[95svh]">{DesktopChat}</div>
 					</div>
 				</div>
-			)}
+			)} */}
 		</>
 	);
 };
@@ -405,7 +443,7 @@ const RoomButtons = ({
 				<RoomSettingsDrawer />
 				<TextGradient
 					onClick={isFullscreen ? exitFullscreen : enterFullscreen}
-					className="cursor-pointer text-lg md:text-2xl"
+					className="w-full max-w-40 cursor-pointer text-lg lg:text-2xl"
 				>
 					Gather Groove
 				</TextGradient>

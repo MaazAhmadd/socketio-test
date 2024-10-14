@@ -328,6 +328,7 @@ export async function makeRoom(userId: string, url: string, duration: number) {
 		roomMic: 0,
 		membersJoinedList: [userIDandMic],
 		activeMembersList: [userId],
+		invitedMembersList: [userId],
 		activeMembersCount: 1,
 		countries: [],
 		kicked: [],

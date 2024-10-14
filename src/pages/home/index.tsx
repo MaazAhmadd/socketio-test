@@ -211,7 +211,7 @@ const RoomList = ({
 			className="border-2 border-muted bg-primary-foreground "
 		>
 			{/* <div className="bg-muted space-y-4 rounded-b-lg "> */}
-			<div className="h-[75svh] px-1 lg:px-2">
+			<div className="h-[75svh] px-1 pt-2 lg:px-2">
 				<ul>
 					{!rooms && (
 						<p className="mx-4 scroll-m-20 p-4 pb-2 text-center font-semibold text-lg text-primary xs:text-xl tracking-tight transition-colors first:mt-0 md:mt-1 md:text-pretty md:text-2xl">

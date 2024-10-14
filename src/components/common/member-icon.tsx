@@ -37,7 +37,8 @@ const MemberIcon = ({
 	const randomColor = getHexColorFromString(_id);
 	const { data: user } = useGetNormalUser(_id);
 
-	const { data: currentUser } = useGetCurrentUser();
+	const { data: currentUser,error } = useGetCurrentUser();
+	
 	const { activeMembersList } = useRoomStore((s) => ({
 		activeMembersList: s.roomData?.activeMembersList,
 	}));

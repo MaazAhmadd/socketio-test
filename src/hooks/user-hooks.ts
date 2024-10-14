@@ -1,5 +1,6 @@
 import api from "@/api";
 import { isValidJwt } from "@/lib/utils";
+import { useGlobalStore } from "@/store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { toast } from "react-hot-toast";
@@ -121,16 +122,22 @@ export const useGetNormalUser = (idOrHandle: string) => {
 	});
 };
 export const useGetCurrentUser = () => {
+	const logout = useGlobalStore((s) => s.logout);
 	const getCurrentUser = async () => {
 		const response = await api.get("/user/getCurrentUser");
 		return response.data;
 	};
-	return useQuery<CurrentUser, ResError>({
+
+	const query = useQuery<CurrentUser, ResError>({
 		queryKey: ["currentUser"],
 		queryFn: getCurrentUser,
 		staleTime: 1000 * 60 * 60, // 1 hour
 		// gcTime: 0,
 	});
+	if (query.error?.response?.data.error === "User not found") {
+		logout();
+	}
+	return query;
 };
 
 // const friendRoutes = {

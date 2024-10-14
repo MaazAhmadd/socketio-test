@@ -29,7 +29,10 @@ const roomSchema = new Schema("Room", {
 	createdAt: { type: "number" },
 	// searchKeywords: { type: "text" },
 	videoUrl: { type: "string" },
-	playerStats: { type: "number[]" },
+	playerStats: { type: "number[]" }, // [duration,progress,lastChanged,status,type]
+	skips: { type: "number" },
+	pinQueue: { type: "string[]" }, //  ["url1","url2"] -> ["url2","url1"]
+	voteQueue: { type: "string[]" }, // ["member1","member2"] -> ["member2,member3","member1"]
 });
 
 // export const memberRepository = new Repository<Member>(memberSchema, redis);

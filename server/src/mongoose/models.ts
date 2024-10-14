@@ -79,7 +79,7 @@ const YtVideoSchema: Schema = new Schema({
 });
 
 const WebVideoSchema: Schema = new Schema({
-	url: { type: String, required: true, unique: true },
+	url: { type: String, required: true },
 	t: { type: String },
 	tn: { type: String },
 	by: { type: Types.ObjectId, ref: "User" },

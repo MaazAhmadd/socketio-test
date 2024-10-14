@@ -215,7 +215,7 @@ const SelectPlayback = () => {
 				<SelectGroup>
 					<SelectItem value="voting">Voting</SelectItem>
 					<SelectItem value="justplay">Just Play</SelectItem>
-					<SelectItem value="autoplay">Autoplay</SelectItem>
+					{/* <SelectItem value="autoplay">Autoplay</SelectItem> */}
 					<SelectItem value="leaderschoice">Leader's choice</SelectItem>
 				</SelectGroup>
 			</SelectContent>

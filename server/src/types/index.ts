@@ -21,6 +21,7 @@ interface ClientToServerEvents {
 	sendSyncPlayerStats: () => void;
 	seekVideo: (data: number) => void;
 	updateRoomSettings: (data: [number, number]) => void;
+	sendInvites: (invitees: string[]) => void;
 }
 
 interface InterServerEvents {
@@ -33,7 +34,7 @@ interface Room {
 	playback: number; // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
 	roomMic: number; // on(1), off(0)
 	membersJoinedList?: string[];
-	activeMembersList?: string[];
+	activeMembersList?: string[]; // last item are mics string
 	invitedMembersList?: string[];
 	activeMembersCount?: number;
 	countries: string[];
@@ -42,7 +43,10 @@ interface Room {
 	createdAt: number;
 	// searchKeywords: string;
 	videoUrl: string;
-	playerStats: number[];
+	playerStats: number[]; // [duration,progress,lastChanged,status,type]
+	skips?: number;
+	pinQueue?: string[]; // ["url1","customUrlId1",01] -> ["customUrlId1","url1",10] last item player/url type 0->youtube 1->custom
+	voteQueue?: string[]; // ["member1","member2"] -> ["member2,member3","member1"]
 	entityId?: string;
 	[key: string]: any;
 }
