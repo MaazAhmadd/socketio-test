@@ -1,15 +1,16 @@
 interface Navigator {
-	virtualKeyboard?: {
-		overlaysContent: boolean;
-		show: () => void;
-		hide: () => void;
-		boundingRect: DOMRect;
-		addEventListener: (type: string, listener: (evt: BR) => void) => void;
+	virtualKeyboard?: VKEventProps & {
+		addEventListener: (type: string, listener: (evt: VKEvent) => void) => void;
 	};
 }
 
-interface BR extends Event {
-	target: EventTarget & {
-		boundingRect: DOMRect;
-	};
+interface VKEvent extends Event {
+	target: EventTarget & VKEventProps;
 }
+
+type VKEventProps = {
+	overlaysContent: boolean;
+	show: () => void;
+	hide: () => void;
+	boundingRect: DOMRect;
+};

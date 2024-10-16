@@ -289,11 +289,13 @@ const VideoPlayer = React.forwardRef<
 							onClick={() => {
 								if ("virtualKeyboard" in navigator) {
 									toast.success("VirtualKeyboard API is supported!");
-									const { x, y, width, height } = (
-										navigator.virtualKeyboard as any
-									).boundingRect as any;
+									const { x, y, width, height } =
+										navigator.virtualKeyboard!.boundingRect;
 									toast.success(
 										`x: ${x}, y: ${y}, width: ${width}, height: ${height}`,
+										{
+											position: "top-right",
+										},
 									);
 								} else {
 									toast.success("VirtualKeyboard API is not supported");
