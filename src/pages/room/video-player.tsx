@@ -287,12 +287,6 @@ const VideoPlayer = React.forwardRef<
 									);
 								} else {
 									toast.success("VirtualKeyboard API is not supported");
-									const { x, y, width, height } = (
-										(navigator as any).virtualKeyboard as any
-									).boundingRect as any;
-									toast.success(
-										`x: ${x}, y: ${y}, width: ${width}, height: ${height}`,
-									);
 								}
 							}}
 						>
@@ -302,7 +296,10 @@ const VideoPlayer = React.forwardRef<
 						<Button
 							variant={"ghost"}
 							onClick={() => {
-								toast.success("isFullscreen: " + isFullscreen);
+								if ("virtualKeyboard" in navigator) {
+									(navigator.virtualKeyboard as any).overlaysContent = true;
+									(navigator.virtualKeyboard as any).hide();
+								}
 							}}
 							size={screen === "mobile" ? "sm" : "default"}
 						>
@@ -312,6 +309,12 @@ const VideoPlayer = React.forwardRef<
 						<Button
 							variant={"ghost"}
 							size={screen === "mobile" ? "sm" : "default"}
+							onClick={() => {
+								if ("virtualKeyboard" in navigator) {
+									(navigator.virtualKeyboard as any).overlaysContent = true;
+									(navigator.virtualKeyboard as any).show();
+								}
+							}}
 						>
 							{/* <IoPlaySkipForward /> */}
 							<IoPlaySkipForwardOutline />
