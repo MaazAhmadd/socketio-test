@@ -98,6 +98,7 @@ const RoomPage = () => {
 		progress,
 		serverTimeOffset,
 		initialSync,
+		playerModalOpen,
 		setPlayerType,
 		setUrl,
 		setServerTimeOffset,
@@ -117,6 +118,7 @@ const RoomPage = () => {
 		progress: s.progress,
 		serverTimeOffset: s.serverTimeOffset,
 		initialSync: s.initialSync,
+		playerModalOpen: s.playerModalOpen,
 		setPlayerType: s.setPlayerType,
 		setUrl: s.setUrl,
 		setServerTimeOffset: s.setServerTimeOffset,
@@ -341,7 +343,7 @@ const RoomPage = () => {
 					<div
 						className={cn(
 							"fixed top-0 z-10 flex h-[40px] w-full border-muted border-b bg-primary-foreground lg:h-[45px] lg:w-[30svw]",
-							keyboardHeight > 100 && "hidden lg:flex",
+							playerModalOpen && keyboardHeight > 100 && "hidden lg:flex",
 						)}
 					>
 						<RoomButtons
