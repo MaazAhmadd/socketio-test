@@ -7,8 +7,14 @@ import { SOCKET_URL } from "./lib/config";
 
 type CustomSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 export const socket: CustomSocket = io(SOCKET_URL, {
+	auth:{
+    token: localStorage.getItem("auth_token")
+  },
+	extraHeaders: {
+    "ngrok-skip-browser-warning": "true"
+  },
 	autoConnect: false,
-	query: { token: localStorage.getItem("auth_token") },
+	// query: { token: localStorage.getItem("auth_token") },
 });
 
 // socket.io.on("reconnect_attempt", () => {

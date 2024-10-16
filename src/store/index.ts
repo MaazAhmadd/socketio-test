@@ -10,6 +10,7 @@ const initialGlobalState: GlobalStoreInitialState = {
 	connected: false,
 	roomJoinDialogShown: true,
 	isFullscreen: false,
+	keyboardHeight: 0,
 };
 export const useGlobalStore = create<GlobalStore>((set) => ({
 	...initialGlobalState,
@@ -21,9 +22,10 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
 	},
 	setRoomJoinDialogShown: (roomJoinDialogShown: boolean) =>
 		set({ roomJoinDialogShown }),
-	setIsFullscreen: (isFullscreen:boolean) => set({ isFullscreen }),
+	setIsFullscreen: (isFullscreen: boolean) => set({ isFullscreen }),
+	setKeyboardHeight: (keyboardHeight) => set({ keyboardHeight }),
 	resetGlobalState: () => set({ ...initialGlobalState }),
-})); 
+}));
 const initialRoomState: RoomStoreInitialState = {
 	loading: true,
 	roomData: null,
@@ -117,6 +119,7 @@ const initialPlayerState: PlayerStoreInitialState = {
 	autoSync: true,
 	pauseDelayTimeout: null,
 	playerModalOpen: true,
+	controlsJustChanged: false,
 };
 
 export const usePlayerStore = create<PlayerStore>((set) => ({
@@ -140,6 +143,8 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
 	setPauseDelayTimeout: (pauseDelayTimeout: NodeJS.Timeout | null) =>
 		set({ pauseDelayTimeout }),
 	setPlayerModalOpen: (playerModalOpen: boolean) => set({ playerModalOpen }),
+	setControlsJustChanged: (controlsJustChanged: boolean) =>
+		set({ controlsJustChanged }),
 	resetPlayerState: () => set({ ...initialPlayerState }),
 }));
 
@@ -148,6 +153,7 @@ interface GlobalStoreInitialState {
 	showRoomTab: Tabs;
 	roomJoinDialogShown: boolean;
 	isFullscreen: boolean;
+	keyboardHeight: number;
 }
 interface GlobalStore extends GlobalStoreInitialState {
 	setConnected: (connected: boolean) => void;
@@ -155,6 +161,7 @@ interface GlobalStore extends GlobalStoreInitialState {
 	logout: () => void;
 	setRoomJoinDialogShown: (shown: boolean) => void;
 	setIsFullscreen: (isFullscreen: boolean) => void;
+	setKeyboardHeight: (keyboardHeight: number) => void;
 	resetGlobalState: () => void;
 }
 interface RoomStoreInitialState {
@@ -197,6 +204,7 @@ interface PlayerStoreInitialState {
 	autoSync: boolean;
 	pauseDelayTimeout: NodeJS.Timeout | null;
 	playerModalOpen: boolean;
+	controlsJustChanged: boolean;
 }
 interface PlayerStore extends PlayerStoreInitialState {
 	setUrl: (url: string | undefined) => void;
@@ -217,5 +225,6 @@ interface PlayerStore extends PlayerStoreInitialState {
 	setAutoSync: (autoSync: boolean) => void;
 	setPauseDelayTimeout: (pauseDelayTimeout: NodeJS.Timeout | null) => void;
 	setPlayerModalOpen: (playerModalOpen: boolean) => void;
+	setControlsJustChanged: (controlsJustChanged: boolean) => void;
 	resetPlayerState: () => void;
 }

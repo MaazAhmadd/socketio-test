@@ -33,7 +33,8 @@ export default function socketServer(io: CustomIO) {
 	// auth middleware
 	io.use(async (socket: CustomSocket, next) => {
 		try {
-			const token = socket.handshake?.query?.token;
+			// const token = socket.handshake?.query?.token;
+			const token = socket.handshake.auth.token;	
 			logger.info(`socket-middleware, token: ${token}`);
 
 			if (typeof token !== "string" || !token) {

@@ -3,7 +3,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 import express from "express";
 import { createServer } from "node:http";
-import { Server } from "socket.io";
+import { Server as IOSERVER } from "socket.io";
 import { connectDB } from "./db";
 import { logger } from "./logger";
 import { allRequestLoggerMiddlerware, errorHandler } from "./middlewares";
@@ -15,7 +15,6 @@ import socketServer from "./socketServer";
 import {
 	ClientToServerEvents,
 	InterServerEvents,
-	
 	ServerToClientEvents,
 } from "./types";
 import { RedisSchemas } from "./redis-om/schemas";
@@ -30,15 +29,29 @@ const allowedHeaders = [
 	"Accept",
 	"Authorization",
 	"x-auth-token",
+	"ngrok-skip-browser-warning",
 ];
 app.use(express.json());
-app.use(cors({ allowedHeaders }));
+app.use(
+	cors({
+		allowedHeaders,
+		// origin: "*",
+	}),
+);
 
-const io = new Server<
+const io = new IOSERVER<
 	ClientToServerEvents,
 	ServerToClientEvents,
 	InterServerEvents
->(server, { cors: { allowedHeaders } });
+>(server, {
+	cors: {
+		// origin: "*",
+		// methods: ["GET", "POST"],
+		// credentials: true,
+		allowedHeaders,
+	},
+});
+// >(server, { cors: { allowedHeaders } });
 
 connectDB().then(() => {
 	socketServer(io);
@@ -67,6 +80,7 @@ connectDB().then(() => {
 
 	app.use(errorHandler);
 
+	// server.listen(3000, "0.0.0.0", () =>
 	server.listen(port, () =>
 		logger.info(`server running at http://localhost:${port}`),
 	);

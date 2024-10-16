@@ -124,7 +124,9 @@ export const useGetNormalUser = (idOrHandle: string) => {
 export const useGetCurrentUser = () => {
 	const logout = useGlobalStore((s) => s.logout);
 	const getCurrentUser = async () => {
+		console.log("getCurrentUser start");
 		const response = await api.get("/user/getCurrentUser");
+		console.log("getCurrentUser end", response.data);
 		return response.data;
 	};
 

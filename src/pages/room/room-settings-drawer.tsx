@@ -30,12 +30,13 @@ export function RoomSettingsDrawer() {
 		url,
 		controls,
 		volume,
-		autoSync,
+		autoSync, 
 		setUrl,
 		setControls,
 		setVolume,
 		setInitialSync,
 		setAutoSync,
+		setControlsJustChanged,
 	} = usePlayerStore((s) => ({
 		url: s.url,
 		controls: s.controls,
@@ -45,7 +46,8 @@ export function RoomSettingsDrawer() {
 		setControls: s.setControls,
 		setVolume: s.setVolume,
 		setInitialSync: s.setInitialSync,
-		setAutoSync: s.setAutoSync,
+		setAutoSync: s.setAutoSync, 
+		setControlsJustChanged: s.setControlsJustChanged,
 	}));
 	const load = (newUrl: string | undefined) => {
 		setUrl(newUrl);
@@ -61,7 +63,7 @@ export function RoomSettingsDrawer() {
 		<Drawer direction="top">
 			<DrawerTrigger asChild>
 				<Button variant="ghost" size={"sm"}>
-					<GearIcon  className="size-[18px]"  />
+					<GearIcon className="size-[18px]" />
 				</Button>
 			</DrawerTrigger>
 			<DrawerContent className="right-0 mt-0 mb-24 flex h-min max-h-[50svh] w-[100svw] flex-col bg-background/80 md:w-[30svw]">
@@ -93,6 +95,7 @@ export function RoomSettingsDrawer() {
 								checked={controls}
 								onCheckedChange={(e) => {
 									handleToggleControls();
+									setControlsJustChanged(true);
 									// socket.emit("sendSyncPlayerStats");
 								}}
 							/>

@@ -29,7 +29,10 @@ const VideoPlayer = React.forwardRef<
 >(({ screen, playerRef }, ref) => {
 	const [isPlayerSyncing, setIsPlayerSyncing] = useState(false);
 	const containerRef = useRef<HTMLDivElement | null>(null);
-	const roomJoinDialogShown = useGlobalStore((s) => s.roomJoinDialogShown);
+	const { keyboardHeight, roomJoinDialogShown } = useGlobalStore((s) => ({
+		keyboardHeight: s.keyboardHeight,
+		roomJoinDialogShown: s.roomJoinDialogShown,
+	}));
 	const { currentLeader, playerStats } = useRoomStore((s) => ({
 		currentLeader: s.roomData?.activeMembersList![0],
 		playerStats: s.roomData?.playerStats,
@@ -52,6 +55,7 @@ const VideoPlayer = React.forwardRef<
 		autoSync,
 		pauseDelayTimeout,
 		playerModalOpen,
+		controlsJustChanged,
 		setUrl,
 		setPip,
 		setControls,
@@ -70,6 +74,7 @@ const VideoPlayer = React.forwardRef<
 		setAutoSync,
 		setPauseDelayTimeout,
 		setPlayerModalOpen,
+		setControlsJustChanged,
 	} = usePlayerStore((s) => ({
 		url: s.url,
 		pip: s.pip,
@@ -88,6 +93,7 @@ const VideoPlayer = React.forwardRef<
 		autoSync: s.autoSync,
 		pauseDelayTimeout: s.pauseDelayTimeout,
 		playerModalOpen: s.playerModalOpen,
+		controlsJustChanged: s.controlsJustChanged,
 		setUrl: s.setUrl,
 		setPip: s.setPip,
 		setControls: s.setControls,
@@ -105,21 +111,12 @@ const VideoPlayer = React.forwardRef<
 		setAutoSync: s.setAutoSync,
 		setPauseDelayTimeout: s.setPauseDelayTimeout,
 		setPlayerModalOpen: s.setPlayerModalOpen,
+		setControlsJustChanged: s.setControlsJustChanged,
 	}));
 	const { data: currentUser } = useGetCurrentUser();
 
 	// TODO: add fullscreen capabilities (add a button) -> screenfull.request(document.querySelector('.react-player'))
-	useEffect(() => {
-		navigator.virtualKeyboard?.addEventListener("geometrychange", (event) => {
-			const { x, y, width, height } = event.target?.boundingRect!;
-			toast.success(
-				`VK: [x, y, width, height] = [${x}, ${y}, ${width}, ${height}]`,
-				{
-					position: "top-right",
-				},
-			);
-		});
-	}, []);
+
 	useEffect(() => {
 		if (!autoSync) return;
 		if (currentUser?._id === currentLeader) return;
@@ -192,6 +189,11 @@ const VideoPlayer = React.forwardRef<
 	}
 	function onProgress(state: OnProgressProps) {
 		const currentProgress = state.playedSeconds;
+		if (controlsJustChanged) {
+			setProgress(currentProgress);
+			setControlsJustChanged(false);
+			return;
+		}
 		if (!autoSync) {
 			setProgress(currentProgress);
 			return;
@@ -277,7 +279,12 @@ const VideoPlayer = React.forwardRef<
 					</div>
 				</div>
 
-				<div className="mt-1 flex items-center justify-center rounded-sm bg-background/80 py-1.5">
+				<div
+					className={cn(
+						"mt-1 flex items-center justify-center rounded-sm bg-background/80 py-1.5",
+						keyboardHeight > 100 && "hidden",
+					)}
+				>
 					<div
 						className={cn(
 							"flex h-[24px] w-full max-w-[min(550px,100vw)] items-center justify-between rounded-b-xl bg-transparent",
@@ -286,33 +293,13 @@ const VideoPlayer = React.forwardRef<
 						<Button
 							size={screen === "mobile" ? "sm" : "default"}
 							variant={"ghost"}
-							onClick={() => {
-								if ("virtualKeyboard" in navigator) {
-									toast.success("VirtualKeyboard API is supported!");
-									const { x, y, width, height } =
-										navigator.virtualKeyboard!.boundingRect;
-									toast.success(
-										`x: ${x}, y: ${y}, width: ${width}, height: ${height}`,
-										{
-											position: "top-right",
-										},
-									);
-								} else {
-									toast.success("VirtualKeyboard API is not supported");
-								}
-							}}
+							onClick={() => {}}
 						>
 							<FaShareAlt />
 						</Button>
 						<RoomInviteDialog screen={screen} />
 						<Button
 							variant={"ghost"}
-							onClick={() => {
-								if ("virtualKeyboard" in navigator) {
-									toast.success("VK hide");
-									navigator.virtualKeyboard?.hide();
-								}
-							}}
 							size={screen === "mobile" ? "sm" : "default"}
 						>
 							{/* <FaHeart /> */}
@@ -321,12 +308,6 @@ const VideoPlayer = React.forwardRef<
 						<Button
 							variant={"ghost"}
 							size={screen === "mobile" ? "sm" : "default"}
-							onClick={() => {
-								if ("virtualKeyboard" in navigator) {
-									toast.success("VK show");
-									navigator.virtualKeyboard?.show();
-								}
-							}}
 						>
 							{/* <IoPlaySkipForward /> */}
 							<IoPlaySkipForwardOutline />

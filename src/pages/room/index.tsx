@@ -29,6 +29,7 @@ import { HiMiniXMark } from "react-icons/hi2";
 import { Spinner } from "@/components/common/spinner";
 import ReactPlayer from "react-player";
 import { useGetCurrentUser } from "@/hooks/user-hooks";
+import { cn } from "@/lib/utils";
 const RoomLoading = () => {
 	return (
 		<div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -53,13 +54,13 @@ const RoomPage = () => {
 	const { exitFullscreen } = useFullscreen();
 	const { data: currentUser } = useGetCurrentUser();
 
-	const { setConnected, setRoomJoinDialogShown, isFullscreen } = useGlobalStore(
-		(s) => ({
+	const { setConnected, setRoomJoinDialogShown, isFullscreen, keyboardHeight } =
+		useGlobalStore((s) => ({
 			setConnected: s.setConnected,
 			setRoomJoinDialogShown: s.setRoomJoinDialogShown,
 			isFullscreen: s.isFullscreen,
-		}),
-	);
+			keyboardHeight: s.keyboardHeight,
+		}));
 
 	const {
 		roomData,
@@ -190,7 +191,7 @@ const RoomPage = () => {
 
 	function onConnectError(err: Error) {
 		// console.log("[socket connect_error] connect_error: ", err);
-		toast.error(err.message);
+		toast.error("connect_error: " + err.message);
 		setConnected(false);
 		// navigate("/home");
 	}
@@ -317,7 +318,7 @@ const RoomPage = () => {
 	// desktop chat width 30svw
 	// turn to ssvh if caused issue on mobile
 	// const mobileView = width <= screenBreakpoints.lg;
-	const MemoizedChat = useMemo(() => <Chat />, [messages.length,isFullscreen]);
+	const MemoizedChat = useMemo(() => <Chat />, [messages.length]);
 
 	if (!id) {
 		return <Navigate to="/home" />;
@@ -337,14 +338,24 @@ const RoomPage = () => {
 			<div className="lg:flex lg:flex-row-reverse">
 				<div className="w-auto lg:w-[30svw]">
 					<div className="h-[100svh]">{MemoizedChat}</div>
-					<div className="fixed top-0 z-10 flex h-[40px] w-full border-muted border-b bg-primary-foreground lg:h-[45px] lg:w-[30svw]">
+					<div
+						className={cn(
+							"fixed top-0 z-10 flex h-[40px] w-full border-muted border-b bg-primary-foreground lg:h-[45px] lg:w-[30svw]",
+							keyboardHeight > 100 && "hidden lg:flex",
+						)}
+					>
 						<RoomButtons
 							kickDialogRef={kickDialogRef}
 							onLeaveRoom={onLeaveRoom}
 						/>
 					</div>
 				</div>
-				<div className="fixed top-[40px] w-full lg:static lg:top-0 lg:w-[70svw]">
+				<div
+					className={cn(
+						"fixed top-[40px] w-full lg:static lg:top-0 lg:w-[70svw]",
+						keyboardHeight > 100 && "top-0 lg:top-[40px]",
+					)}
+				>
 					<VideoPlayer
 						screen={"mobile"}
 						ref={playerRef}

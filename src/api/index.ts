@@ -5,6 +5,7 @@ const instance = axios.create({ baseURL: API_URL, });
 
 instance.interceptors.request.use(
 	(config) => {
+		config.headers["ngrok-skip-browser-warning"] =  "true"
 		const token = localStorage.getItem("auth_token");
 		if (token) {
 			config.headers["x-auth-token"] = token;

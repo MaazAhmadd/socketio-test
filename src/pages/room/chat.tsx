@@ -27,7 +27,9 @@ export function Chat() {
 	const scrollAreaRef = useRef<HTMLDivElement | null>(null);
 	const { messages } = useRoomStore((s) => ({ messages: s.messages }));
 	const { data: user } = useGetCurrentUser();
-
+	const { keyboardHeight } = useGlobalStore((s) => ({
+		keyboardHeight: s.keyboardHeight,
+	}));
 	useEffect(() => {
 		if (scrollAreaRef.current) {
 			scrollAreaRef.current.scrollTo({
@@ -194,6 +196,7 @@ export function Chat() {
 				hideScrollBar
 				viewportRef={scrollAreaRef}
 				className={cn("h-[100svh] bg-primary-foreground")}
+				style={{ bottom: `${keyboardHeight > 100 ? keyboardHeight : 0}px` }}
 			>
 				<div className={cn("flex flex-col justify-end")}>
 					<div
@@ -263,9 +266,14 @@ const ChatInput = () => {
 	const { width } = useWindowSize();
 	const { data: currentUser } = useGetCurrentUser();
 	const addMessage = useRoomStore((s) => s.addMessage);
-	const isFullscreen = useGlobalStore((s) => s.isFullscreen);
+	const { isFullscreen, keyboardHeight, setKeyboardHeight } = useGlobalStore(
+		(s) => ({
+			isFullscreen: s.isFullscreen,
+			keyboardHeight: s.keyboardHeight,
+			setKeyboardHeight: s.setKeyboardHeight,
+		}),
+	);
 
-	const [bottomOffset, setBottomOffset] = useState(0);
 	const mobileView = width <= screenBreakpoints.lg;
 	useEffect(() => {
 		const handleResize = () => {
@@ -273,10 +281,10 @@ const ChatInput = () => {
 				const viewportHeight = window.visualViewport.height;
 				const windowHeight = window.innerHeight;
 				if (windowHeight - viewportHeight > 100) {
-					const keyboardHeight = windowHeight - viewportHeight;
-					setBottomOffset(keyboardHeight + (isFullscreen ? 50 : 0));
+					// 100 is arbitrary
+					setKeyboardHeight(windowHeight - viewportHeight);
 				} else {
-					setBottomOffset(0);
+					setKeyboardHeight(0);
 				}
 			}
 		};
@@ -290,6 +298,7 @@ const ChatInput = () => {
 		e.preventDefault();
 		if (textAreaRef.current) {
 			textAreaRef.current.focus();
+
 			textAreaRef.current.style.height = "40px";
 		}
 		if (input.trim().length === 0) return;
@@ -319,7 +328,7 @@ const ChatInput = () => {
 	return (
 		<div
 			className={cn("fixed bottom-0 w-full bg-transparent py-2")}
-			style={{ bottom: `${bottomOffset}px` }}
+			style={{ bottom: `${keyboardHeight + (isFullscreen ? 50 : 0)}px` }}
 			ref={chatContainerRef}
 			onKeyDown={handleKeyDown}
 			// onClick={(e) => {
@@ -337,41 +346,8 @@ const ChatInput = () => {
 					className="!max-h-[30svh] no-scrollbar h-[40px] min-h-[40px] bg-primary-foreground"
 					autoComplete="off"
 					value={input}
-					onBlur={() => {
-						// if (textAreaRef.current) {
-						// 	textAreaRef.current.focus();
-						// }
-						if ("virtualKeyboard" in navigator) {
-							toast.success("onblur VK API is supported!");
-							const { x, y, width, height } =
-								navigator.virtualKeyboard!.boundingRect;
-							toast.success(
-								`x: ${x}, y: ${y}, width: ${width}, height: ${height}`,
-								{
-									position: "top-right",
-								},
-							);
-						} else {
-							toast.success("VirtualKeyboard API is not supported");
-						}
-
-					}}
-					onFocus={() => {
-						if ("virtualKeyboard" in navigator) {
-							toast.success("onfocus VK API is supported!");
-							const { x, y, width, height } =
-								navigator.virtualKeyboard!.boundingRect;
-							toast.success(
-								`x: ${x}, y: ${y}, width: ${width}, height: ${height}`,
-								{
-									position: "top-right",
-								},
-							);
-						} else {
-							toast.success("VirtualKeyboard API is not supported");
-						}
-					}}
-
+					onFocus={() => {}}
+					onBlur={() => {}}
 					aria-autocomplete="none"
 					onChange={onChange}
 				/>

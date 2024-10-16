@@ -217,7 +217,7 @@ const UpdateName = () => {
 		</div>
 	);
 };
-const UpdateProfilePic: React.FC = () => {
+const UpdateProfilePic = () => {
 	const { data: currentUser } = useGetCurrentUser();
 	// const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
