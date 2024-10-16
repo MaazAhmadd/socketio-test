@@ -282,7 +282,7 @@ const VideoPlayer = React.forwardRef<
 				<div
 					className={cn(
 						"mt-1 flex items-center justify-center rounded-sm bg-background/80 py-1.5",
-						keyboardHeight > 100 && "hidden",
+						playerModalOpen && keyboardHeight > 100 && "hidden",
 					)}
 				>
 					<div
