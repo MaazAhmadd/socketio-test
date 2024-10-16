@@ -307,8 +307,8 @@ const VideoPlayer = React.forwardRef<
 							variant={"ghost"}
 							onClick={() => {
 								if ("virtualKeyboard" in navigator) {
-									(navigator.virtualKeyboard as any).overlaysContent = true;
-									(navigator.virtualKeyboard as any).hide();
+									toast.success("VK hide");
+									navigator.virtualKeyboard?.hide();
 								}
 							}}
 							size={screen === "mobile" ? "sm" : "default"}
@@ -321,8 +321,8 @@ const VideoPlayer = React.forwardRef<
 							size={screen === "mobile" ? "sm" : "default"}
 							onClick={() => {
 								if ("virtualKeyboard" in navigator) {
-									(navigator.virtualKeyboard as any).overlaysContent = true;
-									(navigator.virtualKeyboard as any).show();
+									toast.success("VK show");
+									navigator.virtualKeyboard?.show();
 								}
 							}}
 						>
