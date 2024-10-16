@@ -61,7 +61,7 @@ export function RoomSettingsDrawer() {
 		<Drawer direction="top">
 			<DrawerTrigger asChild>
 				<Button variant="ghost" size={"sm"}>
-					<GearIcon />
+					<GearIcon  className="size-[18px]"  />
 				</Button>
 			</DrawerTrigger>
 			<DrawerContent className="right-0 mt-0 mb-24 flex h-min max-h-[50svh] w-[100svw] flex-col bg-background/80 md:w-[30svw]">

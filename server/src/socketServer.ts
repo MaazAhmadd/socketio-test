@@ -244,7 +244,9 @@ export default function socketServer(io: CustomIO) {
 			room.invitedMembersList = [
 				...new Set([...room.invitedMembersList!, ...invitees!]),
 			];
-			room.kicked = room.kicked.filter((id) => !invitees.includes(id));
+			if (socket.user?._id === room.activeMembersList[0]) {
+				room.kicked = room.kicked.filter((id) => !invitees.includes(id));
+			}
 			await roomRepository.save(room);
 		});
 		socket.on("playPauseVideo", async (reqType: number) => {

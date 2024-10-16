@@ -16,6 +16,7 @@ import { FaShareAlt } from "react-icons/fa";
 import { OnProgressProps } from "react-player/base";
 import { RoomInviteDialog } from "./room-invite-dialog";
 import screenfull from "screenfull";
+import toast from "react-hot-toast";
 
 type Props = {
 	screen: "mobile" | "desktop";
@@ -198,6 +199,11 @@ const VideoPlayer = React.forwardRef<
 		}
 		setProgress(currentProgress);
 	}
+	const [isFullscreen, setIsFullscreen] = useGlobalStore((s) => [
+		s.isFullscreen,
+		s.setIsFullscreen,
+	]);
+
 	return (
 		<>
 			<RoomJoinDialog />
@@ -210,7 +216,7 @@ const VideoPlayer = React.forwardRef<
 				}}
 			>
 				<div ref={containerRef} className={cn("w-full bg-red-800")}>
-					<div className="react-player relative pt-[56.25%]">
+					<div className="react-player relative pt-[min(56.25%,100vh)]">
 						{!roomJoinDialogShown && (
 							<ReactPlayer
 								ref={ref}
@@ -270,12 +276,34 @@ const VideoPlayer = React.forwardRef<
 						<Button
 							size={screen === "mobile" ? "sm" : "default"}
 							variant={"ghost"}
+							onClick={() => {
+								if ("virtualKeyboard" in navigator) {
+									toast.success("VirtualKeyboard API is supported!");
+									const { x, y, width, height } = (
+										navigator.virtualKeyboard as any
+									).boundingRect as any;
+									toast.success(
+										`x: ${x}, y: ${y}, width: ${width}, height: ${height}`,
+									);
+								} else {
+									toast.success("VirtualKeyboard API is not supported");
+									const { x, y, width, height } = (
+										(navigator as any).virtualKeyboard as any
+									).boundingRect as any;
+									toast.success(
+										`x: ${x}, y: ${y}, width: ${width}, height: ${height}`,
+									);
+								}
+							}}
 						>
 							<FaShareAlt />
 						</Button>
 						<RoomInviteDialog screen={screen} />
 						<Button
 							variant={"ghost"}
+							onClick={() => {
+								toast.success("isFullscreen: " + isFullscreen);
+							}}
 							size={screen === "mobile" ? "sm" : "default"}
 						>
 							{/* <FaHeart /> */}

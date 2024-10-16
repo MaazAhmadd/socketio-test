@@ -9,6 +9,7 @@ const initialGlobalState: GlobalStoreInitialState = {
 	showRoomTab: "public",
 	connected: false,
 	roomJoinDialogShown: true,
+	isFullscreen: false,
 };
 export const useGlobalStore = create<GlobalStore>((set) => ({
 	...initialGlobalState,
@@ -20,9 +21,9 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
 	},
 	setRoomJoinDialogShown: (roomJoinDialogShown: boolean) =>
 		set({ roomJoinDialogShown }),
+	setIsFullscreen: (isFullscreen:boolean) => set({ isFullscreen }),
 	resetGlobalState: () => set({ ...initialGlobalState }),
-}));
-
+})); 
 const initialRoomState: RoomStoreInitialState = {
 	loading: true,
 	roomData: null,
@@ -146,12 +147,14 @@ interface GlobalStoreInitialState {
 	connected: boolean;
 	showRoomTab: Tabs;
 	roomJoinDialogShown: boolean;
+	isFullscreen: boolean;
 }
 interface GlobalStore extends GlobalStoreInitialState {
 	setConnected: (connected: boolean) => void;
 	setShowRoomTab: (tab: Tabs) => void;
 	logout: () => void;
 	setRoomJoinDialogShown: (shown: boolean) => void;
+	setIsFullscreen: (isFullscreen: boolean) => void;
 	resetGlobalState: () => void;
 }
 interface RoomStoreInitialState {

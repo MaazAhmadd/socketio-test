@@ -3,10 +3,14 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { useGetCurrentUser, useGetNormalUser } from "@/hooks/user-hooks";
-import { screenBreakpoints, useWindowSize } from "@/hooks/util-hooks";
+import {
+	screenBreakpoints,
+	useFullscreen,
+	useWindowSize,
+} from "@/hooks/util-hooks";
 import { cn } from "@/lib/utils";
 import { socket } from "@/socket";
-import { useRoomStore } from "@/store";
+import { useGlobalStore, useRoomStore } from "@/store";
 import { PaperPlaneIcon } from "@radix-ui/react-icons";
 import React, {
 	FormEvent,
@@ -17,6 +21,7 @@ import React, {
 } from "react";
 import { Message } from "server/src/types";
 import DialogWrapperPfpIcon from "./dialog-wrapper-pfp-icon";
+import toast from "react-hot-toast";
 
 export function Chat() {
 	const scrollAreaRef = useRef<HTMLDivElement | null>(null);
@@ -252,22 +257,45 @@ function ChatText({
 const ChatInput = () => {
 	const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
 	const enterButtonRef = useRef<HTMLButtonElement | null>(null);
+	const chatContainerRef = useRef<HTMLDivElement | null>(null);
+
 	const [input, setInput] = useState("");
 	const { width } = useWindowSize();
 	const { data: currentUser } = useGetCurrentUser();
 	const addMessage = useRoomStore((s) => s.addMessage);
+	const isFullscreen = useGlobalStore((s) => s.isFullscreen);
+
+	const [bottomOffset, setBottomOffset] = useState(0);
 	const mobileView = width <= screenBreakpoints.lg;
+	useEffect(() => {
+		const handleResize = () => {
+			if (window.visualViewport) {
+				const viewportHeight = window.visualViewport.height;
+				const windowHeight = window.innerHeight;
+				if (windowHeight - viewportHeight > 100) {
+					const keyboardHeight = windowHeight - viewportHeight;
+					setBottomOffset(keyboardHeight + (isFullscreen ? 50 : 0));
+				} else {
+					setBottomOffset(0);
+				}
+			}
+		};
+		window.visualViewport?.addEventListener("resize", handleResize);
+		return () => {
+			window.visualViewport?.removeEventListener("resize", handleResize);
+		};
+	}, [isFullscreen]);
 
 	const handleSendMessage = (e: FormEvent) => {
 		e.preventDefault();
-		if (input.trim().length === 0) return;
-		addMessage([0, currentUser?._id!, Date.now(), input]);
-		socket.emit("sendMessage", input);
-		setInput("");
 		if (textAreaRef.current) {
 			textAreaRef.current.focus();
 			textAreaRef.current.style.height = "40px";
 		}
+		if (input.trim().length === 0) return;
+		addMessage([0, currentUser?._id!, Date.now(), input]);
+		socket.emit("sendMessage", input);
+		setInput("");
 	};
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
 		if (mobileView && e.shiftKey && e.key === "Enter") {
@@ -282,7 +310,7 @@ const ChatInput = () => {
 		setInput(value.slice(0, 512));
 		if (textAreaRef.current) {
 			const newLines = (value.match(/\n/g) || []).length;
-			const maxLines = 10;
+			const maxLines = 3;
 			const baseHeight = 40;
 			const lineHeight = 20;
 			textAreaRef.current.style.height = `${baseHeight + Math.min(newLines, maxLines) * lineHeight}px`;
@@ -290,8 +318,15 @@ const ChatInput = () => {
 	};
 	return (
 		<div
-			className="fixed bottom-0 w-full bg-transparent py-2"
+			className={cn("fixed bottom-0 w-full bg-transparent py-2")}
+			style={{ bottom: `${bottomOffset}px` }}
+			ref={chatContainerRef}
 			onKeyDown={handleKeyDown}
+			// onClick={(e) => {
+			// 	if (textAreaRef.current) {
+			// 		textAreaRef.current.focus();
+			// 	}
+			// }}
 		>
 			<div className="flex w-full items-center space-x-[10px] px-1 lg:w-[30svw]">
 				<Textarea
@@ -302,6 +337,16 @@ const ChatInput = () => {
 					className="!max-h-[30svh] no-scrollbar h-[40px] min-h-[40px] bg-primary-foreground"
 					autoComplete="off"
 					value={input}
+					onBlur={() => {
+						// if (textAreaRef.current) {
+						// 	textAreaRef.current.focus();
+						// }
+
+					}}
+					onFocus={() => {
+						
+					}}
+
 					aria-autocomplete="none"
 					onChange={onChange}
 				/>

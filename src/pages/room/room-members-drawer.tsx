@@ -60,8 +60,11 @@ export function RoomMembersDrawer() {
 		<>
 			<Drawer direction="right">
 				<DrawerTrigger asChild>
-					<Button variant="ghost" size={"sm"}>
-						<BsPersonFill />
+					<Button variant="ghost" size={"sm"} className="relative">
+						<span className="absolute top-1 right-1 flex size-3 items-center justify-center rounded-full bg-primary text-[8px] text-primary-foreground">
+							{activeMembersList?.length}
+						</span>
+						<BsPersonFill className="size-[18px]" />
 					</Button>
 				</DrawerTrigger>
 				<DrawerContent className="right-0 mr-0 ml-24 max-w-[80svw] bg-background/80">

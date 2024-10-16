@@ -50,13 +50,16 @@ const RoomPage = () => {
 	const { id } = useParams();
 	const kickDialogRef = useRef<HTMLButtonElement | null>(null);
 	const playerRef = useRef<ReactPlayer | null>(null);
-	const { isFullscreen, exitFullscreen } = useFullscreen();
+	const { exitFullscreen } = useFullscreen();
 	const { data: currentUser } = useGetCurrentUser();
 
-	const { setConnected, setRoomJoinDialogShown } = useGlobalStore((s) => ({
-		setConnected: s.setConnected,
-		setRoomJoinDialogShown: s.setRoomJoinDialogShown,
-	}));
+	const { setConnected, setRoomJoinDialogShown, isFullscreen } = useGlobalStore(
+		(s) => ({
+			setConnected: s.setConnected,
+			setRoomJoinDialogShown: s.setRoomJoinDialogShown,
+			isFullscreen: s.isFullscreen,
+		}),
+	);
 
 	const {
 		roomData,
@@ -314,7 +317,7 @@ const RoomPage = () => {
 	// desktop chat width 30svw
 	// turn to ssvh if caused issue on mobile
 	// const mobileView = width <= screenBreakpoints.lg;
-	const MemoizedChat = useMemo(() => <Chat />, [messages.length]);
+	const MemoizedChat = useMemo(() => <Chat />, [messages.length,isFullscreen]);
 
 	if (!id) {
 		return <Navigate to="/home" />;
@@ -359,13 +362,14 @@ const RoomButtons = ({
 	onLeaveRoom: () => void;
 	kickDialogRef: React.MutableRefObject<HTMLButtonElement | null>;
 }) => {
-	const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen();
+	const isFullscreen = useGlobalStore((s) => s.isFullscreen);
+	const { enterFullscreen, exitFullscreen } = useFullscreen();
 	return (
 		<>
 			<KickDialogBox kickDialogRef={kickDialogRef} />
 			<div className="my-auto flex w-full items-center justify-between px-2">
 				<Button variant={"ghost"} size={"sm"} onClick={() => onLeaveRoom()}>
-					<HiMiniXMark className="size-[20px] md:size-6" />
+					<HiMiniXMark className="size-6" />
 				</Button>
 				<RoomSettingsDrawer />
 				<TextGradient

@@ -1,4 +1,7 @@
+import { useGlobalStore } from "@/store";
 import { useState, useEffect, useCallback, useLayoutEffect } from "react";
+import toast from "react-hot-toast";
+
 export function useDebounce(value: any, delay: number) {
 	const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -39,23 +42,32 @@ export function useWindowSize() {
 }
 
 export const useFullscreen = () => {
-	const [isFullscreen, setIsFullscreen] = useState(false);
+	const [isFullscreen, setIsFullscreen] = useGlobalStore((s) => [
+		s.isFullscreen,
+		s.setIsFullscreen,
+	]);
+	const enterFullscreen =
+		// () => {
+		useCallback(() => {
+			setIsFullscreen(true);
+			if (document.documentElement.requestFullscreen) {
+				document.documentElement.requestFullscreen();
+			}
+		}, [isFullscreen]);
+	// };
 
-	const enterFullscreen = useCallback(() => {
-		if (document.documentElement.requestFullscreen) {
-			document.documentElement.requestFullscreen();
-		}
-		setIsFullscreen(true);
-	}, []);
+	const exitFullscreen =
+		// () => {
+		useCallback(() => {
+			toast.success("exitFullscreen");
+			setIsFullscreen(false);
 
-	const exitFullscreen = useCallback(() => {
-		if (document.exitFullscreen) {
-			document.exitFullscreen();
-		}
-		setIsFullscreen(false);
-	}, []);
-
-	return { isFullscreen, enterFullscreen, exitFullscreen };
+			if (document.exitFullscreen) {
+				document.exitFullscreen();
+			}
+		}, [isFullscreen]);
+	// };
+	return { enterFullscreen, exitFullscreen };
 };
 export const screenBreakpoints = {
 	xs: 320,
