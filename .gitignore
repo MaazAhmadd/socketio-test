@@ -34,3 +34,4 @@ server/lib
 server/.env
 server/.vercel
 .vercel
+src/global.d.ts

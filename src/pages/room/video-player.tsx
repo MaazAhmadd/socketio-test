@@ -109,7 +109,17 @@ const VideoPlayer = React.forwardRef<
 	const { data: currentUser } = useGetCurrentUser();
 
 	// TODO: add fullscreen capabilities (add a button) -> screenfull.request(document.querySelector('.react-player'))
-
+	useEffect(() => {
+		navigator.virtualKeyboard?.addEventListener("geometrychange", (event) => {
+			const { x, y, width, height } = event.target?.boundingRect!;
+			toast.success(
+				`VK: [x, y, width, height] = [${x}, ${y}, ${width}, ${height}]`,
+				{
+					position: "top-right",
+				},
+			);
+		});
+	}, []);
 	useEffect(() => {
 		if (!autoSync) return;
 		if (currentUser?._id === currentLeader) return;
