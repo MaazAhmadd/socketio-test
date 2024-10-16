@@ -355,7 +355,7 @@ const RoomPage = () => {
 				<div
 					className={cn(
 						"fixed top-[40px] w-full lg:static lg:top-0 lg:w-[70svw]",
-						keyboardHeight > 100 && "top-0 lg:top-[40px]",
+						playerModalOpen && keyboardHeight > 100 && "top-0 lg:top-[40px]",
 					)}
 				>
 					<VideoPlayer
