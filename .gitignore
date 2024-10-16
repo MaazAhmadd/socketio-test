@@ -33,5 +33,4 @@ server/lib
 # Keep environment variables out of version control
 server/.env
 server/.vercel
-.vercel
-src/global.d.ts
+.vercel 
