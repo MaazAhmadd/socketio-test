@@ -341,11 +341,24 @@ const ChatInput = () => {
 						// if (textAreaRef.current) {
 						// 	textAreaRef.current.focus();
 						// }
+						if ("virtualKeyboard" in navigator) {
+							toast.success("onblur VK API is supported!");
+							const { x, y, width, height } =
+								navigator.virtualKeyboard!.boundingRect;
+							toast.success(
+								`x: ${x}, y: ${y}, width: ${width}, height: ${height}`,
+								{
+									position: "top-right",
+								},
+							);
+						} else {
+							toast.success("VirtualKeyboard API is not supported");
+						}
 
 					}}
 					onFocus={() => {
 						if ("virtualKeyboard" in navigator) {
-							toast.success("VirtualKeyboard API is supported!");
+							toast.success("onfocus VK API is supported!");
 							const { x, y, width, height } =
 								navigator.virtualKeyboard!.boundingRect;
 							toast.success(
