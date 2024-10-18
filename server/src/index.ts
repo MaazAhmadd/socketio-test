@@ -82,9 +82,10 @@ connectDB().then(() => {
 	app.use(errorHandler);
 
 	// server.listen(3000, "0.0.0.0", () =>
-	server.listen(port, () =>
-		logger.info(`server running at http://localhost:${port}`),
-	);
+	server.listen(port, () => {
+		logger.info(`server running at http://localhost:${port}`);
+		console.log(`server running at http://localhost:${port}`);
+	});
 });
 
 module.exports = app;
