@@ -53,7 +53,7 @@ const RoomPage = () => {
 	const playerRef = useRef<ReactPlayer | null>(null);
 	const { exitFullscreen } = useFullscreen();
 	const { data: currentUser } = useGetCurrentUser();
-
+	const { width } = useWindowSize();
 	const { setConnected, setRoomJoinDialogShown, isFullscreen, keyboardHeight } =
 		useGlobalStore((s) => ({
 			setConnected: s.setConnected,
@@ -72,6 +72,7 @@ const RoomPage = () => {
 		setMutedMembers,
 		setMics,
 		loading,
+		currentLeader,
 		setLoading,
 		setPlayerStats,
 		setRoomSettings,
@@ -90,7 +91,9 @@ const RoomPage = () => {
 		setPlayerStats: s.setPlayerStats,
 		setRoomSettings: s.setRoomSettings,
 		resetRoomState: s.resetRoomState,
+		currentLeader: s.roomData?.activeMembersList![0],
 	}));
+
 	const {
 		url,
 		playing,
@@ -195,6 +198,7 @@ const RoomPage = () => {
 		// console.log("[socket connect_error] connect_error: ", err);
 		toast.error("connect_error: " + err.message);
 		setConnected(false);
+		setInitialSync(false);
 		// navigate("/home");
 	}
 	function onActiveMemberListUpdate(data: string[]) {
@@ -292,6 +296,13 @@ const RoomPage = () => {
 			}
 		};
 	}, []);
+	useEffect(() => {
+		if (!currentUser) return;
+		if (!currentLeader) return;
+		if (currentLeader === currentUser._id) {
+			setControls(true);
+		}
+	}, [currentLeader, currentUser]);
 
 	useEffect(() => {
 		const initialSync = usePlayerStore.getState().initialSync;
@@ -328,6 +339,7 @@ const RoomPage = () => {
 	if (!currentUser || !roomData) {
 		return <RoomLoading />;
 	}
+	const mobileView = width <= screenBreakpoints.md;
 
 	return (
 		<>
@@ -339,11 +351,14 @@ const RoomPage = () => {
 			<ConnectionStatus />
 			<div className="lg:flex lg:flex-row-reverse">
 				<div className="w-auto lg:w-[30svw]">
-					<div className="h-[100svh]">{MemoizedChat}</div>
+					<div className="h-[100svh] lg:border-0 lg:border-muted lg:border-l">
+						{MemoizedChat}
+					</div>
 					<div
 						className={cn(
 							"fixed top-0 z-10 flex h-[40px] w-full border-muted border-b bg-primary-foreground lg:h-[45px] lg:w-[30svw]",
 							playerModalOpen && keyboardHeight > 100 && "hidden lg:flex",
+							"lg:border-0 lg:border-muted lg:border-l lg:border-b",
 						)}
 					>
 						<RoomButtons
@@ -359,7 +374,7 @@ const RoomPage = () => {
 					)}
 				>
 					<VideoPlayer
-						screen={"mobile"}
+						screen={mobileView ? "mobile" : "desktop"}
 						ref={playerRef}
 						playerRef={playerRef}
 					/>

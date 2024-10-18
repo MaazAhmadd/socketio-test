@@ -120,6 +120,7 @@ const initialPlayerState: PlayerStoreInitialState = {
 	pauseDelayTimeout: null,
 	playerModalOpen: true,
 	controlsJustChanged: false,
+	isPlayerFullscreen: false,
 };
 
 export const usePlayerStore = create<PlayerStore>((set) => ({
@@ -145,6 +146,8 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
 	setPlayerModalOpen: (playerModalOpen: boolean) => set({ playerModalOpen }),
 	setControlsJustChanged: (controlsJustChanged: boolean) =>
 		set({ controlsJustChanged }),
+	setIsPlayerFullscreen: (isPlayerFullscreen: boolean) =>
+		set({ isPlayerFullscreen }),
 	resetPlayerState: () => set({ ...initialPlayerState }),
 }));
 
@@ -205,6 +208,7 @@ interface PlayerStoreInitialState {
 	pauseDelayTimeout: NodeJS.Timeout | null;
 	playerModalOpen: boolean;
 	controlsJustChanged: boolean;
+	isPlayerFullscreen: boolean;
 }
 interface PlayerStore extends PlayerStoreInitialState {
 	setUrl: (url: string | undefined) => void;
@@ -226,5 +230,6 @@ interface PlayerStore extends PlayerStoreInitialState {
 	setPauseDelayTimeout: (pauseDelayTimeout: NodeJS.Timeout | null) => void;
 	setPlayerModalOpen: (playerModalOpen: boolean) => void;
 	setControlsJustChanged: (controlsJustChanged: boolean) => void;
+	setIsPlayerFullscreen: (isPlayerFullscreen: boolean) => void;
 	resetPlayerState: () => void;
 }

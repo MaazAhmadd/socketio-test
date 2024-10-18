@@ -23,6 +23,7 @@ import { BsPersonFillAdd } from "react-icons/bs";
 type Props = {
 	screen: "mobile" | "desktop";
 };
+const maxSelections = 100;
 export function RoomInviteDialog({ screen }: Props) {
 	const [selectedInvitees, setSelectedInvitees] = useState<string[]>([]);
 	const { data: currentUser } = useGetCurrentUser();
@@ -34,7 +35,7 @@ export function RoomInviteDialog({ screen }: Props) {
 					<BsPersonFillAdd />
 				</Button>
 			</DialogTrigger>
-			<DialogContent className="flex h-[min(550px,65svh)] max-w-[min(550px,90svw)] flex-col justify-between gap-0">
+			<DialogContent className="flex h-[max(550px,65svh)] max-w-[min(550px,90svw)] flex-col justify-between gap-0">
 				<div className="flex flex-col">
 					<DialogHeader>
 						<DialogTitle className="text-center">Invite</DialogTitle>
@@ -62,6 +63,7 @@ export function RoomInviteDialog({ screen }: Props) {
 												);
 											}
 										}}
+										disabled={selectedInvitees.length >= maxSelections}
 										checked={selectedInvitees.includes(_id)}
 									/>
 								))}
@@ -90,6 +92,7 @@ export function RoomInviteDialog({ screen }: Props) {
 													);
 												}
 											}}
+											disabled={selectedInvitees.length >= maxSelections}
 											checked={selectedInvitees.includes(_id)}
 										/>
 									))}
@@ -119,10 +122,12 @@ const InviteListItem = ({
 	_id,
 	onCheckedChange,
 	checked,
+	disabled,
 }: {
 	_id: string;
 	onCheckedChange: (checked: boolean) => void;
 	checked: boolean;
+	disabled: boolean;
 }) => {
 	const { data: currentUser } = useGetCurrentUser();
 	const { data: user } = useGetNormalUser(_id);
@@ -131,7 +136,7 @@ const InviteListItem = ({
 		currentUser &&
 		user && (
 			<div
-				className="mb-4 flex items-center justify-between gap-4"
+				className="mb-4 flex cursor-pointer items-center justify-between gap-4"
 				onClick={() => onCheckedChange(!checked)}
 			>
 				<div className="flex items-center gap-4">
@@ -146,7 +151,11 @@ const InviteListItem = ({
 				</div>
 
 				<div className="pr-4">
-					<Checkbox checked={checked} onCheckedChange={onCheckedChange} />
+					<Checkbox
+						checked={checked}
+						onCheckedChange={onCheckedChange}
+						disabled={!checked &&disabled}
+					/>
 				</div>
 			</div>
 		)

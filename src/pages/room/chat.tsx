@@ -195,7 +195,9 @@ export function Chat() {
 			<ScrollArea
 				hideScrollBar
 				viewportRef={scrollAreaRef}
-				className={cn("h-[100svh] bg-primary-foreground")}
+				className={cn(
+					"h-[100svh] bg-primary-foreground",
+				)}
 				style={{ bottom: `${keyboardHeight > 100 ? keyboardHeight : 0}px` }}
 			>
 				<div className={cn("flex flex-col justify-end")}>

@@ -9,7 +9,7 @@ import { socket } from "@/socket";
 import { Button } from "@/components/ui/button";
 import { FaForward, FaBackward, FaSyncAlt } from "react-icons/fa";
 import { BsPersonFillAdd } from "react-icons/bs";
-import { FaHeart, FaRegHeart } from "react-icons/fa6";
+import { FaHeart, FaRegHeart, FaPlay, FaPause } from "react-icons/fa6";
 import { IoPlaySkipForward, IoPlaySkipForwardOutline } from "react-icons/io5";
 import { RiFullscreenFill, RiFullscreenExitFill } from "react-icons/ri";
 import { FaShareAlt } from "react-icons/fa";
@@ -17,6 +17,7 @@ import { OnProgressProps } from "react-player/base";
 import { RoomInviteDialog } from "./room-invite-dialog";
 import screenfull from "screenfull";
 import toast from "react-hot-toast";
+import FullscreenButton from "./fullscreen-button";
 
 type Props = {
 	screen: "mobile" | "desktop";
@@ -56,6 +57,7 @@ const VideoPlayer = React.forwardRef<
 		pauseDelayTimeout,
 		playerModalOpen,
 		controlsJustChanged,
+		isPlayerFullscreen,
 		setUrl,
 		setPip,
 		setControls,
@@ -75,6 +77,7 @@ const VideoPlayer = React.forwardRef<
 		setPauseDelayTimeout,
 		setPlayerModalOpen,
 		setControlsJustChanged,
+		setIsPlayerFullscreen,
 	} = usePlayerStore((s) => ({
 		url: s.url,
 		pip: s.pip,
@@ -94,6 +97,7 @@ const VideoPlayer = React.forwardRef<
 		pauseDelayTimeout: s.pauseDelayTimeout,
 		playerModalOpen: s.playerModalOpen,
 		controlsJustChanged: s.controlsJustChanged,
+		isPlayerFullscreen: s.isPlayerFullscreen,
 		setUrl: s.setUrl,
 		setPip: s.setPip,
 		setControls: s.setControls,
@@ -112,6 +116,7 @@ const VideoPlayer = React.forwardRef<
 		setPauseDelayTimeout: s.setPauseDelayTimeout,
 		setPlayerModalOpen: s.setPlayerModalOpen,
 		setControlsJustChanged: s.setControlsJustChanged,
+		setIsPlayerFullscreen: s.setIsPlayerFullscreen,
 	}));
 	const { data: currentUser } = useGetCurrentUser();
 
@@ -227,8 +232,12 @@ const VideoPlayer = React.forwardRef<
 					transition: "transform .5s cubic-bezier(.32, .72, 0, 1)",
 				}}
 			>
-				<div ref={containerRef} className={cn("w-full bg-red-800")}>
-					<div className="react-player relative pt-[min(56.25%,100vh)]">
+				<div ref={containerRef} className={cn("w-full")}>
+					<div className="react-player relative select-none pt-[min(56.25%,100vh)]">
+						{/* {screenfull.isFullscreen && (
+							<FullscreenButton playerRef={playerRef} />
+							)} */}
+						<FullscreenButton />
 						{!roomJoinDialogShown && (
 							<ReactPlayer
 								ref={ref}
@@ -267,10 +276,12 @@ const VideoPlayer = React.forwardRef<
 								config={{
 									youtube: {
 										playerVars: {
-											/*controls: 1,*/ autoplay: 1,
+											// controls: 1,
+											autoplay: 1,
 											fs: 0,
 											playsinline: 1,
 											disablekb: 1,
+											// origin: "http://localhost:5173",
 										},
 									},
 								}}
@@ -348,7 +359,30 @@ const VideoPlayer = React.forwardRef<
 						>
 							<FaBackward />
 						</Button>
-
+						<Button
+							disabled={!controls}
+							size={screen === "mobile" ? "sm" : "default"}
+							variant={"ghost"}
+							onClick={() => {
+								if (playing) {
+									if (currentUser?._id === currentLeader) {
+										socket.emit("playPauseVideo", 0); // 1 play 0 pause
+									} else {
+										setUserIntervention(true);
+									}
+									setPlaying(false);
+								} else {
+									if (currentUser?._id === currentLeader) {
+										socket.emit("playPauseVideo", 1); // 1 play 0 pause
+									} else {
+										setUserIntervention(true);
+									}
+									setPlaying(true);
+								}
+							}}
+						>
+							{playing ? <FaPause /> : <FaPlay />}
+						</Button>
 						<Button
 							disabled={!controls}
 							size={screen === "mobile" ? "sm" : "default"}
@@ -367,7 +401,8 @@ const VideoPlayer = React.forwardRef<
 						>
 							<FaForward />
 						</Button>
-						<Button
+
+						{/* <Button
 							variant={"ghost"}
 							size={screen === "mobile" ? "sm" : "default"}
 							onClick={() => {
@@ -375,12 +410,13 @@ const VideoPlayer = React.forwardRef<
 								const player = document.querySelector(".react-player");
 								if (player) {
 									screenfull.request(player);
+									setIsPlayerFullscreen(true);
 								}
 							}}
 						>
-							{/* <RiFullscreenExitFill /> */}
+							 <RiFullscreenExitFill /> 
 							<RiFullscreenFill />
-						</Button>
+						</Button> */}
 					</div>
 				</div>
 			</div>

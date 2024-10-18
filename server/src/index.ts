@@ -31,11 +31,12 @@ const allowedHeaders = [
 	"x-auth-token",
 	"ngrok-skip-browser-warning",
 ];
+
 app.use(express.json());
 app.use(
 	cors({
 		allowedHeaders,
-		// origin: "*",
+		origin: "*",
 	}),
 );
 
@@ -45,9 +46,9 @@ const io = new IOSERVER<
 	InterServerEvents
 >(server, {
 	cors: {
-		// origin: "*",
-		// methods: ["GET", "POST"],
-		// credentials: true,
+		origin: "*",
+		methods: ["GET", "POST"],
+		credentials: true,
 		allowedHeaders,
 	},
 });
