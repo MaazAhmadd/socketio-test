@@ -3,6 +3,9 @@ import { getHexColorFromString, cn } from "@/lib/utils";
 import { useRoomStore } from "@/store";
 import { CgCrown } from "react-icons/cg";
 import ReactCountryFlag from "react-country-flag";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CircleFlag } from "react-circle-flags";
+
 const MemberIcon = ({
 	_id,
 	className,
@@ -29,20 +32,20 @@ const MemberIcon = ({
 		lg: "top-[-17px] left-[2px] size-[26px] rotate-[-24deg]",
 	};
 	const flagClassesMap = {
-		xs: "top-[24px] left-[28px] size-4",
-		sm: "top-[24px] left-[28px] size-4",
-		md: "top-[33px] left-[36px] size-7",
-		lg: "top-[38px] left-[40px] size-10",
+		xs: "size-[15px]",
+		sm: "size-4",
+		md: "size-[22px]",
+		lg: "size-6",
 	};
 	const randomColor = getHexColorFromString(_id);
 	const { data: user } = useGetNormalUser(_id);
 
-	const { data: currentUser,error } = useGetCurrentUser();
-	
+	const { data: currentUser, error } = useGetCurrentUser();
+
 	const { activeMembersList } = useRoomStore((s) => ({
 		activeMembersList: s.roomData?.activeMembersList,
 	}));
-	
+
 	const isFriend =
 		currentUser?._id === _id || currentUser?.friends.includes(_id);
 
@@ -51,11 +54,27 @@ const MemberIcon = ({
 			{crown && activeMembersList && activeMembersList[0] === _id && (
 				<CgCrown className={cn("absolute", crownClassesMap[_size])} />
 			)}
-			{flag && user && (
+			{/* {flag && user && (
 				<ReactCountryFlag
 					countryCode={user.country}
 					className={cn("absolute opacity-80", flagClassesMap[_size])}
 				/>
+			)} */}
+			{/* {flag && user && (
+				<Avatar className={cn("absolute opacity-80", flagClassesMap[_size])}>
+					<AvatarImage
+						src={`https://flagsapi.com/${user.country}/flat/64.png`}
+						alt={user.country}
+					/>
+					<AvatarFallback>{user.country}</AvatarFallback>
+				</Avatar>
+			)} */}
+			{flag && user && (
+				<CircleFlag
+					className={cn("absolute top-[55%] left-[70%] opacity-90", flagClassesMap[_size])}
+					countryCode={String(user.country).toLowerCase()}
+					alt={user.country} 
+				/> 
 			)}
 			{user &&
 				(user.pfp ? (

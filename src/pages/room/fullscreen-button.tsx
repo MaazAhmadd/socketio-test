@@ -44,10 +44,10 @@ const FullscreenButton = () => {
 				variant={"outline"}
 				size={"sm"}
 				className={cn(
-					"bg-black transition-all duration-500 ease-in-out hover:bg-black",
+					"bg-black transition-all duration-300 ease-in-out hover:bg-black hover:opacity-100",
 					"h-[38px] w-[69px]",
 					!isPlayerFullscreen && "h-[30px] w-[47px] lg:h-[38px] lg:w-[69px]",
-					!isBlack && "opacity-80",
+					!isBlack && "opacity-100",
 					playing && "opacity-40",
 					// visible ? "opacity-100" : "pointer-events-none opacity-0",
 				)}
