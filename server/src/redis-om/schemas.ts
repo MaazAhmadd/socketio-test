@@ -35,9 +35,9 @@ const roomSchema = new Schema("Room", {
 	voteQueue: { type: "string[]" }, // ["member1","member2"] -> ["member2,member3","member1"]
 });
 
-// export const memberRepository = new Repository<Member>(memberSchema, redis);
 
 export const roomRepository = new Repository<Room>(roomSchema, redis);
+// export const memberRepository = new Repository<Member>(memberSchema, redis);
 
 const redisSchemas = {
 	// member: memberRepository,

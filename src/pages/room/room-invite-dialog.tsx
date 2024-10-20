@@ -17,8 +17,11 @@ import {
 } from "@/components/ui/dialog";
 import { useGetCurrentUser, useGetNormalUser } from "@/hooks/user-hooks";
 import { socket } from "@/socket";
-import { useState } from "react";
+import React, { useState } from "react";
 import { BsPersonFillAdd } from "react-icons/bs";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Props = {
 	screen: "mobile" | "desktop";
@@ -31,31 +34,40 @@ export function RoomInviteDialog({ screen }: Props) {
 
 	const handleInviteSelection = (checked: boolean, _id: string) => {
 		setSelectedInvitees((prev) =>
-			checked ? [...prev, _id] : prev.filter((id) => id !== _id)
+			checked ? [...prev, _id] : prev.filter((id) => id !== _id),
 		);
 	};
 
-	const inviteFriends = currentUser?.friends?.map((_id) => (
-		<InviteListItem
-			key={_id}
-			_id={_id}
-			onCheckedChange={(checked) => handleInviteSelection(checked, _id)}
-			checked={selectedInvitees.includes(_id)}
-			disabled={selectedInvitees.length >= MAX_SELECTIONS}
-		/>
-	));
-
-	const inviteRecents = currentUser?.recentUsers
-		?.filter((_id) => ![...currentUser.friends, currentUser._id].includes(_id))
-		.map((_id) => (
+	const friends = currentUser?.friends!;
+	const inviteFriends = friends?.map((_id, i) => (
+		<React.Fragment key={_id}>
 			<InviteListItem
-				key={_id}
 				_id={_id}
 				onCheckedChange={(checked) => handleInviteSelection(checked, _id)}
 				checked={selectedInvitees.includes(_id)}
 				disabled={selectedInvitees.length >= MAX_SELECTIONS}
 			/>
-		));
+			{friends.length > 1 && i < friends.length - 1 && (
+				<Separator className={cn("my-1")} />
+			)}
+		</React.Fragment>
+	));
+	const filteredRecents = currentUser?.recentUsers?.filter(
+		(_id) => ![...currentUser.friends, currentUser._id].includes(_id),
+	)!;
+	const inviteRecents = filteredRecents.map((_id, i) => (
+		<React.Fragment key={_id}>
+			<InviteListItem
+				_id={_id}
+				onCheckedChange={(checked) => handleInviteSelection(checked, _id)}
+				checked={selectedInvitees.includes(_id)}
+				disabled={selectedInvitees.length >= MAX_SELECTIONS}
+			/>
+			{filteredRecents.length > 1 && i < filteredRecents.length - 1 && (
+				<Separator className={cn("my-1")} />
+			)}
+		</React.Fragment>
+	));
 
 	const handleInvite = () => {
 		socket.emit("sendInvites", [...new Set(selectedInvitees)]);
@@ -74,17 +86,52 @@ export function RoomInviteDialog({ screen }: Props) {
 					<DialogHeader>
 						<DialogTitle className="text-center">Invite</DialogTitle>
 					</DialogHeader>
-					<Accordion type="single" collapsible className="w-full" defaultValue="friends">
+					<Accordion
+						type="single"
+						collapsible
+						className="w-full"
+						defaultValue="friends"
+					>
 						<AccordionItem value="friends">
 							<AccordionTrigger>Friends</AccordionTrigger>
-							<AccordionContent className="max-h-[300px] overflow-y-auto">
-								{inviteFriends?.length ? inviteFriends : <p>No friends</p>}
+							<AccordionContent>
+								{inviteFriends?.length ? (
+									<ScrollArea
+										className={cn(
+											"max-h-[300px]",
+											inviteFriends.length == 1 && "h-[60px]",
+											inviteFriends.length == 2 && "h-[120px]",
+											inviteFriends.length == 3 && "h-[180px]",
+											inviteFriends.length == 4 && "h-[240px]",
+											inviteFriends.length >= 5 && "h-[300px]",
+										)}
+									>
+										{inviteFriends}
+									</ScrollArea>
+								) : (
+									<p>No friends</p>
+								)}
 							</AccordionContent>
 						</AccordionItem>
 						<AccordionItem value="recents">
 							<AccordionTrigger>Recents</AccordionTrigger>
-							<AccordionContent className="max-h-[300px] overflow-y-auto">
-								{inviteRecents?.length ? inviteRecents : <p>No recent users</p>}
+							<AccordionContent>
+								{inviteRecents?.length ? (
+									<ScrollArea
+										className={cn(
+											"max-h-[300px]",
+											inviteRecents.length == 1 && "h-[60px]",
+											inviteRecents.length == 2 && "h-[120px]",
+											inviteRecents.length == 3 && "h-[180px]",
+											inviteRecents.length == 4 && "h-[240px]",
+											inviteRecents.length >= 5 && "h-[300px]",
+										)}
+									>
+										{inviteRecents}
+									</ScrollArea>
+								) : (
+									<p>No recent users</p>
+								)}
 							</AccordionContent>
 						</AccordionItem>
 					</Accordion>
@@ -119,7 +166,10 @@ const InviteListItem = ({
 	if (!user) return null;
 
 	return (
-		<div className="mb-4 flex cursor-pointer items-center justify-between gap-4" onClick={() => onCheckedChange(!checked)}>
+		<div
+			className="mb-4 flex cursor-pointer items-center justify-between gap-4"
+			onClick={() => onCheckedChange(!checked)}
+		>
 			<div className="flex items-center gap-4">
 				<MemberIcon _id={_id} _size="sm" />
 				<div className="flex flex-col items-start">
@@ -127,8 +177,12 @@ const InviteListItem = ({
 					<span className="text-gray-400">@{user.handle}</span>
 				</div>
 			</div>
-			<div className="pr-4">
-				<Checkbox checked={checked} onCheckedChange={onCheckedChange} disabled={!checked && disabled} />
+			<div className="pr-6">
+				<Checkbox
+					checked={checked}
+					onCheckedChange={onCheckedChange}
+					disabled={!checked && disabled}
+				/>
 			</div>
 		</div>
 	);

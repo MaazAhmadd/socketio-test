@@ -21,9 +21,7 @@ router.get(
 	authUser,
 	forwardError(async function (req, res) {
 		// Pagination setup
-		const pageNumber = Number.isNaN(Number(req.query.pageNumber))
-			? 1
-			: Number(req.query.pageNumber);
+		const pageNumber = Number(req.query.pageNumber) || 1
 		const pageSize = 20;
 		const offset = (pageNumber - 1) * pageSize;
 

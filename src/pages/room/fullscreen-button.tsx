@@ -44,7 +44,7 @@ const FullscreenButton = () => {
 				variant={"outline"}
 				size={"sm"}
 				className={cn(
-					"bg-black transition-all duration-300 ease-in-out hover:bg-black hover:opacity-100",
+					"bg-black transition-all duration-300 ease-in-out",
 					"h-[38px] w-[69px]",
 					!isPlayerFullscreen && "h-[30px] w-[47px] lg:h-[38px] lg:w-[69px]",
 					!isBlack && "opacity-100",

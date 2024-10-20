@@ -34,7 +34,7 @@ export default function socketServer(io: CustomIO) {
 	io.use(async (socket: CustomSocket, next) => {
 		try {
 			// const token = socket.handshake?.query?.token;
-			const token = socket.handshake.auth.token;	
+			const token = socket.handshake.auth.token;
 			logger.info(`socket-middleware, token: ${token}`);
 
 			if (typeof token !== "string" || !token) {
@@ -132,93 +132,91 @@ export default function socketServer(io: CustomIO) {
 			}
 			kickMember(targetMember);
 		});
-		socket.on(
-			"updateRoomSettings",
-			async (data: [0 | 1 | 2, 0 | 1 | 2 | 3]) => {
-				// type, 0 = privacy, 1 = playback, 2 = roomMic
-				// privacy: number; // public(0), private(1), friends(2)
-				// playback: number; // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
-				// roomMic: number; // on(1), off(0)
-				const _map: Record<string, number> = {
-					// refer to chat message types
-					"0,0": 7,
-					"0,1": 8,
-					"0,2": 9,
-					"1,0": 10,
-					"1,1": 11,
-					"1,2": -1,
-					"1,3": 12,
-					"2,0": 15,
-					"2,1": 14,
-				};
-				const [reqtype, updatetype] = data;
-				const roomId = socket.roomId;
-				if (!roomId) {
-					return socket.emit("stateError", "roomId not found");
+		socket.on("updateRoomSettings", async (data) => {
+			// type, 0 = privacy, 1 = playback, 2 = roomMic
+			// privacy: number; // public(0), private(1), friends(2)
+			// playback: number; // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
+			// roomMic: number; // on(1), off(0)
+			const req: [0 | 1 | 2, 0 | 1 | 2 | 3] = data;
+			const _map: Record<string, number> = {
+				// refer to chat message types
+				"0,0": 7,
+				"0,1": 8,
+				"0,2": 9,
+				"1,0": 10,
+				"1,1": 11,
+				"1,2": -1,
+				"1,3": 12,
+				"2,0": 15,
+				"2,1": 14,
+			};
+			const [reqtype, updatetype] = req;
+			const roomId = socket.roomId;
+			if (!roomId) {
+				return socket.emit("stateError", "roomId not found");
+			}
+			const room = await roomRepository.fetch(roomId);
+			if (!room) {
+				return socket.emit("stateError", "room not found");
+			}
+			if (!room.activeMembersList || room.activeMembersList.length < 1) {
+				return socket.emit("stateError", "Empty room");
+			}
+			if (room.activeMembersList[0] !== socket.user?._id) {
+				return socket.emit("stateError", "You are not the leader");
+			}
+			if (reqtype === 0) {
+				// 0 = privacy
+				room.privacy = updatetype;
+				if (updatetype === 1) {
+					room.invitedMembersList = [
+						...new Set([
+							...room.invitedMembersList!,
+							...room.activeMembersList!,
+						]),
+					];
 				}
-				const room = await roomRepository.fetch(roomId);
-				if (!room) {
-					return socket.emit("stateError", "room not found");
+			} else if (reqtype === 1) {
+				// 1 = playback
+				room.playback = updatetype;
+			} else if (reqtype === 2) {
+				// 2 = roomMic
+				room.roomMic = updatetype;
+				if (updatetype === 1) {
+					room.membersJoinedList!.forEach((id, i) => {
+						if (i === 0) {
+							room.membersJoinedList![i] = `${id},1`;
+							return;
+						}
+						const [key, value] = id.split(",");
+						room.membersJoinedList![i] = `${key},1`;
+					});
+				} else if (updatetype === 0) {
+					room.membersJoinedList!.forEach((id, i) => {
+						if (i === 0) {
+							room.membersJoinedList![i] = `${id},1`;
+							return;
+						}
+						const [key, value] = id.split(",");
+						room.membersJoinedList![i] = `${key},0`;
+					});
 				}
-				if (!room.activeMembersList || room.activeMembersList.length < 1) {
-					return socket.emit("stateError", "Empty room");
-				}
-				if (room.activeMembersList[0] !== socket.user?._id) {
-					return socket.emit("stateError", "You are not the leader");
-				}
-				if (reqtype === 0) {
-					// 0 = privacy
-					room.privacy = updatetype;
-					if (updatetype === 1) {
-						room.invitedMembersList = [
-							...new Set([
-								...room.invitedMembersList!,
-								...room.activeMembersList!,
-							]),
-						];
-					}
-				} else if (reqtype === 1) {
-					// 1 = playback
-					room.playback = updatetype;
-				} else if (reqtype === 2) {
-					// 2 = roomMic
-					room.roomMic = updatetype;
-					if (updatetype === 1) {
-						room.membersJoinedList!.forEach((id, i) => {
-							if (i === 0) {
-								room.membersJoinedList![i] = `${id},1`;
-								return;
-							}
-							const [key, value] = id.split(",");
-							room.membersJoinedList![i] = `${key},1`;
-						});
-					} else if (updatetype === 0) {
-						room.membersJoinedList!.forEach((id, i) => {
-							if (i === 0) {
-								room.membersJoinedList![i] = `${id},1`;
-								return;
-							}
-							const [key, value] = id.split(",");
-							room.membersJoinedList![i] = `${key},0`;
-						});
-					}
-				}
+			}
 
-				await roomRepository.save(room);
-				sendActiveMemberListUpdate(room, roomId);
-				io.in(roomId).emit("roomSettings", [
-					room.privacy,
-					room.playback,
-					room.roomMic,
-				]);
-				io.in(roomId).emit("message", [
-					_map[String(data)],
-					"system",
-					Date.now(),
-					"",
-				]);
-			},
-		);
+			await roomRepository.save(room);
+			sendActiveMemberListUpdate(room, roomId);
+			io.in(roomId).emit("roomSettings", [
+				room.privacy,
+				room.playback,
+				room.roomMic,
+			]);
+			io.in(roomId).emit("message", [
+				_map[String(req)],
+				"system",
+				Date.now(),
+				"",
+			]);
+		});
 		socket.on("sendInvites", async (invitees: string[]) => {
 			if (!invitees) {
 				socket.emit("stateError", "invitees not provided");
