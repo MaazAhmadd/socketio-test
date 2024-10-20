@@ -21,7 +21,7 @@ import {
 	RecentVideosDialog,
 	ResultCard,
 	SelectSearchPlatform,
-} from "../home";
+} from "@/pages/home";
 export type Tabs = "public" | "invited" | "friends" | "createRoom";
 
 export function RoomPinDialog() {
