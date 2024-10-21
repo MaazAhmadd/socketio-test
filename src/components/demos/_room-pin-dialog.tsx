@@ -93,7 +93,7 @@ export function RoomPinDialog() {
 						</Button>
 					</form>
 					<div className="mx-4 mt-4 flex items-end gap-4 md:mx-10">
-						<SelectSearchPlatform setSelectedValue={setSelectedPlatform} />
+						{/* <SelectSearchPlatform setSelectedValue={setSelectedPlatform} /> */}
 						<Label className="sr-only" htmlFor="searchQuery">
 							Search
 						</Label>
