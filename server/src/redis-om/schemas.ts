@@ -19,7 +19,7 @@ const roomSchema = new Schema("Room", {
 	privacy: { type: "number" }, // public(0), private(1), friends(2)
 	playback: { type: "number" }, // voting(0), justPlay(1), autoPlay(2), leaderChoice(3)
 	roomMic: { type: "number" }, // on(1), off(0)
-	membersJoinedList: { type: "string[]" },
+	membersJoinedList: { type: "string[]" }, // ["mongoId1,mic1","mongoId2,mic2"]
 	activeMembersList: { type: "string[]" },
 	invitedMembersList: { type: "string[]" },
 	activeMembersCount: { type: "number", sortable: true },
@@ -31,10 +31,8 @@ const roomSchema = new Schema("Room", {
 	videoUrl: { type: "string" },
 	playerStats: { type: "number[]" }, // [duration,progress,lastChanged,status,type]
 	skips: { type: "number" },
-	pinQueue: { type: "string[]" }, //  ["url1","url2"] -> ["url2","url1"]
-	voteQueue: { type: "string[]" }, // ["member1","member2"] -> ["member2,member3","member1"]
+	pins: { type: "string[]" }, // [[voter1,voter2,pin1source,type],[voter3,pin2source,type]] // last 2 items are source and type
 });
-
 
 export const roomRepository = new Repository<Room>(roomSchema, redis);
 // export const memberRepository = new Repository<Member>(memberSchema, redis);

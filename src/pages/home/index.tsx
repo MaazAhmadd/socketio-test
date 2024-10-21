@@ -41,7 +41,7 @@ import { FieldValues, useForm } from "react-hook-form";
 import { z } from "zod";
 import { FaYoutube } from "react-icons/fa";
 import { TiPin } from "react-icons/ti";
-import { useYoutubeInfo } from "@/hooks/video-player-hooks";
+import { useVideoInfo } from "@/hooks/video-player-hooks";
 
 export type Tabs = "public" | "invited" | "friends" | "createRoom";
 
@@ -226,7 +226,7 @@ const RoomList = ({
 					{rooms &&
 						rooms.length > 0 &&
 						// [...new Array(20).fill(0).map((_, i) => rooms[0])].map((room) => {
-						rooms.map((room) => { 
+						rooms.map((room) => {
 							return (
 								<RoomCard
 									key={room.entityId}
@@ -248,6 +248,7 @@ const RoomList = ({
 
 const CreateRoom = () => {
 	const [url, setUrl] = useState("");
+	const [srcType, setSrcType] = useState<number>(0); // 0 for youtube
 	const schema = z.object({
 		url: z
 			.string()
@@ -262,7 +263,10 @@ const CreateRoom = () => {
 	} = useForm<FormData>({
 		resolver: zodResolver(schema),
 	});
-	const { info, error, setError, isLoading, player } = useYoutubeInfo(url);
+	const { info, error, setError, isLoading, player } = useVideoInfo(
+		url,
+		srcType,
+	); // 0 for youtube
 
 	const {
 		data: room,
@@ -292,13 +296,14 @@ const CreateRoom = () => {
 			</p>
 			<form
 				onSubmit={handleSubmit(onSubmitUrlForm)}
-				className="mx-4 mt-4 flex items-center gap-4 md:mx-10"
+				className="mx-2 mt-3 flex items-center gap-3 md:mx-10"
 			>
 				{/* <Button variant={"secondary"}>Youtube</Button> */}
-				<FaYoutube className="h-9 w-14 text-[#FF0000]" />
+				{/* <FaYoutube className="h-9 w-14 text-[#FF0000]" />
 				<Label className="sr-only" htmlFor="searchquery">
 					Play Using Url
-				</Label>
+				</Label> */}
+				<SelectSearchPlatform setSelectedValue={setSrcType} />
 				<Input
 					{...register("url")}
 					id="searchquery"
@@ -347,21 +352,20 @@ export function trimString(str: string, max = 40) {
 export const SelectSearchPlatform = ({
 	setSelectedValue,
 }: {
-	setSelectedValue: (v: any) => void;
+	setSelectedValue: (v: number) => void;
 }) => {
-	const handleChange = (value: any) => {
-		setSelectedValue(value);
+	const handleChange = (value: string) => {
+		setSelectedValue(Number(value));
 	};
 	return (
-		<Select defaultValue="youtube" onValueChange={handleChange}>
+		<Select defaultValue="0" onValueChange={handleChange}>
 			<SelectTrigger className="w-min">
 				<SelectValue placeholder="Select platform" />
 			</SelectTrigger>
 			<SelectContent>
 				<SelectGroup className="">
-					<SelectItem value="youtube">Youtube</SelectItem>
-					<SelectItem value="netflix">Netflix</SelectItem>
-					<SelectItem value="prime">Prime</SelectItem>
+					<SelectItem value="0">Youtube</SelectItem>
+					<SelectItem value="1">Custom</SelectItem>
 				</SelectGroup>
 			</SelectContent>
 		</Select>
@@ -455,64 +459,64 @@ export const Spinner = ({ className }: { className?: string }) => {
 	);
 };
 
-const SearchYt = () => {
-	const [searchQuery, setSearchQuery] = useState("");
-	const [selectedPlatform, setSelectedPlatform] =
-		useState<SupportedPlatforms>("youtube");
-	// const navigate = useNavigate();
-	const {
-		data: room,
-		mutate: makeRoom,
-		isPending: creatingRoom,
-	} = useMakeRoom();
+// const SearchYt = () => {
+// 	const [searchQuery, setSearchQuery] = useState("");
+// 	const [selectedPlatform, setSelectedPlatform] =
+// 		useState<SupportedPlatforms>("youtube");
+// 	// const navigate = useNavigate();
+// 	const {
+// 		data: room,
+// 		mutate: makeRoom,
+// 		isPending: creatingRoom,
+// 	} = useMakeRoom();
 
-	// const { setRoomData, setMics } = useRoomStore((s) => ({
-	// 	setRoomData: s.setRoomData,
-	// 	setMics: s.setMics,
-	// }));
-	const debouncedSearchQuery = useDebounce(searchQuery, 1000);
+// 	// const { setRoomData, setMics } = useRoomStore((s) => ({
+// 	// 	setRoomData: s.setRoomData,
+// 	// 	setMics: s.setMics,
+// 	// }));
+// 	const debouncedSearchQuery = useDebounce(searchQuery, 1000);
 
-	const { data: searchResults, isFetching: isFetchingSearchResults } =
-		useGetSearchResults(searchQuery, debouncedSearchQuery, selectedPlatform);
+// 	const { data: searchResults, isFetching: isFetchingSearchResults } =
+// 		useGetSearchResults(searchQuery, debouncedSearchQuery, selectedPlatform);
 
-	return (
-		<>
-			<div className="mx-4 mt-4 flex items-end gap-4 md:mx-10">
-				<SelectSearchPlatform setSelectedValue={setSelectedPlatform} />
-				<Label className="sr-only" htmlFor="searchQuery">
-					Search
-				</Label>
-				<Input
-					onChange={(e) => {
-						setSearchQuery(e.target.value);
-					}}
-					value={searchQuery}
-					id="handle"
-					className="border-muted-foreground/50"
-					placeholder="Search"
-					type="text"
-					autoCapitalize="none"
-					autoCorrect="off"
-					autoComplete="off"
-					disabled={creatingRoom}
-				/>
-			</div>
-			<div className="mx-4 mt-4 flex flex-wrap justify-center gap-4 overflow-y-hidden md:mx-10">
-				{!isFetchingSearchResults && !searchResults && (
-					<p className="text-pretty px-20 pt-5 pb-20 font-bold capitalize">
-						start typing to search from {selectedPlatform} or select another
-						platform to search from...
-					</p>
-				)}
-				{isFetchingSearchResults && <Spinner />}
-				{!isFetchingSearchResults &&
-					searchResults?.map((r) => {
-						return <ResultCard key={r.ytId} result={r} />;
-					})}
-			</div>
-		</>
-	);
-};
+// 	return (
+// 		<>
+// 			<div className="mx-4 mt-4 flex items-end gap-4 md:mx-10">
+// 				<SelectSearchPlatform setSelectedValue={setSelectedPlatform} />
+// 				<Label className="sr-only" htmlFor="searchQuery">
+// 					Search
+// 				</Label>
+// 				<Input
+// 					onChange={(e) => {
+// 						setSearchQuery(e.target.value);
+// 					}}
+// 					value={searchQuery}
+// 					id="handle"
+// 					className="border-muted-foreground/50"
+// 					placeholder="Search"
+// 					type="text"
+// 					autoCapitalize="none"
+// 					autoCorrect="off"
+// 					autoComplete="off"
+// 					disabled={creatingRoom}
+// 				/>
+// 			</div>
+// 			<div className="mx-4 mt-4 flex flex-wrap justify-center gap-4 overflow-y-hidden md:mx-10">
+// 				{!isFetchingSearchResults && !searchResults && (
+// 					<p className="text-pretty px-20 pt-5 pb-20 font-bold capitalize">
+// 						start typing to search from {selectedPlatform} or select another
+// 						platform to search from...
+// 					</p>
+// 				)}
+// 				{isFetchingSearchResults && <Spinner />}
+// 				{!isFetchingSearchResults &&
+// 					searchResults?.map((r) => {
+// 						return <ResultCard key={r.ytId} result={r} />;
+// 					})}
+// 			</div>
+// 		</>
+// 	);
+// };
 
 export const ResultCard = ({ result }: { result: VideoInfo }) => {
 	// const navigate = useNavigate();
@@ -527,7 +531,10 @@ export const ResultCard = ({ result }: { result: VideoInfo }) => {
 			onClick={() => {
 				makeRoom({ url: result.ytId, duration: Number(result.duration) });
 			}}
-			className="h-[135px] w-[180px] cursor-pointer rounded-sm border border-muted hover:border-muted-foreground"
+			className={cn(
+				"h-[135px] w-[180px] cursor-pointer rounded-sm border border-muted hover:border-muted-foreground",
+				!result.duration && "cursor-not-allowed",
+			)}
 			style={{
 				backgroundImage: `url(${result.thumbnail})`,
 				backgroundSize: "cover",

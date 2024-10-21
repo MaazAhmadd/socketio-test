@@ -36,7 +36,7 @@ const FullscreenButton = () => {
 	return (
 		<div
 			className={cn(
-				"absolute right-0 bottom-0 z-50 flex h-[50px] w-[100px] items-end justify-end pr-1 pb-1",
+				"absolute right-0 bottom-0 z-50 flex h-[50px] w-[80px] items-end justify-end pr-1 pb-1 lg:w-[100px]",
 				!controls && "w-[150px]",
 			)}
 		>

@@ -14,7 +14,13 @@ export type YoutubeInfo = {
 	duration: number | null;
 };
 
-export function useYoutubeInfo(yturl: string) {
+export function useVideoInfo(src: string, vidType: number) {
+	/*
+	vidType
+	0 -> youtube
+	1 -> web/custom
+	
+	*/
 	const [info, setInfo] = useState<YoutubeInfo>({
 		title: "",
 		thumbnail: "",
@@ -23,11 +29,11 @@ export function useYoutubeInfo(yturl: string) {
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 
-	const noembedUrl = `https://noembed.com/embed?url=${yturl}`;
+	const noembedUrl = `https://noembed.com/embed?url=${src}`;
 
 	useEffect(() => {
-		console.log("[useYoutubeInfo] effect yturl: ", yturl);
-		if (!yturl) return;
+		console.log("[useYoutubeInfo] effect yturl: ", src);
+		if (!src) return;
 		const fetchData = async () => {
 			setIsLoading(true);
 			try {
@@ -51,11 +57,11 @@ export function useYoutubeInfo(yturl: string) {
 		};
 
 		fetchData();
-	}, [yturl, noembedUrl]);
+	}, [src, noembedUrl]);
 
 	useEffect(() => {
 		console.log("[useYoutubeInfo] effect isLoading: ", isLoading);
-		if (!yturl) return
+		if (!src) return;
 		const timer = setTimeout(() => {
 			if (isLoading) {
 				setIsLoading(false);
@@ -68,7 +74,7 @@ export function useYoutubeInfo(yturl: string) {
 		return () => clearTimeout(timer);
 	}, [isLoading, error]);
 
-	if (!yturl) {
+	if (!src) {
 		return {
 			info: {
 				title: "",
@@ -86,7 +92,7 @@ export function useYoutubeInfo(yturl: string) {
 		!error &&
 		(!info.duration ? (
 			<ReactPlayer
-				url={yturl}
+				url={src}
 				style={{ display: "none" }}
 				onDuration={(duration: number) => {
 					setIsLoading(false);

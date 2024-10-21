@@ -6,32 +6,36 @@ import ReactCountryFlag from "react-country-flag";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CircleFlag } from "react-circle-flags";
 
+type Props = {
+	_id: string;
+	className?: string;
+	_size?: "vote" | "xs" | "sm" | "md" | "lg";
+	crown?: boolean;
+	flag?: boolean;
+};
 const MemberIcon = ({
 	_id,
 	className,
 	_size = "sm",
 	crown = false,
 	flag = false,
-}: {
-	_id: string;
-	className?: string;
-	_size?: "xs" | "sm" | "md" | "lg";
-	crown?: boolean;
-	flag?: boolean;
-}) => {
+}: Props) => {
 	const sizeMap = {
+		vote: "!size-[27px]",
 		xs: "!size-[36px]",
 		sm: "!size-[42px]",
 		md: "!size-[56px]",
 		lg: "!size-[65px]",
 	};
 	const crownClassesMap = {
+		vote: "",
 		xs: "top-[-13px] left-[2px] size-[18px] rotate-[-21deg]",
 		sm: "top-[-13px] left-[2px] size-[18px] rotate-[-21deg]",
 		md: "top-[-17px] left-[2px] size-6 rotate-[-21deg]",
 		lg: "top-[-17px] left-[2px] size-[26px] rotate-[-24deg]",
 	};
 	const flagClassesMap = {
+		vote: "",
 		xs: "size-[15px]",
 		sm: "size-4",
 		md: "size-[22px]",
@@ -71,10 +75,13 @@ const MemberIcon = ({
 			)} */}
 			{flag && user && (
 				<CircleFlag
-					className={cn("absolute top-[55%] left-[70%] opacity-90", flagClassesMap[_size])}
+					className={cn(
+						"absolute top-[55%] left-[70%] opacity-90",
+						flagClassesMap[_size],
+					)}
 					countryCode={String(user.country).toLowerCase()}
-					alt={user.country} 
-				/> 
+					alt={user.country}
+				/>
 			)}
 			{user &&
 				(user.pfp ? (
@@ -84,7 +91,11 @@ const MemberIcon = ({
 							alt=""
 							className={cn(
 								"rounded-full border object-cover p-[2px]",
-								isFriend ? "border-primary" : "border-muted",
+								_size === "vote"
+									? ""
+									: isFriend
+										? "border-primary"
+										: "border-muted",
 								sizeMap[_size],
 								className,
 							)}
@@ -94,11 +105,20 @@ const MemberIcon = ({
 					<div
 						style={{
 							backgroundImage: `linear-gradient(to bottom, ${randomColor} 0%, ${randomColor} 100%), linear-gradient(to bottom, hsl(var(--muted)) 0%, hsl(var(--muted)) 100%)`,
-							backgroundClip: isFriend ? "content-box, padding-box" : "",
+							backgroundClip:
+								_size === "vote"
+									? ""
+									: isFriend
+										? "content-box, padding-box"
+										: "",
 						}}
 						className={cn(
 							"rounded-full border p-[2px]",
-							isFriend ? "border-primary" : "border-muted",
+							_size === "vote"
+								? ""
+								: isFriend
+									? "border-primary"
+									: "border-muted",
 							sizeMap[_size],
 							className,
 						)}

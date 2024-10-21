@@ -1,7 +1,7 @@
 import MemberIcon from "@/components/common/member-icon";
 import { useGetCurrentUser } from "@/hooks/user-hooks";
 import { screenBreakpoints, useWindowSize } from "@/hooks/util-hooks";
-import { useYoutubeInfo } from "@/hooks/video-player-hooks";
+import { useVideoInfo } from "@/hooks/video-player-hooks";
 import { cn } from "@/lib/utils";
 import { trimString } from "@/pages/home";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
@@ -16,7 +16,7 @@ interface RoomCardProps {
 const RoomCard = ({ room, className, onClick }: RoomCardProps) => {
 	const { data: currentUser } = useGetCurrentUser();
 	const { width } = useWindowSize();
-	const { info } = useYoutubeInfo(room.videoUrl);
+	const { info } = useVideoInfo(room.videoUrl,0); // 0 for youtube
 	if (!currentUser) return <></>;
 	if (!room || !room.activeMembersList || !room.activeMembersList?.length) {
 		return <></>;

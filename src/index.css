@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 .gradient-text {
 	background: linear-gradient(
 		to right,
@@ -19,7 +18,7 @@
 }
 
 body {
-  overflow: hidden;
+	overflow: hidden;
 }
 
 @layer base {
@@ -84,10 +83,10 @@ body {
 }
 
 /* Hide scrollbar for IE, Edge and Firefox */
-/* .no-scrollbar-ie-edge-firefox {
-  -ms-overflow-style: none !important; 
-  scrollbar-width: none !important;  
-} */
+.no-scrollbar-ie-edge-firefox {
+	-ms-overflow-style: none !important;
+	scrollbar-width: none !important;
+}
 
 @font-face {
 	font-family: "Scripto";

@@ -8,7 +8,7 @@ const ConnectionStatus = () => {
   return (
     <span
       className={cn(
-        "size-1 fixed top-0 right-0 bg-red-500 z-10",
+        "fixed top-0 right-0 z-[100] size-1 bg-red-500",
         connected ? "bg-green-500" : ""
       )}
     ></span>
