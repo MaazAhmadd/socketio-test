@@ -12,7 +12,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 type Props = {
 	src: string;
 	vidType: number;
@@ -99,13 +99,11 @@ const PinVotes = ({ votes }: { votes: string[] }) => {
 	if (votes.length === 0) {
 		return null;
 	}
-
 	const votersToRender = votes.slice(0, 3);
-
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger>
-				<div className="flex items-center gap-[2px] rounded-sm bg-muted/70 p-1">
+			<DropdownMenuTrigger asChild>
+				<div className="flex items-center gap-[2px] rounded-sm bg-muted/70 p-[2px]">
 					{votersToRender.map((voter) => (
 						<span key={voter}>
 							<MemberIcon _id={voter} _size="vote" />
@@ -139,7 +137,7 @@ const VotePopOverListItem = ({ _id }: { _id: string }) => {
 		<div className="flex w-full items-center justify-between">
 			<MemberIcon _id={_id} _size="vote" />
 			<p className="text-xs">{data?.name}</p>
-      <div></div>
+			<div></div>
 		</div>
 	);
 };

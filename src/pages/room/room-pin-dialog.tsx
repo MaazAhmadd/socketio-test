@@ -33,14 +33,20 @@ export function RoomPinDialog() {
 	const { data: currentUser } = useGetCurrentUser();
 	const id = currentUser?._id || "";
 	// const voters: [string, string] = [id, id];
-	const voters: [string, string, string, string, string] = [id, id, id, id, id];
+	const voters: [string, string, string, string, string] = [
+		"670b608ca7526f111019590d",
+		"670b608ba7526f1110195908",
+		"670b68e65ea84c258e8afb57",
+		"670c65d63f92b274d15d4606",
+		"670d63b41b9ece293eb6c9fd",
+	];
 	const links: [string, string, string, string, string, string, number][] = [
 		// const links: [string, string, string, number][] = [
-		[...voters, "https://youtu.be/oqujOmPTyXQ?si=2HGFO-pEPKj0BJZn", 0],
+		[...voters, "https://youtu.be/GBh3Pk2ctqY?si=u7sFgMNBhIlgsR_B", 0],
 		[...voters, "https://youtu.be/Tqsz6fjvhZM?si=qtQCfrjpOsC3nSVz", 0],
 		[...voters, "https://youtu.be/ENhfIeZF_AY?si=M6ImNfc9A9vJr0ZP", 0],
+		[...voters, "https://youtu.be/PI5Sv0QNGvM?si=i62syXJ5oEgzGMwd", 0],
 		[...voters, "https://youtu.be/nJ4qA-S-KmE?si=4EncFeM-LcNe3BGe", 0],
-		[...voters, "https://youtu.be/Qi_p9JO1wyM?si=vqBh5ueMnJWkKi4_", 0],
 	];
 	return (
 		<Dialog>

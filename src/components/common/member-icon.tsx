@@ -85,7 +85,7 @@ const MemberIcon = ({
 			)}
 			{user &&
 				(user.pfp ? (
-					<div className={cn(sizeMap[_size])}>
+					<div className={cn(sizeMap[_size], className)}>
 						<img
 							src={user.pfp}
 							alt=""
@@ -97,7 +97,6 @@ const MemberIcon = ({
 										? "border-primary"
 										: "border-muted",
 								sizeMap[_size],
-								className,
 							)}
 						/>
 					</div>

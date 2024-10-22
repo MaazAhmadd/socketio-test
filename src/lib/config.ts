@@ -1,13 +1,13 @@
 export const SOCKET_URL =
 	process.env.NODE_ENV == "development"
-		? "http://192.168.8.100:3000/"
+		? "http://192.168.8.101:3000/"
 		: //"https://informed-ghoul-glorious.ngrok-free.app/"
 			"https://api.codingwebninja.site/";
 // : "https://socketiotest.adaptable.app/";
 
 export const API_URL =
 	process.env.NODE_ENV == "development"
-		? "http://192.168.8.100:3000/"
+		? "http://192.168.8.101:3000/"
 		: //	"https://informed-ghoul-glorious.ngrok-free.app/"
 			"https://api.codingwebninja.site/";
 // : "https://socketiotest.adaptable.app/api/",

@@ -93,5 +93,16 @@ module.exports = {
 	plugins: [
 		require("tailwindcss-animate"),
 		require("tailwindcss-displaymodes"),
+		function ({ addUtilities }) {
+			addUtilities({
+				".scrollbar-hide": {
+					"scrollbar-width": "none" /* Firefox */,
+					"-ms-overflow-style": "none" /* Internet Explorer and Edge */,
+				},
+				".scrollbar-hide::-webkit-scrollbar": {
+					display: "none" /* Chrome, Safari, Opera */,
+				},
+			});
+		},
 	],
 };

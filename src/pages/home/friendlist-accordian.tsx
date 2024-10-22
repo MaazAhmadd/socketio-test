@@ -22,68 +22,59 @@ import { useEffect } from "react";
 import { CurrentUser } from "server/src/types";
 
 export function FriendlistAccordian() {
-	const recents = [
-		"6627f8fe91f2c742c09e01e8",
-		"6627fc2791f2c742c09e01f9",
-		"6627fc3f91f2c742c09e0201",
-	];
 	// const currentUser = useGlobalStore((state) => state.currentUser);
 	const { data: currentUser, isFetching: isCurrentUserFetching } =
 		useGetCurrentUser();
-
+	const recents = currentUser?.recentUsers || [];
+	const friends = currentUser?.friends || [];
+	const friendReqsReceived = currentUser?.friendReqsReceived || [];
+	if (!currentUser) return <Spinner className="h-[200px]" />;
 	return (
 		<Accordion type="single" collapsible className="w-full">
 			{/* <Accordion type="multiple"  className="w-full pr-4"> */}
 			<AccordionItem value="item-1">
 				<AccordionTrigger>Friends</AccordionTrigger>
-				{isCurrentUserFetching && (
-					<AccordionContent>
-						<Spinner className="h-[200px]" />
-					</AccordionContent>
-				)}
-				{!isCurrentUserFetching && (
-					<AccordionContent
-						className={cn(
-							"grid grid-cols-2 justify-center justify-items-center gap-2 md:grid-cols-3",
-						)}
-					>
-						{(!currentUser?.friends || currentUser?.friends.length < 1) &&
-							"Friend List..."}
-						{currentUser?.friends?.map((f) => (
-							<Friend _id={f} key={f} />
-						))}
-					</AccordionContent>
-				)}
+
+				<AccordionContent
+					className={cn(
+						"grid grid-cols-2 items-start justify-center justify-items-center gap-2 md:grid-cols-3",
+						"scrollbar-hide h-[50svh] overflow-auto",
+					)}
+				>
+					{!friends?.length && "Friend List..."}
+					{friends.map((f) => (
+						<Friend _id={f} key={f} />
+					))}
+				</AccordionContent>
 			</AccordionItem>
 			<AccordionItem value="item-2">
 				<AccordionTrigger>Friend Requests</AccordionTrigger>
-				{isCurrentUserFetching && (
-					<AccordionContent>
-						<Spinner className="h-[200px]" />
-					</AccordionContent>
-				)}
-				{!isCurrentUserFetching && (
-					<AccordionContent
-						className={cn(
-							"grid grid-cols-2 justify-center justify-items-center gap-2 md:grid-cols-3",
-						)}
-					>
-						{(!currentUser?.friendReqsReceived ||
-							currentUser?.friendReqsReceived.length < 1) &&
-							"Friend Requests..."}
-						{currentUser?.friendReqsReceived.map((f) => (
-							<FriendRequest _id={f} key={f} />
-						))}
-					</AccordionContent>
-				)}
+
+				<AccordionContent
+					className={cn(
+						"grid grid-cols-2 items-start justify-center justify-items-center gap-2 md:grid-cols-3",
+						"scrollbar-hide h-[50svh] overflow-auto",
+					)}
+				>
+					{!friendReqsReceived?.length && "Friend Requests..."}
+					{friendReqsReceived.map((f) => (
+						<FriendRequest _id={f} key={f} />
+					))}
+				</AccordionContent>
 			</AccordionItem>
 			<AccordionItem value="item-3">
 				<AccordionTrigger>Recents</AccordionTrigger>
-				{/* <AccordionContent>Recents coming soon...</AccordionContent> */}
-				<AccordionContent className="grid grid-cols-2 justify-center justify-items-center gap-2 md:grid-cols-3">
+
+				<AccordionContent
+					className={cn(
+						"grid grid-cols-2 items-start justify-center justify-items-center gap-2 md:grid-cols-3",
+						"scrollbar-hide h-[50svh] overflow-auto",
+					)}
+				>
+					{!recents?.length && "No recents yet..."}
 					{recents.map((r) => {
 						if (r === currentUser?._id) {
-							return;
+							return null;
 						}
 						return <Recent key={r} _id={r} currentUser={currentUser} />;
 					})}
@@ -104,7 +95,7 @@ const Friend = ({
 }) => {
 	const { data: targetUser } = useGetNormalUser(_id);
 	const { mutate: removeFriend, isPending } = useRemoveFriend();
-
+	const { isFetching: isCurrentUserFetching } = useGetCurrentUser();
 	if (!targetUser) return;
 	return (
 		<div className=" relative flex w-[120px] flex-col justify-center gap-1 rounded border border-muted bg-muted/50 p-2 text-center transition-all duration-150 hover:border-muted-foreground/40">
@@ -128,10 +119,10 @@ const Friend = ({
 					onClick={() => {
 						removeFriend(targetUser._id);
 					}}
-					disabled={isPending}
+					disabled={isPending || isCurrentUserFetching}
 				>
 					{isPending ? (
-						<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+						<Icons.spinner className="mx-auto h-4 w-4 animate-spin" />
 					) : (
 						"Remove"
 					)}
@@ -151,6 +142,7 @@ const FriendRequest = ({
 		useAcceptFriendRequest();
 	const { mutate: rejectFriendRequest, isPending: isPendingReject } =
 		useRejectFriendRequest();
+	const { isFetching: isCurrentUserFetching } = useGetCurrentUser();
 
 	// useEffect(() => {});
 	if (!targetUser) return;
@@ -176,10 +168,10 @@ const FriendRequest = ({
 					onClick={() => {
 						rejectFriendRequest(targetUser._id);
 					}}
-					disabled={isPendingReject}
+					disabled={isPendingReject || isCurrentUserFetching}
 				>
 					{isPendingReject ? (
-						<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+						<Icons.spinner className="mx-auto h-4 w-4 animate-spin" />
 					) : (
 						"Reject"
 					)}
@@ -191,10 +183,10 @@ const FriendRequest = ({
 					onClick={() => {
 						acceptFriendRequest(targetUser._id);
 					}}
-					disabled={isPendingAccept}
+					disabled={isPendingAccept || isCurrentUserFetching}
 				>
 					{isPendingAccept ? (
-						<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+						<Icons.spinner className="mx-auto h-4 w-4 animate-spin" />
 					) : (
 						"Accept"
 					)}
@@ -203,6 +195,7 @@ const FriendRequest = ({
 		</div>
 	);
 };
+
 const Recent = ({
 	_id,
 	currentUser,
@@ -218,6 +211,7 @@ const Recent = ({
 		useRejectFriendRequest();
 	const { mutate: acceptFriendRequest, isPending: isPendingAccept } =
 		useAcceptFriendRequest();
+	const { isFetching: isCurrentUserFetching } = useGetCurrentUser();
 
 	if (currentUser?._id === _id) return;
 	if (!targetUser) return;
@@ -248,10 +242,10 @@ const Recent = ({
 							onClick={() => {
 								rejectFriendRequest(_id);
 							}}
-							disabled={isPendingReject}
+							disabled={isPendingReject || isCurrentUserFetching}
 						>
 							{isPendingReject ? (
-								<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+								<Icons.spinner className="mx-auto h-4 w-4 animate-spin" />
 							) : (
 								"Reject"
 							)}
@@ -263,10 +257,10 @@ const Recent = ({
 							onClick={() => {
 								acceptFriendRequest(_id);
 							}}
-							disabled={isPendingAccept}
+							disabled={isPendingAccept || isCurrentUserFetching}
 						>
 							{isPendingAccept ? (
-								<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+								<Icons.spinner className="mx-auto h-4 w-4 animate-spin" />
 							) : (
 								"Accept"
 							)}
@@ -280,10 +274,10 @@ const Recent = ({
 						onClick={() => {
 							cancelFriendRequest(_id);
 						}}
-						disabled={isPendingCancel}
+						disabled={isPendingCancel || isCurrentUserFetching}
 					>
 						{isPendingCancel ? (
-							<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+							<Icons.spinner className="mx-auto h-4 w-4 animate-spin" />
 						) : (
 							"Cancel Request"
 						)}
@@ -296,10 +290,10 @@ const Recent = ({
 						onClick={() => {
 							addFriend(_id);
 						}}
-						disabled={isPendingAdd}
+						disabled={isPendingAdd || isCurrentUserFetching}
 					>
 						{isPendingAdd ? (
-							<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+							<Icons.spinner className="mx-auto h-4 w-4 animate-spin" />
 						) : (
 							"Add Friend"
 						)}

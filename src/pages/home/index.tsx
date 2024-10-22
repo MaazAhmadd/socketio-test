@@ -245,35 +245,28 @@ const RoomList = ({
 		</ScrollArea>
 	);
 };
-
 const CreateRoom = () => {
 	const [url, setUrl] = useState("");
 	const [srcType, setSrcType] = useState<number>(0); // 0 for youtube
 	const schema = z.object({
 		url: z
 			.string()
-			.min(11, "url should me minimum 11 characters")
-			.max(512, "url should me maximum 512 characters"),
+			.min(11, "url should be minimum 11 characters")
+			.max(512, "url should be maximum 512 characters"),
 	});
 	type FormData = z.infer<typeof schema>;
 	const {
 		register,
 		handleSubmit,
 		formState: { errors },
-	} = useForm<FormData>({
-		resolver: zodResolver(schema),
-	});
+	} = useForm<FormData>({ resolver: zodResolver(schema) });
+
 	const { info, error, setError, isLoading, player } = useVideoInfo(
 		url,
 		srcType,
-	); // 0 for youtube
+	);
 
-	const {
-		data: room,
-		mutate: makeRoom,
-		isPending: makingRoom,
-		isError: roomMakingError,
-	} = useMakeRoom();
+	const { mutate: makeRoom } = useMakeRoom();
 
 	useEffect(() => {
 		if (info.duration) {
@@ -281,89 +274,69 @@ const CreateRoom = () => {
 		}
 	}, [info.duration]);
 
-	const onSubmitUrlForm = async (data: FieldValues) => {
-		if (data) {
-			setError("");
-			setUrl(data.url);
-		}
+	const onSubmitUrlForm = (data: FieldValues) => {
+		setError("");
+		setUrl(data.url);
 	};
 
 	return (
-		<div className="h-[75svh] border-2 border-muted bg-primary-foreground">
-			{player}
-			<p className="mx-4 scroll-m-20 p-4 pb-2 text-center font-semibold text-lg text-primary xs:text-xl tracking-tight transition-colors first:mt-0 md:mt-1 md:text-pretty md:text-2xl">
-				Create Room
-			</p>
-			<form
-				onSubmit={handleSubmit(onSubmitUrlForm)}
-				className="mx-2 mt-3 flex items-center gap-3 md:mx-10"
-			>
-				{/* <Button variant={"secondary"}>Youtube</Button> */}
-				{/* <FaYoutube className="h-9 w-14 text-[#FF0000]" />
-				<Label className="sr-only" htmlFor="searchquery">
-					Play Using Url
-				</Label> */}
-				<SelectSearchPlatform setSelectedValue={setSrcType} />
-				<Input
-					{...register("url")}
-					id="searchquery"
-					className="border-muted-foreground/50"
-					placeholder="Play Using Youtube Url"
-					type="text"
-					autoCapitalize="none"
-					autoCorrect="off"
-					autoComplete="off"
-					disabled={isLoading || makingRoom}
-				/>
-				<Button
-					disabled={isLoading || makingRoom}
-					size={"sm"}
-					type="submit"
-					className=""
-				>
-					{isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
-					<TiPin className="size-6" />
-				</Button>
-			</form>
-			{error && (
-				<p className="my-2 text-center text-red-500 text-sm">{error}</p>
-			)}
-			{errors && (
-				<p className="my-2 text-center text-red-500 text-sm">
-					{errors.url?.message}
+		<div className="border-2 border-muted">
+			<div className="h-[75svh] bg-primary-foreground">
+				{player}
+				<p className="mx-4 p-4 text-center font-semibold text-lg text-primary md:text-2xl">
+					Create Room
 				</p>
-			)}
-			{/* <SearchYt /> */}
-			<div className="mx-4 mt-4 flex flex-wrap justify-center gap-4 overflow-y-hidden md:mx-10">
-				<RecentVideosDialog />
-				<LikedVideosDialog />
+				<div className="pt-3">
+					<form
+						onSubmit={handleSubmit(onSubmitUrlForm)}
+						className="mx-2 flex items-center gap-3 md:mx-10"
+					>
+						<SelectSearchPlatform setSelectedValue={setSrcType} />
+						<Input
+							{...register("url")}
+							id="searchquery"
+							placeholder="Play Using Youtube Url"
+							autoCapitalize="none"
+							autoCorrect="off"
+							autoComplete="off"
+							disabled={isLoading}
+						/>
+						<Button disabled={isLoading} size="sm" type="submit">
+							{isLoading ? (
+								<Icons.spinner className="mx-auto size-4 animate-spin" />
+							) : (
+								<TiPin className="size-6" />
+							)}
+						</Button>
+					</form>
+					{error && (
+						<p className="my-2 text-center text-red-500 text-sm">{error}</p>
+					)}
+					{errors.url && (
+						<p className="my-2 text-center text-red-500 text-sm">
+							{errors.url.message}
+						</p>
+					)}
+				</div>
 			</div>
 		</div>
 	);
 };
-
 export function trimString(str: string, max = 40) {
-	if (str.length > max) {
-		return str.slice(0, max) + "...";
-	}
-	return str;
+	return str.length > max ? `${str.slice(0, max)}...` : str;
 }
-
 export const SelectSearchPlatform = ({
 	setSelectedValue,
-}: {
-	setSelectedValue: (v: number) => void;
-}) => {
-	const handleChange = (value: string) => {
-		setSelectedValue(Number(value));
-	};
+}: { setSelectedValue: (v: number) => void }) => {
+	const handleChange = (value: string) => setSelectedValue(Number(value));
+
 	return (
 		<Select defaultValue="0" onValueChange={handleChange}>
 			<SelectTrigger className="w-min">
 				<SelectValue placeholder="Select platform" />
 			</SelectTrigger>
 			<SelectContent>
-				<SelectGroup className="">
+				<SelectGroup>
 					<SelectItem value="0">Youtube</SelectItem>
 					<SelectItem value="1">Custom</SelectItem>
 				</SelectGroup>
@@ -518,40 +491,40 @@ export const Spinner = ({ className }: { className?: string }) => {
 // 	);
 // };
 
-export const ResultCard = ({ result }: { result: VideoInfo }) => {
-	// const navigate = useNavigate();
-	const { data: room, mutate: makeRoom, isPending } = useMakeRoom();
-	// useEffect(() => {
-	// 	if (room) {
-	// 		navigate("/room/" + room?.entityId!);
-	// 	}
-	// }, [isPending]);
-	return (
-		<div
-			onClick={() => {
-				makeRoom({ url: result.ytId, duration: Number(result.duration) });
-			}}
-			className={cn(
-				"h-[135px] w-[180px] cursor-pointer rounded-sm border border-muted hover:border-muted-foreground",
-				!result.duration && "cursor-not-allowed",
-			)}
-			style={{
-				backgroundImage: `url(${result.thumbnail})`,
-				backgroundSize: "cover",
-				backgroundRepeat: "no-repeat",
-				backgroundPosition: "center",
-			}}
-		>
-			<div className="flex h-full flex-col justify-between">
-				<div className="flex flex-col items-end ">
-					<span className="rounded-sm bg-muted/70 p-1 font-bold text-sm text-white leading-tight">
-						{parseYouTubeDuration(result.duration)}
-					</span>
-				</div>
-				<p className="rounded-t-sm bg-muted/70 px-2 text-white text-xs leading-tight">
-					{trimString(result.title, 50)}
-				</p>
-			</div>
-		</div>
-	);
-};
+// const ResultCard = ({ result }: { result: VideoInfo }) => {
+// 	// const navigate = useNavigate();
+// 	const { data: room, mutate: makeRoom, isPending } = useMakeRoom();
+// 	// useEffect(() => {
+// 	// 	if (room) {
+// 	// 		navigate("/room/" + room?.entityId!);
+// 	// 	}
+// 	// }, [isPending]);
+// 	return (
+// 		<div
+// 			onClick={() => {
+// 				makeRoom({ url: result.ytId, duration: Number(result.duration) });
+// 			}}
+// 			className={cn(
+// 				"h-[135px] w-[180px] cursor-pointer rounded-sm border border-muted hover:border-muted-foreground",
+// 				!result.duration && "cursor-not-allowed",
+// 			)}
+// 			style={{
+// 				backgroundImage: `url(${result.thumbnail})`,
+// 				backgroundSize: "cover",
+// 				backgroundRepeat: "no-repeat",
+// 				backgroundPosition: "center",
+// 			}}
+// 		>
+// 			<div className="flex h-full flex-col justify-between">
+// 				<div className="flex flex-col items-end ">
+// 					<span className="rounded-sm bg-muted/70 p-1 font-bold text-sm text-white leading-tight">
+// 						{parseYouTubeDuration(result.duration)}
+// 					</span>
+// 				</div>
+// 				<p className="rounded-t-sm bg-muted/70 px-2 text-white text-xs leading-tight">
+// 					{trimString(result.title, 50)}
+// 				</p>
+// 			</div>
+// 		</div>
+// 	);
+// };

@@ -28,7 +28,7 @@ export function FriendsDrawer() {
 					<PersonIcon className="size-[18px] md:size-5" />
 				</Button>
 			</DrawerTrigger>
-			<DrawerContent className="right-0 mr-0 ml-24 max-w-[80svw] bg-background/80">
+			<DrawerContent className="right-0 mr-0 ml-24 max-w-[90svw] bg-background/80">
 				<div className="flex h-full flex-col items-center justify-between ">
 					<DrawerClose asChild>
 						<Cross1Icon className="mt-5 ml-5 h-6 w-6 cursor-pointer md:h-8 md:w-8" />
