@@ -2,8 +2,7 @@ import MemberIcon from "@/components/common/member-icon";
 import { useGetCurrentUser } from "@/hooks/user-hooks";
 import { screenBreakpoints, useWindowSize } from "@/hooks/util-hooks";
 import { useVideoInfo } from "@/hooks/video-player-hooks";
-import { cn } from "@/lib/utils";
-import { trimString } from "@/pages/home";
+import { cn, trimString } from "@/lib/utils"; 
 import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { Room } from "server/src/types";
 

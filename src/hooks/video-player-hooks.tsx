@@ -14,7 +14,7 @@ export type YoutubeInfo = {
 	duration: number | null;
 };
 
-export function useVideoInfo(src: string, vidType: number) {
+export function useVideoInfo(src: string, platform: number) {
 	/*
 	vidType
 	0 -> youtube
@@ -38,7 +38,7 @@ export function useVideoInfo(src: string, vidType: number) {
 			try {
 				const res = await axios.get<NoembedRes>(noembedUrl);
 				if (res.data.error) {
-					setError("Invalid URL");
+					setError("No playable source");
 				} else {
 					setInfo({
 						title: res.data.title,
@@ -47,7 +47,7 @@ export function useVideoInfo(src: string, vidType: number) {
 					});
 				}
 			} catch (error) {
-				setError("Invalid URL");
+				setError("No playable source");
 			} finally {
 				setIsLoading(false);
 			}

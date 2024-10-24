@@ -26,6 +26,8 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { DrawingPinFilledIcon } from "@radix-ui/react-icons";
 import { VideoPinCard } from "@/components/common/video-pin-card";
 import toast from "react-hot-toast";
+import VideoUrlInput from "../home/video-url-input";
+import LikedRecentVideos from "../home/liked-recent-videos";
 
 const MAX_SELECTIONS = 100;
 
@@ -58,7 +60,7 @@ export function RoomPinDialog() {
 					<DrawingPinFilledIcon className="size-[18px]" />
 				</Button>
 			</DialogTrigger>
-			<DialogContent className="flex h-[max(550px,80svh)] max-w-[min(550px,100svw)] flex-col justify-between p-4">
+			<DialogContent className="flex h-[max(550px,85svh)] max-w-[min(550px,100svw)] flex-col justify-between p-4">
 				<div className="flex flex-col">
 					<DialogHeader>
 						<DialogTitle className="text-center">Pin Videos</DialogTitle>
@@ -66,7 +68,7 @@ export function RoomPinDialog() {
 					<DialogDescription className="my-1">
 						pinned videos (click to vote)
 					</DialogDescription>
-					<ScrollArea className="w-[calc(100svw-2rem)] rounded-md border">
+					<ScrollArea className="w-[min(514px,calc(100svw-2rem))] rounded-md border">
 						<div className="flex w-max p-1 pb-4">
 							{links.map((l) => {
 								const vidType = l.pop() as number;
@@ -74,7 +76,7 @@ export function RoomPinDialog() {
 								return (
 									<div key={src} className="shrink-0">
 										<VideoPinCard
-											vidType={vidType}
+											platform={vidType}
 											src={src}
 											votes={l as string[]}
 											onClick={() => {
@@ -91,10 +93,20 @@ export function RoomPinDialog() {
 					<DialogDescription className="my-1">
 						pin a video, you can select different platforms
 					</DialogDescription>
+					<VideoUrlInput
+						className="my-1.5"
+						makeRoomOrPinVideo={({ url, duration }) => {}}
+					/>
+					<Separator className="my-2" />
+					<DialogDescription className="mb-2">
+						Pick from recent or liked videos:
+					</DialogDescription>
+
+					<LikedRecentVideos scrollAreaClassName="h-[30svh] sm:h-[35svh]" />
 				</div>
-				<DialogClose asChild>
+				{/* <DialogClose asChild>
 					<Button className="my-2">Done</Button>
-				</DialogClose>
+				</DialogClose> */}
 			</DialogContent>
 		</Dialog>
 	);

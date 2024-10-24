@@ -1,10 +1,7 @@
-import { useVideoInfo } from "@/hooks/video-player-hooks";
-import { cn } from "@/lib/utils";
-import MemberIcon from "./member-icon";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { ScrollArea } from "../ui/scroll-area";
 import { useGetNormalUser } from "@/hooks/user-hooks";
-import { Separator } from "../ui/separator";
+import { useVideoInfo } from "@/hooks/video-player-hooks";
+import { cn, formatTime, trimString } from "@/lib/utils";
+import React from "react";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -12,88 +9,74 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import React, { useEffect, useRef } from "react";
+import MemberIcon from "./member-icon";
 type Props = {
 	src: string;
-	vidType: number;
+	platform: number;
 	votes?: string[];
 	onClick?: () => void;
+	titleLength?: number;
 	className?: string;
 };
 export const VideoPinCard = ({
 	src,
-	vidType,
+	platform,
 	votes = [],
 	onClick = () => {},
+	titleLength = 50,
 	className,
 }: Props) => {
-	const { info, player } = useVideoInfo(src, vidType);
+	const { info, player } = useVideoInfo(src, platform);
 
 	return (
-		<div
-			onClick={() => {
-				if (!info.duration) return;
-				console.log("ready to send data to server to make room: ", info);
-				onClick();
-			}}
-			className={cn(
-				"h-[100px] w-[177.77px] cursor-pointer rounded-sm border border-muted bg-center bg-cover bg-primary-foreground bg-no-repeat hover:border-muted-foreground",
-				!info.thumbnail && "animate-pulse",
-				!info.duration && "cursor-not-allowed",
-				className,
+		<div className="relative">
+			{votes.length > 0 && (
+				<div className="absolute top-0 left-0">
+					<PinVotes votes={votes} />
+				</div>
 			)}
-			style={{
-				backgroundImage: `url(${info.thumbnail})`,
-			}}
-		>
-			{player}
-			<div className="flex h-full flex-col justify-between">
-				<div className="flex items-start justify-between">
-					{votes.length > 0 && <PinVotes votes={votes} />}
-					<span
+			<div
+				onClick={() => {
+					if (!info.duration) return;
+					console.log("ready to send data to server to make room: ", info);
+					onClick();
+				}}
+				className={cn(
+					"h-[100px] w-[177.77px] cursor-pointer rounded-sm border border-muted bg-center bg-cover bg-primary-foreground bg-no-repeat hover:border-muted-foreground",
+					!info.thumbnail && "animate-pulse",
+					!info.duration && "cursor-not-allowed",
+					className,
+				)}
+				style={{
+					backgroundImage: `url(${info.thumbnail})`,
+				}}
+			>
+				{player}
+				<div className="flex h-full flex-col justify-between">
+					<div className="flex items-start justify-between">
+						<span></span>
+						<span
+							className={cn(
+								"select-none rounded-sm bg-muted/70 p-[3px] text-white text-xs leading-tight",
+								!info.duration && "h-6 w-11 animate-pulse",
+							)}
+						>
+							{info.duration && formatTime(info.duration)}
+						</span>
+					</div>
+					<p
 						className={cn(
-							"rounded-sm bg-muted/70 p-1 font-bold text-white text-xs leading-tight",
-							!info.duration && "h-6 w-11 animate-pulse",
+							"select-none rounded-t-sm bg-muted/70 p-[3px] text-white text-xs leading-tight",
+							!info.title && "m-1 h-8 animate-pulse",
 						)}
 					>
-						{info.duration && formatTime(info.duration)}
-					</span>
+						{trimString(info.title, titleLength)}
+					</p>
 				</div>
-				<p
-					className={cn(
-						"rounded-t-sm bg-muted/70 px-2 py-1 text-white text-xs leading-tight",
-						!info.title && "m-1 h-8 animate-pulse",
-					)}
-				>
-					{trimString(info.title, 50)}
-				</p>
 			</div>
 		</div>
 	);
 };
-export function trimString(str: string, max = 40) {
-	if (str.length > max) {
-		return str.slice(0, max) + "...";
-	}
-	return str;
-}
-
-export function formatTime(seconds: number): string {
-	const minutes = Math.floor(seconds / 60);
-	const hours = Math.floor(minutes / 60);
-
-	const formattedMinutes = String(minutes % 60).padStart(2, "0");
-	const formattedSeconds = String(seconds % 60).padStart(2, "0");
-
-	if (hours > 0) {
-		const formattedHours = String(hours).padStart(2, "0");
-		return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
-	}
-	if (minutes > 0) {
-		return `${formattedMinutes}:${formattedSeconds}`;
-	}
-	return `00:${formattedSeconds}`;
-}
 
 const PinVotes = ({ votes }: { votes: string[] }) => {
 	if (votes.length === 0) {
@@ -118,7 +101,7 @@ const PinVotes = ({ votes }: { votes: string[] }) => {
 				<div className="flex flex-col">
 					{votes.map((voter, index) => (
 						<React.Fragment key={voter}>
-							<DropdownMenuItem className="p-1">
+							<DropdownMenuItem className="p-1" onClick={() => {}}>
 								<VotePopOverListItem _id={voter} />
 							</DropdownMenuItem>
 							{index < votes.length - 1 && <DropdownMenuSeparator />}

@@ -46,10 +46,11 @@ export function RoomInviteDialog({ screen }: Props) {
 				onCheckedChange={(checked) => handleInviteSelection(checked, _id)}
 				checked={selectedInvitees.includes(_id)}
 				disabled={selectedInvitees.length >= MAX_SELECTIONS}
+				separator={friends.length > 1 && i < friends.length - 1}
 			/>
-			{friends.length > 1 && i < friends.length - 1 && (
+			{/* {friends.length > 1 && i < friends.length - 1 && (
 				<Separator className={cn("my-1")} />
-			)}
+			)} */}
 		</React.Fragment>
 	));
 	const filteredRecents = currentUser?.recentUsers?.filter(
@@ -62,10 +63,11 @@ export function RoomInviteDialog({ screen }: Props) {
 				onCheckedChange={(checked) => handleInviteSelection(checked, _id)}
 				checked={selectedInvitees.includes(_id)}
 				disabled={selectedInvitees.length >= MAX_SELECTIONS}
+				separator={filteredRecents.length > 1 && i < filteredRecents.length - 1}
 			/>
-			{filteredRecents.length > 1 && i < filteredRecents.length - 1 && (
+			{/* {filteredRecents.length > 1 && i < filteredRecents.length - 1 && (
 				<Separator className={cn("my-1")} />
-			)}
+			)} */}
 		</React.Fragment>
 	));
 
@@ -155,35 +157,40 @@ const InviteListItem = ({
 	onCheckedChange,
 	checked,
 	disabled,
+	separator = false,
 }: {
 	_id: string;
 	onCheckedChange: (checked: boolean) => void;
 	checked: boolean;
 	disabled: boolean;
+	separator?: boolean;
 }) => {
 	const { data: user } = useGetNormalUser(_id);
 
 	if (!user) return null;
 
 	return (
-		<div
-			className="mb-4 flex cursor-pointer items-center justify-between gap-4"
-			onClick={() => onCheckedChange(!checked)}
-		>
-			<div className="flex items-center gap-4">
-				<MemberIcon _id={_id} _size="sm" />
-				<div className="flex flex-col items-start">
-					<span className="text-gray-200">{user.name || "name"}</span>
-					<span className="text-gray-400">@{user.handle}</span>
+		<>
+			<div
+				className="flex cursor-pointer items-center justify-between gap-4"
+				onClick={() => onCheckedChange(!checked)}
+			>
+				<div className="flex items-center gap-4">
+					<MemberIcon _id={_id} _size="sm" />
+					<div className="flex flex-col items-start">
+						<span className="text-gray-200">{user.name || "name"}</span>
+						<span className="text-gray-400">@{user.handle}</span>
+					</div>
+				</div>
+				<div className="pr-6">
+					<Checkbox
+						checked={checked}
+						onCheckedChange={onCheckedChange}
+						disabled={!checked && disabled}
+					/>
 				</div>
 			</div>
-			<div className="pr-6">
-				<Checkbox
-					checked={checked}
-					onCheckedChange={onCheckedChange}
-					disabled={!checked && disabled}
-				/>
-			</div>
-		</div>
+			{separator && <Separator className={cn("my-2")} />}
+		</>
 	);
 };

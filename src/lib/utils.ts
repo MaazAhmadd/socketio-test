@@ -39,20 +39,25 @@ export function isValidJwt(jwt: string) {
 	return parts.length === 3;
 }
 
-export function parseYouTubeDuration(duration: string): string {
-	const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
-	if (!match) {
-		return "00:00:00";
+export function formatTime(seconds: number): string {
+	const minutes = Math.floor(seconds / 60);
+	const hours = Math.floor(minutes / 60);
+
+	const formattedMinutes = String(minutes % 60).padStart(2, "0");
+	const formattedSeconds = String(seconds % 60).padStart(2, "0");
+
+	if (hours > 0) {
+		const formattedHours = String(hours).padStart(2, "0");
+		return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
 	}
-
-	const hours = match[1] ? Number.parseInt(match[1]) : 0;
-	const minutes = match[2] ? Number.parseInt(match[2]) : 0;
-	const seconds = match[3] ? Number.parseInt(match[3]) : 0;
-
-	const formattedHours = hours > 0 ? `${hours}:` : "";
-	const formattedMinutes =
-		minutes < 10 && hours > 0 ? `0${minutes}` : `${minutes}`;
-	const formattedSeconds = seconds < 10 ? `0${seconds}` : `${seconds}`;
-
-	return `${formattedHours}${formattedMinutes}:${formattedSeconds}`;
+	if (minutes > 0) {
+		return `${formattedMinutes}:${formattedSeconds}`;
+	}
+	return `00:${formattedSeconds}`;
 }
+
+
+export function trimString(str: string, max = 40) {
+	return str.length > max ? `${str.slice(0, max)}...` : str;
+}
+ 

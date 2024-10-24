@@ -45,7 +45,7 @@ interface Room {
 	videoUrl: string;
 	playerStats: number[]; // [duration,progress,lastChanged,status,type]
 	skips?: number;
-	pinQueue?: string[]; // ["url1","customUrlId1"] -> ["customUrlId1","url1"] last item player/url 
+	pinQueue?: string[]; // ["url1","customUrlId1"] -> ["customUrlId1","url1"] last item player/url
 	voteQueue?: string[]; // ["member1","member2"] -> ["member2,member3","member1"]
 	videoSrcTypes?: number; // 01 or 10 // type 0->youtube 1->custom
 	entityId?: string;
@@ -58,9 +58,8 @@ interface Room {
 		youtube------(0)
 		custom-------(1)
 */
-const pin = {
-	
-}
+
+export const PlatformsArray: ["youtube", "custom"] = ["youtube", "custom"];
 
 type Message = [number, string, number, string];
 /*	

@@ -27,7 +27,7 @@ import {
 	useMakeRoom,
 } from "@/hooks/room-hooks";
 import { useDebounce } from "@/hooks/util-hooks";
-import { cn, parseYouTubeDuration } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useGlobalStore, useRoomStore } from "@/store";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -42,6 +42,9 @@ import { z } from "zod";
 import { FaYoutube } from "react-icons/fa";
 import { TiPin } from "react-icons/ti";
 import { useVideoInfo } from "@/hooks/video-player-hooks";
+import VideoUrlInput from "./video-url-input";
+import LikedRecentVideos from "./liked-recent-videos";
+import { Separator } from "@/components/ui/separator";
 
 export type Tabs = "public" | "invited" | "friends" | "createRoom";
 
@@ -246,102 +249,27 @@ const RoomList = ({
 	);
 };
 const CreateRoom = () => {
-	const [url, setUrl] = useState("");
-	const [srcType, setSrcType] = useState<number>(0); // 0 for youtube
-	const schema = z.object({
-		url: z
-			.string()
-			.min(11, "url should be minimum 11 characters")
-			.max(512, "url should be maximum 512 characters"),
-	});
-	type FormData = z.infer<typeof schema>;
-	const {
-		register,
-		handleSubmit,
-		formState: { errors },
-	} = useForm<FormData>({ resolver: zodResolver(schema) });
-
-	const { info, error, setError, isLoading, player } = useVideoInfo(
-		url,
-		srcType,
-	);
-
 	const { mutate: makeRoom } = useMakeRoom();
-
-	useEffect(() => {
-		if (info.duration) {
-			makeRoom({ url, duration: info.duration });
-		}
-	}, [info.duration]);
-
-	const onSubmitUrlForm = (data: FieldValues) => {
-		setError("");
-		setUrl(data.url);
-	};
 
 	return (
 		<div className="border-2 border-muted">
 			<div className="h-[75svh] bg-primary-foreground">
-				{player}
 				<p className="mx-4 p-4 text-center font-semibold text-lg text-primary md:text-2xl">
 					Create Room
 				</p>
-				<div className="pt-3">
-					<form
-						onSubmit={handleSubmit(onSubmitUrlForm)}
-						className="mx-2 flex items-center gap-3 md:mx-10"
-					>
-						<SelectSearchPlatform setSelectedValue={setSrcType} />
-						<Input
-							{...register("url")}
-							id="searchquery"
-							placeholder="Play Using Youtube Url"
-							autoCapitalize="none"
-							autoCorrect="off"
-							autoComplete="off"
-							disabled={isLoading}
-						/>
-						<Button disabled={isLoading} size="sm" type="submit">
-							{isLoading ? (
-								<Icons.spinner className="mx-auto size-4 animate-spin" />
-							) : (
-								<TiPin className="size-6" />
-							)}
-						</Button>
-					</form>
-					{error && (
-						<p className="my-2 text-center text-red-500 text-sm">{error}</p>
-					)}
-					{errors.url && (
-						<p className="my-2 text-center text-red-500 text-sm">
-							{errors.url.message}
-						</p>
-					)}
+				<div className="mx-2 md:mx-8">
+					<p className="mb-2 text-muted-foreground text-sm">
+						Enter a url to play from:
+					</p>
+					<VideoUrlInput className="" makeRoomOrPinVideo={makeRoom} />
+					<Separator className="my-2" />
+					<p className="my-2 text-muted-foreground text-sm">
+						Pick from recent or liked videos:
+					</p>
+					<LikedRecentVideos scrollAreaClassName="h-[39svh] sm:h-[42svh]" />
 				</div>
 			</div>
 		</div>
-	);
-};
-export function trimString(str: string, max = 40) {
-	return str.length > max ? `${str.slice(0, max)}...` : str;
-}
-export const SelectSearchPlatform = ({
-	setSelectedValue,
-}: { setSelectedValue: (v: number) => void }) => {
-	const handleChange = (value: string) => setSelectedValue(Number(value));
-
-	return (
-		<Select defaultValue="0" onValueChange={handleChange}>
-			<SelectTrigger className="w-min">
-				<SelectValue placeholder="Select platform" />
-			</SelectTrigger>
-			<SelectContent>
-				<SelectGroup>
-					<SelectItem value="0">Youtube</SelectItem>
-					<SelectItem value="1">Custom</SelectItem>
-				</SelectGroup>
-			</SelectContent>
-		</Select>
 	);
 };
 
